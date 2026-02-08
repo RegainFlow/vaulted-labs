@@ -1,63 +1,52 @@
 import { motion } from "motion/react";
-import { useWaitlist } from "../hooks/useWaitlist";
-import { WAITLIST_TOTAL_SPOTS } from "../data/vaults";
+import { useWaitlistCount } from "../hooks/useWaitlistCount";
 
 export function IncentiveBanner() {
-  const { count, spotsRemaining, isLoading } = useWaitlist();
-  const percentage = Math.min(100, (count / WAITLIST_TOTAL_SPOTS) * 100);
-
-  const scrollToWaitlist = () => {
-    document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
-  };
+  const { count, loading } = useWaitlistCount();
+  const maxSpots = 100;
+  const remaining = Math.max(0, maxSpots - count);
+  const progress = Math.min(100, (count / maxSpots) * 100);
 
   return (
-    <section className="border-y border-border bg-surface px-4 py-20 sm:py-28">
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-60px" }}
-        transition={{ duration: 0.4 }}
-        className="mx-auto max-w-2xl text-center"
-      >
-        <p className="mb-2 text-sm font-medium uppercase tracking-widest text-accent">
-          Limited Offer
-        </p>
-        <h2 className="mb-4 text-3xl font-bold sm:text-4xl">
-          First 100 Members Get{" "}
-          <span className="text-accent">$100 Free Credit</span>
-        </h2>
-        <p className="mb-10 text-text-muted">
-          Sign up for the waitlist and claim your credit when we launch.
-        </p>
-
-        {/* Progress bar */}
-        <div className="mx-auto mb-3 max-w-md">
-          <div className="h-3 overflow-hidden rounded-full bg-border">
-            <div
-              className="h-full rounded-full bg-accent transition-all duration-700 ease-out"
-              style={{ width: `${percentage}%` }}
-            />
-          </div>
-        </div>
-
-        <p className="mb-10 text-sm tabular-nums text-text-muted">
-          {isLoading ? (
-            <span className="text-text-dim">Loading...</span>
-          ) : (
-            <>
-              <span className="font-bold text-neon-green text-glow-green">{spotsRemaining}</span> of{" "}
-              {WAITLIST_TOTAL_SPOTS} spots remaining
-            </>
-          )}
-        </p>
-
-        <button
-          onClick={scrollToWaitlist}
-          className="cursor-pointer rounded-lg bg-accent px-8 py-4 text-lg font-bold text-bg transition-colors hover:bg-accent-hover"
+    <section className="py-12 px-6">
+      <div className="max-w-4xl mx-auto">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="relative rounded-2xl overflow-hidden bg-surface-elevated border border-neon-green/30 p-8 md:p-12 text-center"
         >
-          Claim Your Spot
-        </button>
-      </motion.div>
+          {/* Animated glow background */}
+          <div className="absolute inset-0 bg-neon-green/5 animate-pulse" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-neon-green shadow-[0_0_20px_rgba(57,255,20,0.5)]" />
+
+          <div className="relative z-10 space-y-6">
+            <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">
+              First 100 Users Get <span className="text-neon-green text-glow-green">$100 Credit</span>
+            </h2>
+
+            <p className="text-lg text-text-muted">
+              Join the beta to claim your founding member bonus. Risk-free.
+            </p>
+
+            {/* Progress Bar */}
+            <div className="max-w-md mx-auto space-y-2">
+              <div className="flex justify-between text-sm font-medium">
+                <span className="text-neon-green">{loading ? "..." : `${remaining} spots left`}</span>
+                <span className="text-text-muted">{maxSpots} total</span>
+              </div>
+              <div className="h-4 bg-bg rounded-full overflow-hidden border border-white/10">
+                <motion.div
+                  initial={{ width: 0 }}
+                  whileInView={{ width: `${progress}%` }}
+                  transition={{ duration: 1.5, ease: "easeOut" }}
+                  className="h-full bg-neon-green shadow-[0_0_15px_rgba(57,255,20,0.5)]"
+                />
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
     </section>
   );
 }
