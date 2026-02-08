@@ -45,7 +45,7 @@ interface VaultTiersProps {
 
 export function VaultTiers({ onSelect }: VaultTiersProps) {
   return (
-    <section className="py-24 px-6 bg-bg relative overflow-hidden">
+    <section id="protocol" className="py-24 px-6 bg-bg relative overflow-hidden">
       {/* Background industrial pattern */}
       <div
         className="absolute inset-0 opacity-5 pointer-events-none"

@@ -64,15 +64,26 @@ export function Hero() {
         </motion.div>
       </div>
 
-      {/* Scroll indicator */}
+      {/* Bottom CTA */}
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1.5, duration: 1 }}
-        className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 cursor-pointer hover:scale-110 transition-transform"
-        onClick={() => window.scrollTo({ top: window.innerHeight, behavior: "smooth" })}
+        className="absolute bottom-12 left-1/2 -translate-x-1/2 w-full max-w-xs px-4"
       >
-        <span className="text-3xl font-black text-neon-green animate-pulse drop-shadow-[0_0_10px_rgba(57,255,20,0.8)]">$</span>
+        <button
+          onClick={() => document.getElementById("protocol")?.scrollIntoView({ behavior: "smooth" })}
+          className="w-full group relative overflow-hidden bg-accent/10 border border-accent/50 hover:bg-accent/20 text-accent font-black py-4 px-8 rounded-none skew-x-[-10deg] hover:shadow-[0_0_30px_rgba(255,45,149,0.3)] transition-all duration-300 active:scale-95 cursor-pointer"
+        >
+          <div className="skew-x-[10deg] flex items-center justify-center gap-2">
+            <span className="tracking-[0.2em] animate-pulse">INITIALIZE PROTOCOL</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="translate-y-[1px] group-hover:translate-y-1 transition-transform"><path d="M7 13l5 5 5-5M7 6l5 5 5-5" /></svg>
+          </div>
+
+          {/* Tech deco */}
+          <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-accent opacity-50" />
+          <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-accent opacity-50" />
+        </button>
       </motion.div>
     </section>
   );

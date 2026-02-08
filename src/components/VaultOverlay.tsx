@@ -193,7 +193,7 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                                 <p className="text-xl text-text-muted">Estimated Market Value: <span className="text-white font-bold">${tier.price * 10}.00</span></p>
                             </div>
 
-                            <div className="grid md:grid-cols-3 gap-4 max-w-4xl mx-auto px-4 z-10 relative">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto px-4 z-10 relative">
                                 <OptionCard
                                     title="Store to Vault"
                                     desc="Keep it secure in your digital portfolio."
@@ -231,8 +231,8 @@ function OptionCard({ title, desc, icon, action, onClick, highlight = false }: a
         <button
             onClick={onClick}
             className={`p-6 rounded-xl border text-left transition-all hover:-translate-y-1 hover:shadow-lg cursor-pointer flex flex-col h-full bg-surface ${highlight
-                    ? "border-accent/50 shadow-[0_0_20px_rgba(255,45,149,0.1)] hover:border-accent"
-                    : "border-white/10 hover:border-white/30"
+                ? "border-accent/50 shadow-[0_0_20px_rgba(255,45,149,0.1)] hover:border-accent"
+                : "border-white/10 hover:border-white/30"
                 }`}
         >
             <div className="text-3xl mb-4">{icon}</div>
