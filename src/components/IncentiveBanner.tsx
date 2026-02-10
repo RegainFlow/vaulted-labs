@@ -1,4 +1,4 @@
-import { motion } from "motion/react";
+﻿import { motion } from "motion/react";
 import { useWaitlistCount } from "../hooks/useWaitlistCount";
 
 export function IncentiveBanner() {
@@ -14,15 +14,15 @@ export function IncentiveBanner() {
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="relative rounded-2xl overflow-hidden bg-surface-elevated border border-neon-green/30 p-8 md:p-12 text-center"
+          className="relative rounded-2xl overflow-hidden bg-surface-elevated border border-accent/30 p-8 md:p-12 text-center"
         >
           {/* Animated glow background */}
-          <div className="absolute inset-0 bg-neon-green/5 animate-pulse" />
-          <div className="absolute top-0 left-0 w-full h-1 bg-neon-green shadow-[0_0_20px_rgba(57,255,20,0.5)]" />
+          <div className="absolute inset-0 bg-accent/5 animate-pulse" />
+          <div className="absolute top-0 left-0 w-full h-1 bg-accent shadow-[0_0_20px_rgba(255,45,149,0.5)]" />
 
           <div className="relative z-10 space-y-6">
             <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">
-              First 100 Users Get <span className="text-neon-green text-glow-green">$100 Credit</span>
+              First 100 Users Get <span className="text-accent text-glow-magenta">$100 Credit</span>    
             </h2>
 
             <p className="text-lg text-text-muted">
@@ -32,7 +32,7 @@ export function IncentiveBanner() {
             {/* Progress Bar */}
             <div className="max-w-md mx-auto space-y-2">
               <div className="flex justify-between text-sm font-medium">
-                <span className="text-neon-green">{loading ? "..." : `${remaining} spots left`}</span>
+                <span className="text-accent">{loading ? "..." : `${remaining} spots left`}</span>    
                 <span className="text-text-muted">{maxSpots} total</span>
               </div>
               <div className="h-4 bg-bg rounded-full overflow-hidden border border-white/10">
@@ -40,7 +40,7 @@ export function IncentiveBanner() {
                   initial={{ width: 0 }}
                   whileInView={{ width: `${progress}%` }}
                   transition={{ duration: 1.5, ease: "easeOut" }}
-                  className="h-full bg-neon-green shadow-[0_0_15px_rgba(57,255,20,0.5)]"
+                  className="h-full bg-accent shadow-[0_0_15px_rgba(255,45,149,0.5)]"
                 />
               </div>
             </div>

@@ -1,51 +1,34 @@
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-
-export type VaultTierData = {
-  name: string;
-  price: number;
-  color: string;
-  gradient: string;
-  odds: { common: number; uncommon: number; rare: number; legendary: number };
-};
-
-const tiers: VaultTierData[] = [
-  {
-    name: "Bronze",
-    price: 24,
-    color: "#cd7f32",
-    gradient: "from-[#8B4513] to-[#cd7f32]",
-    odds: { common: 60, uncommon: 30, rare: 8.3, legendary: 1.7 },
-  },
-  {
-    name: "Silver",
-    price: 38,
-    color: "#e0e0e0",
-    gradient: "from-[#757575] to-[#e0e0e0]",
-    odds: { common: 40, uncommon: 40, rare: 16.9, legendary: 3.1 },
-  },
-  {
-    name: "Gold",
-    price: 54,
-    color: "#ffd700",
-    gradient: "from-[#b8860b] to-[#ffd700]",
-    odds: { common: 20, uncommon: 45, rare: 30.8, legendary: 4.2 },
-  },
-  {
-    name: "Diamond",
-    price: 86,
-    color: "#b9f2ff",
-    gradient: "from-[#00bfff] to-[#b9f2ff]",
-    odds: { common: 5, uncommon: 30, rare: 60.6, legendary: 4.4 },
-  },
-];
+import { VAULTS, type Vault } from "../data/vaults";
+import { VaultCard } from "./VaultCard";
 
 interface VaultTiersProps {
-  onSelect: (tier: VaultTierData) => void;
+  onSelect: (vault: Vault) => void;
+  locked?: boolean;
+  onLockedAttempt?: () => void;
 }
 
-export function VaultTiers({ onSelect }: VaultTiersProps) {
+export function VaultTiers({
+  onSelect,
+  locked = false,
+  onLockedAttempt,
+}: VaultTiersProps) {
+  const [showLockHint, setShowLockHint] = useState(false);
+
+  useEffect(() => {
+    if (!showLockHint) return;
+    const timer = setTimeout(() => setShowLockHint(false), 2200);
+    return () => clearTimeout(timer);
+  }, [showLockHint]);
+
+  const handleLockedAttempt = () => {
+    setShowLockHint(true);
+    onLockedAttempt?.();
+  };
+
   return (
-    <section id="protocol" className="py-24 px-6 bg-bg relative overflow-hidden">
+    <section id="protocol" className="relative overflow-hidden bg-bg px-6 py-24 min-h-[800px]">
       {/* Background industrial pattern */}
       <div
         className="absolute inset-0 opacity-5 pointer-events-none"
@@ -57,120 +40,70 @@ export function VaultTiers({ onSelect }: VaultTiersProps) {
 
       <div className="max-w-6xl mx-auto relative z-10">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 14 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="mb-16 text-center"
         >
-          <h2 className="text-3xl md:text-5xl font-black mb-6 uppercase tracking-tight">
-            Secure Storage <span className="text-accent">Protocol</span>
+          <h2 className="text-3xl md:text-5xl font-black uppercase tracking-tight text-white mb-6">
+            Vault <span className="text-accent">Protocol</span>
           </h2>
-          <p className="text-text-muted max-w-2xl mx-auto">
-            Select your clearance level. Higher tiers unlock better probabilities for legendary artifacts.
+          <p className="mx-auto mt-4 max-w-2xl text-text-muted">
+            Select your containment tier. High-level vaults feature reinforced probability for Tier-1 legendary loot.
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          {tiers.map((tier, i) => (
-            <VaultCard key={tier.name} tier={tier} index={i} onSelect={onSelect} />
-          ))}
+        <div className={`relative transition-all duration-1000 ease-in-out ${locked ? 'blur-2xl grayscale pointer-events-none scale-95 opacity-30' : 'blur-0 grayscale-0 scale-100 opacity-100'}`}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 gap-y-16 max-w-5xl mx-auto">
+            {VAULTS.map((vault, index) => (
+                <VaultCard
+                    key={vault.name}
+                    vault={vault}
+                    index={index}
+                    locked={locked}
+                    onSelect={onSelect}
+                    onLockedAttempt={handleLockedAttempt}
+                />
+            ))}
+          </div>
         </div>
+
+        {locked && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 text-center w-full max-w-md px-4"
+          >
+            <div className="bg-surface/80 backdrop-blur-xl border-2 border-white/10 p-12 rounded-3xl shadow-[0_0_100px_rgba(0,0,0,0.5)]">   
+              <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6 border border-white/10">      
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-black text-white uppercase tracking-widest mb-4">Sector Locked</h3>
+              <p className="text-text-muted text-sm leading-relaxed mb-8">
+                The vault interface is currently locked. Please use your authorized access badge in the hero section to initialize the system.
+              </p>
+              <button
+                onClick={() => {
+                    onLockedAttempt?.();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className="text-accent text-xs font-bold uppercase tracking-[0.3em] hover:text-white transition-colors cursor-pointer"      
+              >
+                Insert Access Key &rarr;
+              </button>
+            </div>
+          </motion.div>
+        )}
+
+        {showLockHint && locked && (
+          <p className="mt-8 text-center text-xs font-semibold uppercase tracking-[0.2em] text-accent animate-pulse">
+            Security authorization required to proceed
+          </p>
+        )}
       </div>
     </section>
   );
-}
-
-function VaultCard({ tier, index, onSelect }: { tier: VaultTierData; index: number; onSelect: (t: VaultTierData) => void }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 50 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.1 }}
-      whileHover={{ y: -12, scale: 1.02 }}
-      onClick={() => onSelect(tier)}
-      className="group relative cursor-pointer"
-    >
-      {/* Main Vault Door Setup */}
-      <div className="relative bg-surface rounded-xl overflow-hidden shadow-2xl border border-white/5 h-full flex flex-col">
-
-        {/* Metallic Header */}
-        <div className={`h-36 bg-linear-to-br ${tier.gradient} relative flex items-center justify-center border-b-4 border-black/20`}>
-          {/* Industrial Rivets */}
-          <div className="absolute top-2 left-2 w-2 h-2 rounded-full bg-black/20 shadow-inner" />
-          <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-black/20 shadow-inner" />
-          <div className="absolute bottom-2 left-2 w-2 h-2 rounded-full bg-black/20 shadow-inner" />
-          <div className="absolute bottom-2 right-2 w-2 h-2 rounded-full bg-black/20 shadow-inner" />
-
-          {/* Tier Icon/Logo */}
-          <div className="w-20 h-20 bg-black/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/10 shadow-inner">
-            <VaultIcon name={tier.name} color={tier.color} />
-          </div>
-
-          <div className="absolute bottom-2 w-full text-center text-[10px] font-black uppercase tracking-[0.3em] text-black/40">
-            Level 0{index + 1} Access
-          </div>
-        </div>
-
-        {/* Body Content */}
-        <div className="p-6 flex-1 flex flex-col bg-surface-elevated/50 backdrop-blur-sm">
-          <div className="text-center mb-6">
-            <h3 className="text-2xl font-black text-white uppercase tracking-wider">{tier.name}</h3>
-            <div className="text-3xl font-bold mt-2" style={{ color: tier.color }}>
-              ${tier.price}
-            </div>
-          </div>
-
-          <div className="space-y-3 py-4 border-t border-dashed border-white/10">
-            {(Object.entries(tier.odds) as [string, number][]).map(([rarity, chance]) => (
-              <div key={rarity} className="flex items-center justify-between text-xs">
-                <span className="capitalize text-text-muted">{rarity}</span>
-                <span className="font-mono" style={{ color: getRarityColor(rarity) }}>
-                  {chance}%
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-auto pt-6">
-            <button className="w-full py-4 rounded-lg bg-bg border border-white/10 font-bold uppercase tracking-widest text-xs hover:bg-accent hover:border-accent transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(255,45,149,0.3)]">
-              Unlock Vault
-            </button>
-          </div>
-        </div>
-
-        {/* Caution Stripes at bottom */}
-        <div className="h-2 w-full bg-[repeating-linear-gradient(45deg,rgba(0,0,0,0.5),rgba(0,0,0,0.5)_10px,transparent_10px,transparent_20px)] bg-black/40" />
-      </div>
-
-      {/* Selection Glow */}
-      <div className={`absolute inset-0 -z-10 rounded-2xl blur-2xl opacity-0 group-hover:opacity-40 transition-opacity duration-500`} style={{ backgroundColor: tier.color }} />
-    </motion.div>
-  )
-}
-
-function getRarityColor(rarity: string) {
-  switch (rarity) {
-    case 'common': return 'var(--color-text-muted)';
-    case 'uncommon': return 'var(--color-neon-green)';
-    case 'rare': return 'var(--color-neon-cyan)';
-    case 'legendary': return 'var(--color-accent)';
-    default: return 'white';
-  }
-}
-
-function VaultIcon({ name, color }: { name: string; color: string }) {
-  // Simple SVG icons for tiers
-  switch (name) {
-    case 'Bronze':
-      return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><circle cx="12" cy="12" r="10" /><path d="M12 6v12M6 12h12" /></svg>;
-    case 'Silver':
-      return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 12h18M12 3v18" /></svg>;
-    case 'Gold':
-      return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" /></svg>;
-    case 'Diamond':
-      return <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2"><path d="M6 3h12l4 6-10 13L2 9z" /><path d="M11 3v20M6 9h12" /></svg>;
-    default:
-      return null;
-  }
 }

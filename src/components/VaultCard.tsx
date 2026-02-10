@@ -1,108 +1,135 @@
 import { motion } from "motion/react";
 import type { Vault } from "../data/vaults";
+import { VaultIcon } from "./VaultIcons";
 
 interface VaultCardProps {
   vault: Vault;
   index: number;
+  locked: boolean;
+  onSelect: (vault: Vault) => void;
+  onLockedAttempt: () => void;
 }
 
-const tierStyles: Record<string, {
-  text: string;
-  border: string;
-  bg: string;
-  hoverBorder: string;
-  hoverBg: string;
-  glow: string;
-}> = {
-  Bronze:  { text: "text-vault-bronze",  border: "border-vault-bronze",  bg: "bg-vault-bronze",  hoverBorder: "hover:border-vault-bronze",  hoverBg: "hover:bg-vault-bronze",  glow: "hover:shadow-[0_0_20px_rgba(205,127,50,0.25)]" },
-  Silver:  { text: "text-vault-silver",  border: "border-vault-silver",  bg: "bg-vault-silver",  hoverBorder: "hover:border-vault-silver",  hoverBg: "hover:bg-vault-silver",  glow: "hover:shadow-[0_0_20px_rgba(192,192,192,0.25)]" },
-  Gold:    { text: "text-vault-gold",    border: "border-vault-gold",    bg: "bg-vault-gold",    hoverBorder: "hover:border-vault-gold",    hoverBg: "hover:bg-vault-gold",    glow: "hover:shadow-[0_0_20px_rgba(255,215,0,0.25)]" },
-  Diamond: { text: "text-vault-diamond", border: "border-vault-diamond", bg: "bg-vault-diamond", hoverBorder: "hover:border-vault-diamond", hoverBg: "hover:bg-vault-diamond", glow: "hover:shadow-[0_0_20px_rgba(185,242,255,0.25)]" },
-};
-
-export function VaultCard({ vault, index }: VaultCardProps) {
-  const styles = tierStyles[vault.name];
-
-  const scrollToWaitlist = () => {
-    document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
-  };
+export function VaultCard({ vault, index, locked, onSelect, onLockedAttempt }: VaultCardProps) {
+  const handleSelect = () => {
+    if (locked) {
+        onLockedAttempt();
+    } else {
+        onSelect(vault);
+    }
+  }
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 24 }}
+      initial={{ opacity: 0, y: 50 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-60px" }}
-      transition={{ duration: 0.4, delay: index * 0.08 }}
-      whileHover={{ y: -4 }}
-      className={`group overflow-hidden rounded-2xl border border-border bg-surface transition-all ${styles.hoverBorder} ${styles.glow}`}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.1 }}
+      whileHover={locked ? {} : { y: -10 }}
+      onClick={handleSelect}
+      className="group relative cursor-pointer h-full"
     >
-      {/* Tier accent stripe */}
-      <div className={`h-1 ${styles.bg}`} />
+      {/* Main Vault Structure - Cubic Feel */}
+      <div className="relative bg-[#0d0d12] rounded-2xl overflow-hidden shadow-2xl border-2 border-white/5 h-full flex flex-col transition-all duration-500 hover:border-opacity-100 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.1)]" style={{ borderColor: `${vault.color}40` }}>
 
-      <div className="p-6">
-        <p className={`mb-1 text-sm font-semibold uppercase tracking-wider ${styles.text}`}>
-          {vault.name} Vault
-        </p>
-
-        <div className="mb-4">
-          <span className={`text-4xl font-extrabold ${styles.text}`}>
-            ${vault.price}
-          </span>
-          <span className="ml-1 text-sm text-text-dim">/vault</span>
-        </div>
-
-        <p className="mb-3 text-sm text-text-muted">{vault.tagline}</p>
-
-        {/* Rarity breakdown */}
-        <div className="mb-4">
-          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-text-dim">
-            Drop Rates
-          </p>
-          <div className="mb-2 flex h-2 overflow-hidden rounded-full">
-            <div className="bg-rarity-common" style={{ width: `${vault.rarities.common}%` }} />
-            <div className="bg-rarity-uncommon" style={{ width: `${vault.rarities.uncommon}%` }} />
-            <div className="bg-rarity-rare" style={{ width: `${vault.rarities.rare}%` }} />
-            <div className="bg-rarity-legendary" style={{ width: `${vault.rarities.legendary}%` }} />
+        {/* Metallic Header */}
+        <div className={`relative h-48 bg-linear-to-br ${vault.gradient} flex flex-col items-center justify-center border-b-8 border-black/40 overflow-hidden`}>
+          
+          {/* Industrial Rivets */}
+          <div className="absolute top-4 left-4 w-2 h-2 rounded-full bg-black/30 shadow-inner" />
+          <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-black/30 shadow-inner" />
+          
+          {/* Price Tag in Header (Top Right) */}
+          <div className="absolute top-4 right-8 bg-black/40 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 z-10">
+             <span className="font-black italic text-xl text-white">${vault.price}</span>
           </div>
-          <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs">
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-rarity-common" />
-              <span className="text-text-dim">Common</span>
-              <span className="ml-auto tabular-nums text-text-muted">{vault.rarities.common}%</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-rarity-uncommon" />
-              <span className="text-text-dim">Uncommon</span>
-              <span className="ml-auto tabular-nums text-text-muted">{vault.rarities.uncommon}%</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-rarity-rare" />
-              <span className="text-text-dim">Rare</span>
-              <span className="ml-auto tabular-nums text-text-muted">{vault.rarities.rare}%</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 shrink-0 rounded-full bg-rarity-legendary" />
-              <span className="text-text-dim">Legendary</span>
-              <span className="ml-auto tabular-nums text-text-muted">{vault.rarities.legendary}%</span>
-            </div>
+
+          {/* Sequence Number (Top Left) */}
+          <div className="absolute top-4 left-8 text-[10px] font-black uppercase tracking-[0.2em] text-black/50 z-10">
+             SEQ // 0{index + 1}
           </div>
+
+          {/* Ore Icon Container */}
+          <div className="relative z-10 transform transition-transform duration-500 group-hover:scale-110">
+             <div className="drop-shadow-2xl filter">
+                <VaultIcon name={vault.name} color={vault.color} />
+             </div>
+          </div>
+
+          {/* Background pattern for texture */}
+          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,black_1px,transparent_0)] bg-[length:10px_10px]" />
         </div>
 
-        {/* Item range */}
-        <div className="mb-4 flex items-center gap-2 text-sm text-text-muted">
-          <svg className={`h-4 w-4 ${styles.text}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
-          </svg>
-          <span>{vault.itemRange}</span>
+        {/* Body Content */}
+        <div className="p-6 bg-gradient-to-b from-white/5 to-transparent flex-1 flex flex-col">
+          
+          {/* Title Section */}
+          <div className="text-center mb-6">
+            <h3 className="text-3xl font-black text-white uppercase tracking-tighter">{vault.name}</h3>
+            <p className="text-xs font-mono text-text-muted uppercase tracking-[0.3em]">{vault.tagline}</p>
+          </div>
+
+          {/* Stats Section - Always Visible */}
+          <div className="pt-6 space-y-4 border-t border-white/5">
+            {(Object.entries(vault.rarities) as [string, number][]).map(([rarity, chance]) => {
+            const rarityColor = getRarityColor(rarity);
+            return (
+                <div key={rarity} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-wider">
+                        <span style={{ color: rarityColor }}>{rarity}</span>
+                        <span className="text-white">{chance}%</span>
+                    </div>
+                    {/* Wide Stat Bar with Ticks */}
+                    <div className="h-4 w-full bg-black/60 rounded-sm overflow-hidden border border-white/5 relative">
+                        {/* Tick Marks Overlay */}
+                        <div 
+                            className="absolute inset-0 z-20 pointer-events-none opacity-20" 
+                            style={{ backgroundImage: "repeating-linear-gradient(90deg, transparent, transparent 19%, #000 19%, #000 20%)" }} 
+                        />
+                        
+                        {/* Fill */}
+                        <motion.div
+                            initial={{ width: 0 }}
+                            whileInView={{ width: `${chance}%` }}
+                            transition={{ duration: 1, ease: "easeOut" }}
+                            className="h-full relative"
+                            style={{
+                                backgroundColor: rarityColor,
+                                boxShadow: `0 0 10px ${rarityColor}40`
+                            }}
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
+                        </motion.div>
+                    </div>
+                </div>
+            );
+            })}
+          </div>
+             
+          <div className="mt-8 text-center">
+            <span className="text-[10px] font-mono uppercase tracking-widest animate-pulse" style={{ color: locked ? 'var(--color-text-dim)' : vault.color }}>
+                {locked ? "Sector Locked" : "Click to Initialize"}
+            </span>
+          </div>
+
         </div>
 
-        <button
-          onClick={scrollToWaitlist}
-          className={`w-full cursor-pointer rounded-lg border ${styles.border} bg-transparent px-4 py-2.5 text-sm font-semibold ${styles.text} transition-colors ${styles.hoverBg} hover:text-bg`}
-        >
-          Join Waitlist
-        </button>
+        {/* Caution Stripes at bottom */}
+        <div className="h-2 w-full bg-[repeating-linear-gradient(45deg,#000,#000_10px,transparent_10px,transparent_20px)] opacity-20" />    
       </div>
+
+      {/* Selection Glow */}
+      {!locked && <div className={`absolute inset-0 -z-10 rounded-2xl blur-[60px] opacity-0 group-hover:opacity-20 transition-opacity duration-700`} style={{ backgroundColor: vault.color }} />}
     </motion.div>
-  );
+  )
+}
+
+function getRarityColor(rarity: string) {
+  switch (rarity) {
+    case 'common': return '#9a9ab0';
+    case 'uncommon': return '#00f0ff';
+    case 'rare': return '#a855f7';
+    case 'legendary': return '#ff2d95';
+    default: return 'white';
+  }
 }

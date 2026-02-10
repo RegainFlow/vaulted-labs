@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { supabase } from "../lib/supabase";
 
@@ -19,7 +19,7 @@ export function WaitlistForm() {
         // Mock success
         await new Promise(resolve => setTimeout(resolve, 1000));
         setStatus("success");
-        setMessage("Welcome to the vault. You're on the list.");
+        setMessage("ACCESS GRANTED. YOU'RE ON THE SECURE LIST.");
         setEmail("");
         return;
       }
@@ -30,57 +30,59 @@ export function WaitlistForm() {
 
       if (error) {
         if (error.code === '23505') { // Unique violation
-          throw new Error("This email is already registered.");
+          throw new Error("THIS CREDENTIAL IS ALREADY REGISTERED.");
         }
         throw error;
       }
 
       setStatus("success");
-      setMessage("Welcome to the vault. You're on the list.");
+      setMessage("ACCESS GRANTED. YOU'RE ON THE SECURE LIST.");
       setEmail("");
     } catch (err: any) {
       console.error(err);
       setStatus("error");
-      setMessage(err.message || "Something went wrong. Please try again.");
+      setMessage(err.message || "SYSTEM ERROR. PLEASE TRY AGAIN.");
     }
   };
 
   return (
-    <section id="waitlist" className="py-24 px-6 relative">
-      <div className="max-w-xl mx-auto text-center space-y-8">
+    <section id="waitlist" className="py-32 px-6 relative bg-bg">
+      <div className="max-w-xl mx-auto text-center space-y-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-4xl font-bold mb-4">Secure Your Access</h2>
-          <p className="text-text-muted">
-            Be among the first to experience the future of digital collecting.
+          <div className="inline-block px-4 py-1.5 bg-accent/10 border border-accent/20 rounded-full text-accent text-[10px] font-black uppercase tracking-[0.3em] mb-6">
+            Terminal Access
+          </div>
+          <h2 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter mb-4">Secure Your <span className="text-accent">Beta Slot</span></h2>
+          <p className="text-text-muted text-lg">
+            Founding member registration is currently limited. Provide your credentials to secure priority vault access.
           </p>
         </motion.div>
 
-        <form onSubmit={handleSubmit} className="relative max-w-sm mx-auto">
+        <form onSubmit={handleSubmit} className="relative max-w-md mx-auto">
           <div className="relative group">
-            <div className="absolute -inset-1 blur-md bg-gradient-to-r from-accent to-neon-cyan opacity-25 group-hover:opacity-50 transition-opacity" />
+            <div className="absolute -inset-2 blur-2xl bg-accent/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
+              placeholder="ENTER EMAIL ADDRESS"
               disabled={status === "loading" || status === "success"}
-              className="relative w-full bg-bg border border-white/20 rounded-full py-4 pl-6 pr-14 text-white placeholder:text-text-muted focus:outline-none focus:border-neon-cyan focus:ring-1 focus:ring-neon-cyan transition-all disabled:opacity-50"
+              className="relative w-full bg-[#0d0d12] border-2 border-white/10 rounded-2xl py-6 pl-8 pr-16 text-white font-mono placeholder:text-text-dim focus:outline-none focus:border-accent/50 focus:ring-8 focus:ring-accent/5 transition-all disabled:opacity-50 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
             />
             <button
               type="submit"
               disabled={status === "loading" || status === "success"}
-              className="absolute right-2 top-2 bottom-2 bg-white/10 hover:bg-white/20 text-white rounded-full w-10 h-10 flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer"
+              className="absolute right-3 top-3 bottom-3 bg-accent text-white rounded-xl px-6 flex items-center justify-center transition-all hover:scale-105 active:scale-95 disabled:opacity-50 cursor-pointer shadow-lg overflow-hidden group/btn"
             >
+              <div className="absolute inset-0 bg-white/20 translate-y-full group-hover/btn:translate-y-0 transition-transform" />
               {status === "loading" ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M5 12h14M12 5l7 7-7 7" />
-                </svg>
+                <span className="relative z-10 font-black text-xs uppercase tracking-widest">Submit</span>
               )}
             </button>
           </div>
@@ -89,18 +91,24 @@ export function WaitlistForm() {
         <AnimatePresence>
           {message && (
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className={`p-4 rounded-lg text-sm font-medium ${status === "success"
-                  ? "bg-neon-green/10 text-neon-green border border-neon-green/20"
-                  : "bg-error/10 text-error border border-error/20"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className={`p-6 rounded-xl text-xs font-black tracking-widest ${status === "success"
+                ? "bg-accent/10 text-accent border-2 border-accent/20 shadow-[0_0_30px_rgba(255,45,149,0.1)]"
+                : "bg-error/10 text-error border-2 border-error/20"
                 }`}
             >
               {message}
             </motion.div>
           )}
         </AnimatePresence>
+        
+        <div className="pt-8 flex items-center justify-center gap-8 opacity-30 grayscale">
+            <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white">Encrypted</div>
+            <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white">Vaulted-SSL</div>
+            <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white">No Spam</div>
+        </div>
       </div>
     </section>
   );
