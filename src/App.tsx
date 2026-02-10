@@ -1,13 +1,15 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { AnimatePresence } from "motion/react";
 import { Navbar } from "./components/Navbar";
 import { Hero } from "./components/Hero";
-import { VaultTiers, type VaultTierData } from "./components/VaultTiers";
+import { ProductMockupSection } from "./components/ProductMockupSection";
+import { VaultTiers } from "./components/VaultTiers";
 import { VaultOverlay } from "./components/VaultOverlay";
 import { IncentiveBanner } from "./components/IncentiveBanner";
 import { GuaranteedWins } from "./components/GuaranteedWins";
 import { WaitlistForm } from "./components/WaitlistForm";
 import { Footer } from "./components/Footer";
+import type { Vault } from "./data/vaults";
 
 // Helper for simple "fly" animations
 const animateFly = (symbol: string, targetSelector: string) => {
@@ -40,41 +42,39 @@ const animateFly = (symbol: string, targetSelector: string) => {
 };
 
 function App() {
-  const [selectedVault, setSelectedVault] = useState<VaultTierData | null>(null);
+  const [selectedVault, setSelectedVault] = useState<Vault | null>(null);
   const [balance, setBalance] = useState(100);
   const [inventoryCount, setInventoryCount] = useState(0);
   const [isUnlocked, setIsUnlocked] = useState(false);
 
   const handleClaim = (amount: number) => {
-    animateFly("💰", ".stat-icon-credits"); 
+    animateFly("≡ƒÆ░", ".stat-icon-credits");
     setTimeout(() => setBalance(prev => prev + amount), 600);
   };
 
   const handleStore = () => {
-    animateFly("📦", ".stat-icon-inventory"); 
+    animateFly("≡ƒôª", ".stat-icon-inventory");
     setTimeout(() => setInventoryCount(prev => prev + 1), 600);
   };
 
   const handleUnlock = () => {
     console.log("System Unlocking...");
     setIsUnlocked(true);
-    // Smooth scroll to vault tiers after a small delay for animation
-    setTimeout(() => {
-      const el = document.getElementById("protocol");
-      if (el) {
-          el.scrollIntoView({ behavior: "smooth" });
-      } else {
-          window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
-      }
-    }, 1000);
+    // Smooth scroll handled by Hero component internally before calling this,
+    // or we can ensure it here too. Hero scrolls to 'protocol'.
   };
 
   return (
     <div className="min-h-screen bg-bg text-text selection:bg-accent/30 font-sans">
       <Navbar balance={balance} inventoryCount={inventoryCount} />
       <main>
-        <Hero onUnlock={handleUnlock} isUnlocked={isUnlocked} />
-        <VaultTiers onSelect={setSelectedVault} isLocked={!isUnlocked} />
+        <Hero onAccessKeyInsert={handleUnlock} />
+        <ProductMockupSection />
+        <VaultTiers 
+          onSelect={setSelectedVault} 
+          locked={!isUnlocked} 
+          onLockedAttempt={() => document.getElementById("hero-access")?.scrollIntoView({ behavior: "smooth" })}
+        />
         <GuaranteedWins />
         <IncentiveBanner />
         <WaitlistForm />

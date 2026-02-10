@@ -1,13 +1,19 @@
-﻿import { motion } from "motion/react";
+import { motion } from "motion/react";
 
 type NavbarProps = {
   balance?: number;
   inventoryCount?: number;
+  unlockState?: "locked" | "inserting" | "unlocked";
+  onJoinWaitlist?: () => void;
 };
 
-export function Navbar({ balance = 0, inventoryCount = 0 }: NavbarProps) {
+export function Navbar({ balance = 0, inventoryCount = 0, onJoinWaitlist }: NavbarProps) {
   const scrollToWaitlist = () => {
-    document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
+    if (onJoinWaitlist) {
+        onJoinWaitlist();
+    } else {
+        document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
+    }
   };
 
   return (
@@ -20,35 +26,75 @@ export function Navbar({ balance = 0, inventoryCount = 0 }: NavbarProps) {
       {/* Wordmark */}
       <div className="flex items-center gap-2">
         <span className="text-2xl font-black tracking-tighter text-white uppercase italic">
-          Vaulted<span className="text-accent">Labs</span>
+          Vaulted<span className="text-accent text-glow-magenta">Labs</span>
         </span>
       </div>
 
-      <div className="flex items-center gap-4 md:gap-8">
-        {/* User Stats (Gamified HUD) */}
-        <div className="hidden md:flex items-center bg-black/60 border border-white/10 rounded-full p-1 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)]">   
-          <div className="flex items-center gap-2 px-4 py-1.5 border-r border-white/10">
-            <div className="w-6 h-6 rounded-full bg-accent/20 flex items-center justify-center border border-accent/30 stat-icon-credits">
-                <span className="text-[10px] text-accent">⚡</span>
-            </div>
-            <span className="text-lg font-mono font-bold text-white drop-shadow-[0_0_8px_rgba(255,45,149,0.3)] balance-text">${balance.toLocaleString()}</span>
-          </div>
-          <div className="flex items-center gap-2 px-4 py-1.5">
-            <div className="w-6 h-6 rounded-full bg-neon-cyan/20 flex items-center justify-center border border-neon-cyan/30 stat-icon-inventory">
-                <span className="text-[10px] text-neon-cyan">📦</span>
-            </div>
-            <span className="text-lg font-mono font-bold text-white drop-shadow-[0_0_8px_rgba(0,240,255,0.3)] inventory-text">{inventoryCount}</span>
-          </div>
-        </div>
+      {/* Mobile CTA */}
+      <button
+        onClick={scrollToWaitlist}
+        className="md:hidden relative overflow-hidden rounded-lg bg-accent/10 border border-accent/30 text-accent px-4 py-2 font-black uppercase tracking-widest text-[10px] transition-all hover:bg-accent hover:text-white cursor-pointer"
+      >
+        Join
+      </button>
 
-        {/* CTA */}
-        <button
-          onClick={scrollToWaitlist}
-          className="group relative overflow-hidden rounded-full bg-white text-black px-8 py-2.5 font-black uppercase tracking-widest text-xs transition-all hover:bg-accent hover:text-white hover:shadow-[0_0_30px_rgba(255,45,149,0.5)] active:scale-95"
-        >
-          <span className="relative z-10">Join Waitlist</span>
-          <div className="absolute inset-0 bg-accent translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-        </button>
+      {/* Desktop HUD Bar */}
+      <div className="hidden md:block relative">
+        {/* Animated border glow */}
+        <motion.div
+          className="absolute -inset-[1px] rounded-xl opacity-60"
+          style={{
+            background: "conic-gradient(from 0deg, transparent 60%, #ff2d95 75%, #00f0ff 85%, transparent 100%)"
+          }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 4, ease: "linear", repeat: Infinity }}
+        />
+
+        {/* Inner frosted container */}
+        <div className="relative flex items-center bg-surface/80 backdrop-blur-xl rounded-xl border border-white/5">
+
+          {/* Credits slot */}
+          <div className="flex items-center gap-2.5 px-4 py-2.5 border-r border-white/10">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-vault-gold shrink-0">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5s-2 .5-2 1.5 1 1.5 2 2 2 1 2 2-1 1.5-2 1.5-2-.5-2.5-1.5M12 7v1m0 8v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider leading-none">Credits</span>
+              <span id="hud-credits-value" className="text-sm font-mono font-bold text-vault-gold animate-hud-shimmer">
+                ${balance.toLocaleString()}
+              </span>
+            </div>
+          </div>
+
+          {/* Loot slot */}
+          <div className="flex items-center gap-2.5 px-4 py-2.5 border-r border-white/10">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="text-neon-cyan shrink-0">
+              <path d="M21 8V21H3V8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M23 3H1V8H23V3Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M10 12H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider leading-none">Loot</span>
+              <span id="hud-inventory-value" className="text-sm font-mono font-bold text-neon-cyan animate-hud-shimmer" style={{ animationDelay: "0.5s" }}>
+                {inventoryCount}
+              </span>
+            </div>
+          </div>
+
+          {/* Join Waitlist ΓÇö integrated HUD segment */}
+          <button
+            onClick={scrollToWaitlist}
+            className="flex items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-accent hover:bg-accent/10 transition-all rounded-r-xl cursor-pointer"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+              <polyline points="10 17 15 12 10 7" />
+              <line x1="15" y1="12" x2="3" y2="12" />
+            </svg>
+            <span>Join</span>
+          </button>
+        </div>
       </div>
     </motion.nav>
   );
