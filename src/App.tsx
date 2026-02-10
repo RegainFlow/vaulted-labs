@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { AnimatePresence } from "motion/react";
 import { Navbar } from "./components/Navbar";
 import { Hero } from "./components/Hero";
@@ -43,24 +43,38 @@ function App() {
   const [selectedVault, setSelectedVault] = useState<VaultTierData | null>(null);
   const [balance, setBalance] = useState(100);
   const [inventoryCount, setInventoryCount] = useState(0);
+  const [isUnlocked, setIsUnlocked] = useState(false);
 
   const handleClaim = (amount: number) => {
-    animateFly("💰", ".text-lg:first-child"); // Target the coin icon in Navbar
+    animateFly("💰", ".stat-icon-credits"); 
     setTimeout(() => setBalance(prev => prev + amount), 600);
   };
 
   const handleStore = () => {
-    animateFly("📦", ".text-lg:last-child"); // Target the box icon in Navbar
+    animateFly("📦", ".stat-icon-inventory"); 
     setTimeout(() => setInventoryCount(prev => prev + 1), 600);
+  };
+
+  const handleUnlock = () => {
+    console.log("System Unlocking...");
+    setIsUnlocked(true);
+    // Smooth scroll to vault tiers after a small delay for animation
+    setTimeout(() => {
+      const el = document.getElementById("protocol");
+      if (el) {
+          el.scrollIntoView({ behavior: "smooth" });
+      } else {
+          window.scrollTo({ top: window.innerHeight, behavior: 'smooth' });
+      }
+    }, 1000);
   };
 
   return (
     <div className="min-h-screen bg-bg text-text selection:bg-accent/30 font-sans">
       <Navbar balance={balance} inventoryCount={inventoryCount} />
       <main>
-        <Hero />
-        {/* VaultExperience removed - merged into interactive flow */}
-        <VaultTiers onSelect={setSelectedVault} />
+        <Hero onUnlock={handleUnlock} isUnlocked={isUnlocked} />
+        <VaultTiers onSelect={setSelectedVault} isLocked={!isUnlocked} />
         <GuaranteedWins />
         <IncentiveBanner />
         <WaitlistForm />
@@ -80,6 +94,5 @@ function App() {
     </div>
   );
 }
-
 
 export default App;

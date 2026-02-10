@@ -1,4 +1,4 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 @theme {
   /* Backgrounds — blue-shifted darks */
@@ -11,12 +11,9 @@
   --color-accent: #ff2d95;
   --color-accent-hover: #e0267f;
 
-  /* Secondary: Green neon */
-  --color-neon-green: #39ff14;
-  --color-neon-green-hover: #2ecc10;
-
-  /* Tertiary: Cyan */
+  /* Secondary: Cyan neon */
   --color-neon-cyan: #00f0ff;
+  --color-neon-cyan-hover: #00d8e6;
 
   /* Text — cool-tinted */
   --color-text: #f0f0f5;
@@ -31,12 +28,12 @@
 
   /* Rarity colors */
   --color-rarity-common: #9a9ab0;
-  --color-rarity-uncommon: #39ff14;
-  --color-rarity-rare: #00f0ff;
+  --color-rarity-uncommon: #00f0ff;
+  --color-rarity-rare: #a855f7;
   --color-rarity-legendary: #ff2d95;
 
   /* Semantic */
-  --color-success: #39ff14;
+  --color-success: #00f0ff;
   --color-error: #ff3b5c;
 
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -60,16 +57,30 @@
   .glow-magenta {
     box-shadow: 0 0 20px rgba(255, 45, 149, 0.3), 0 0 60px rgba(255, 45, 149, 0.1);
   }
-  .glow-green {
-    box-shadow: 0 0 20px rgba(57, 255, 20, 0.3), 0 0 60px rgba(57, 255, 20, 0.1);
-  }
   .glow-cyan {
     box-shadow: 0 0 20px rgba(0, 240, 255, 0.3), 0 0 60px rgba(0, 240, 255, 0.1);
   }
   .text-glow-magenta {
-    text-shadow: 0 0 10px rgba(255, 45, 149, 0.5), 0 0 30px rgba(255, 45, 149, 0.2);
+    text-shadow: 0 0 10px rgba(255, 45, 149, 0.5), 0 0 25px rgba(255, 45, 149, 0.3);
   }
-  .text-glow-green {
-    text-shadow: 0 0 10px rgba(57, 255, 20, 0.5), 0 0 30px rgba(57, 255, 20, 0.2);
+  .text-glow-cyan {
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.5), 0 0 25px rgba(0, 240, 255, 0.3);
+  }
+  .text-glow-white {
+    text-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+  }
+  /* Explicit clip fix for Firefox */
+  .bg-clip-text {
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+  }
+  .animate-gradient {
+    background-size: 300% 300%;
+    animation: gradient-flow 8s ease infinite;
+  }
+  @keyframes gradient-flow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
   }
 }

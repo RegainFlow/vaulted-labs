@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+﻿import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 
 type VaultTier = {
@@ -82,14 +82,14 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                                 >
                                     {/* Wheel Spokes */}
                                     <div className="absolute inset-2 border-4 border-dashed border-white/20 rounded-full" />
-                                    <div className="w-4 h-full bg-white/10 absolute rounded-full" />
-                                    <div className="h-4 w-full bg-white/10 absolute rounded-full" />
-                                    <div className="w-8 h-8 bg-accent rounded-full shadow-[0_0_20px_var(--color-accent)] z-10" />
+                                    <div className="w-4 h-full bg-white/10 absolute rounded-full" />      
+                                    <div className="h-4 w-full bg-white/10 absolute rounded-full" />      
+                                    <div className="w-8 h-8 rounded-full shadow-2xl z-10" style={{ backgroundColor: tier.color, boxShadow: `0 0 20px ${tier.color}` }} />
                                 </motion.div>
                             </div>
 
                             <div className="space-y-2">
-                                <h2 className="text-3xl font-black text-white uppercase tracking-widest">
+                                <h2 className="text-3xl font-black text-white uppercase tracking-widest"> 
                                     Authenticating
                                 </h2>
                                 <p className="text-text-muted font-mono text-sm">Verifying on-chain credentials...</p>
@@ -120,13 +120,16 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                                         whileHover={{ scale: 1.05, translateZ: 20 }}
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => pickBox(i)}
-                                        className="aspect-square relative rounded-lg bg-surface-elevated border border-white/10 flex items-center justify-center shadow-lg group overflow-hidden cursor-pointer"
+                                        className="aspect-square relative rounded-lg bg-surface-elevated border border-white/10 flex items-center justify-center shadow-lg group overflow-hidden cursor-pointer"    
                                     >
                                         <div className="absolute inset-0 bg-linear-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                         {/* Scanning line effect */}
-                                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/20 to-transparent translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-1000" />
+                                        <div 
+                                          className="absolute inset-0 translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-1000" 
+                                          style={{ backgroundImage: `linear-gradient(to bottom, transparent, ${tier.color}40, transparent)` }}
+                                        />
 
-                                        <span className="text-4xl filter drop-shadow-md">📦</span>
+                                        <span className="text-4xl filter drop-shadow-md">📦</span>      
 
                                         <div className="absolute bottom-1 right-1 text-[8px] font-mono text-white/30">
                                             UNIT-0{i + 1}
@@ -156,7 +159,7 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                             >
                                 📦
                             </motion.div>
-                            <div className="text-2xl text-accent font-bold tracking-[0.5em] uppercase animate-pulse">
+                            <div className="text-2xl font-bold tracking-[0.5em] uppercase animate-pulse" style={{ color: tier.color }}>
                                 Decompressing
                             </div>
                         </motion.div>
@@ -172,14 +175,14 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                             className="space-y-12 relative"
                         >
                             {/* Confetti Explosion */}
-                            <ConfettiParticles />
+                            <ConfettiParticles tierColor={tier.color} />
 
                             <div className="relative inline-block group z-10">
-                                <div className="absolute inset-0 bg-neon-green/40 blur-3xl animate-pulse group-hover:bg-neon-green/60 transition-colors" />
-                                <div className="relative flex items-center justify-center bg-surface-elevated rounded-2xl border-4 border-neon-green shadow-[0_0_60px_rgba(57,255,20,0.4)] w-64 h-64 md:w-80 md:h-80">
+                                <div className="absolute inset-0 blur-3xl animate-pulse opacity-50 transition-colors" style={{ backgroundColor: tier.color }} />
+                                <div className="relative flex items-center justify-center bg-surface-elevated rounded-2xl border-4 shadow-2xl w-64 h-64 md:w-80 md:h-80" style={{ borderColor: tier.color, boxShadow: `0 0 60px ${tier.color}40` }}>
                                     <span className="text-8xl">💎</span>
                                     <div className="absolute bottom-4 left-0 w-full text-center">
-                                        <span className="inline-block px-3 py-1 bg-neon-green/20 border border-neon-green/50 rounded text-xs font-bold text-neon-green uppercase tracking-wider">
+                                        <span className="inline-block px-3 py-1 rounded text-xs font-bold uppercase tracking-wider" style={{ backgroundColor: `${tier.color}20`, border: `1px solid ${tier.color}50`, color: tier.color }}>
                                             Mint Condition
                                         </span>
                                     </div>
@@ -188,7 +191,7 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
 
                             <div className="space-y-2 z-10 relative">
                                 <h3 className="text-4xl md:text-5xl font-black text-white">
-                                    <span className="text-neon-green text-glow-green">Legendary</span> Pull!
+                                    <span style={{ color: tier.color }}>Legendary</span> Pull!
                                 </h3>
                                 <p className="text-xl text-text-muted">Estimated Market Value: <span className="text-white font-bold">${tier.price * 10}.00</span></p>
                             </div>
@@ -200,6 +203,7 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                                     icon="🔒"
                                     action="Build Collection"
                                     onClick={handleStore}
+                                    tierColor={tier.color}
                                 />
                                 <OptionCard
                                     title="Ship to Home"
@@ -207,6 +211,7 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                                     icon="🚚"
                                     action="Get It Shipped"
                                     onClick={scrollToWaitlist}
+                                    tierColor={tier.color}
                                     highlight
                                 />
                                 <OptionCard
@@ -215,6 +220,7 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                                     icon="💳"
                                     action={`Get $${tier.price * 10} Credits`}
                                     onClick={handleClaim}
+                                    tierColor={tier.color}
                                 />
                             </div>
                         </motion.div>
@@ -226,34 +232,37 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
     );
 }
 
-function OptionCard({ title, desc, icon, action, onClick, highlight = false }: any) {
+function OptionCard({ title, desc, icon, action, onClick, tierColor, highlight = false }: any) {
     return (
         <button
             onClick={onClick}
             className={`p-6 rounded-xl border text-left transition-all hover:-translate-y-1 hover:shadow-lg cursor-pointer flex flex-col h-full bg-surface ${highlight
-                ? "border-accent/50 shadow-[0_0_20px_rgba(255,45,149,0.1)] hover:border-accent"
+                ? "shadow-[0_0_20px_rgba(255,45,149,0.1)]"
                 : "border-white/10 hover:border-white/30"
                 }`}
+            style={{ 
+                borderColor: highlight ? tierColor : undefined,
+            }}
         >
             <div className="text-3xl mb-4">{icon}</div>
             <h4 className="text-xl font-bold text-white mb-2">{title}</h4>
             <p className="text-text-muted text-sm mb-6 flex-1">{desc}</p>
             <div className="mt-auto pt-4 border-t border-white/5 w-full">
-                <span className={`text-sm font-bold uppercase tracking-wider ${highlight ? "text-accent" : "text-white"}`}>
-                    {action} &rarr;
+                <span className="text-sm font-bold uppercase tracking-wider" style={{ color: highlight ? tierColor : 'white' }}>
+                    {action} →
                 </span>
             </div>
         </button>
     )
 }
 
-function ConfettiParticles() {
+function ConfettiParticles({ tierColor }: { tierColor: string }) {
     // Generate random particles
     const particles = Array.from({ length: 30 }).map((_, i) => ({
         id: i,
         x: Math.random() * 200 - 100, // Spread X
         y: Math.random() * 200 - 150, // Spread Y (upward bias)
-        color: Math.random() > 0.5 ? "var(--color-neon-green)" : "var(--color-accent)",
+        color: Math.random() > 0.5 ? tierColor : "var(--color-accent)",
         scale: Math.random() * 0.5 + 0.5,
     }));
 
