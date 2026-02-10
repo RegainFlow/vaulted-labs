@@ -61,19 +61,19 @@ export function WaitlistForm() {
 
         <form onSubmit={handleSubmit} className="relative max-w-sm mx-auto">
           <div className="relative group">
-            <div className="absolute -inset-1 blur-md bg-gradient-to-r from-accent to-neon-cyan opacity-25 group-hover:opacity-50 transition-opacity" />
+            <div className="absolute -inset-1 blur-md bg-gradient-to-r from-accent to-purple-600 opacity-25 group-hover:opacity-50 transition-opacity" />
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Enter your email"
               disabled={status === "loading" || status === "success"}
-              className="relative w-full bg-bg border border-white/20 rounded-full py-4 pl-6 pr-14 text-white placeholder:text-text-muted focus:outline-none focus:border-neon-cyan focus:ring-1 focus:ring-neon-cyan transition-all disabled:opacity-50"
+              className="relative w-full bg-bg border border-white/10 rounded-full py-4 pl-6 pr-14 text-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-1 focus:ring-accent transition-all disabled:opacity-50"
             />
             <button
               type="submit"
               disabled={status === "loading" || status === "success"}
-              className="absolute right-2 top-2 bottom-2 bg-white/10 hover:bg-white/20 text-white rounded-full w-10 h-10 flex items-center justify-center transition-colors disabled:opacity-50 cursor-pointer"
+              className="absolute right-2 top-2 bottom-2 bg-white/5 hover:bg-accent text-white rounded-full w-10 h-10 flex items-center justify-center transition-all disabled:opacity-50 cursor-pointer border border-white/5"
             >
               {status === "loading" ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -93,8 +93,8 @@ export function WaitlistForm() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               className={`p-4 rounded-lg text-sm font-medium ${status === "success"
-                  ? "bg-neon-green/10 text-neon-green border border-neon-green/20"
-                  : "bg-error/10 text-error border border-error/20"
+                ? "bg-accent/10 text-accent border border-accent/20"
+                : "bg-error/10 text-error border border-error/20"
                 }`}
             >
               {message}

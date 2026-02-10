@@ -5,6 +5,7 @@ import { Hero } from "./components/Hero";
 import { VaultTiers, type VaultTierData } from "./components/VaultTiers";
 import { VaultOverlay } from "./components/VaultOverlay";
 import { IncentiveBanner } from "./components/IncentiveBanner";
+import { GuaranteedWins } from "./components/GuaranteedWins";
 import { WaitlistForm } from "./components/WaitlistForm";
 import { Footer } from "./components/Footer";
 
@@ -60,6 +61,7 @@ function App() {
         <Hero />
         {/* VaultExperience removed - merged into interactive flow */}
         <VaultTiers onSelect={setSelectedVault} />
+        <GuaranteedWins />
         <IncentiveBanner />
         <WaitlistForm />
       </main>

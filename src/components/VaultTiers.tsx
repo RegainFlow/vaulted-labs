@@ -63,10 +63,10 @@ export function VaultTiers({ onSelect }: VaultTiersProps) {
           className="text-center mb-16"
         >
           <h2 className="text-3xl md:text-5xl font-black mb-6 uppercase tracking-tight">
-            Secure Storage <span className="text-accent">Protocol</span>
+            Loot <span className="text-accent">Tier System</span>
           </h2>
           <p className="text-text-muted max-w-2xl mx-auto">
-            Select your clearance level. Higher tiers unlock better probabilities for legendary artifacts.
+            Choose your vault level. Higher tiers unlock better probabilities for legendary drops.
           </p>
         </motion.div>
 
@@ -92,7 +92,7 @@ function VaultCard({ tier, index, onSelect }: { tier: VaultTierData; index: numb
       className="group relative cursor-pointer"
     >
       {/* Main Vault Door Setup */}
-      <div className="relative bg-surface rounded-xl overflow-hidden shadow-2xl border border-white/5 h-full flex flex-col">
+      <div className="relative bg-surface rounded-xl overflow-hidden shadow-2xl border border-white/5 h-full flex flex-col transition-all duration-300 group-hover:border-opacity-50" style={{ borderColor: tier.color }}>
 
         {/* Metallic Header */}
         <div className={`h-36 bg-linear-to-br ${tier.gradient} relative flex items-center justify-center border-b-4 border-black/20`}>
@@ -121,20 +121,54 @@ function VaultCard({ tier, index, onSelect }: { tier: VaultTierData; index: numb
             </div>
           </div>
 
-          <div className="space-y-3 py-4 border-t border-dashed border-white/10">
-            {(Object.entries(tier.odds) as [string, number][]).map(([rarity, chance]) => (
-              <div key={rarity} className="flex items-center justify-between text-xs">
-                <span className="capitalize text-text-muted">{rarity}</span>
-                <span className="font-mono" style={{ color: getRarityColor(rarity) }}>
-                  {chance}%
-                </span>
-              </div>
-            ))}
+          {/* Stats with Probability Bars */}
+          <div className="space-y-4 py-4 border-t border-dashed border-white/10">
+            {(Object.entries(tier.odds) as [string, number][]).map(([rarity, chance]) => {
+              const rarityColor = getRarityColor(rarity);
+              // Safe lookup for CSS variable or strictly hex/string
+              // Since getRarityColor returns var(...), we can use it directly in style
+              return (
+                <div key={rarity} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="capitalize text-text-muted font-bold">{rarity}</span>
+                    <span className="font-mono text-white opacity-80">{chance}%</span>
+                  </div>
+                  {/* Progress Bar Container */}
+                  <div className="h-2 w-full bg-black/40 rounded-full overflow-hidden">
+                    {/* Fill */}
+                    <motion.div
+                      initial={{ width: 0 }}
+                      whileInView={{ width: `${chance}%` }}
+                      transition={{ duration: 1, delay: 0.2 }}
+                      className="h-full rounded-full"
+                      style={{ backgroundColor: rarityColor }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           <div className="mt-auto pt-6">
-            <button className="w-full py-4 rounded-lg bg-bg border border-white/10 font-bold uppercase tracking-widest text-xs hover:bg-accent hover:border-accent transition-all duration-300 group-hover:shadow-[0_0_20px_rgba(255,45,149,0.3)]">
-              Unlock Vault
+            <button
+              className="w-full py-4 rounded-lg bg-bg border-2 font-black uppercase tracking-widest text-xs transition-all duration-300 group-hover:scale-105"
+              style={{
+                borderColor: tier.color,
+                color: tier.color,
+                boxShadow: `0 0 0 rgba(0,0,0,0)` // start empty
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = tier.color;
+                e.currentTarget.style.color = '#000';
+                e.currentTarget.style.boxShadow = `0 0 20px ${tier.color}40`;
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = tier.color;
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              CRACK OPEN
             </button>
           </div>
         </div>
@@ -144,7 +178,7 @@ function VaultCard({ tier, index, onSelect }: { tier: VaultTierData; index: numb
       </div>
 
       {/* Selection Glow */}
-      <div className={`absolute inset-0 -z-10 rounded-2xl blur-2xl opacity-0 group-hover:opacity-40 transition-opacity duration-500`} style={{ backgroundColor: tier.color }} />
+      <div className={`absolute inset-0 -z-10 rounded-2xl blur-3xl opacity-0 group-hover:opacity-30 transition-opacity duration-500`} style={{ backgroundColor: tier.color }} />
     </motion.div>
   )
 }
