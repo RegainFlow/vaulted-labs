@@ -139,7 +139,7 @@ export function Hero({ onAccessKeyInsert }: HeroProps) {
           transition={{ duration: 1 }}
           className="relative inline-block"
         >
-          <h1 className="text-6xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/50 tracking-tighter filter drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+          <h1 className="text-4xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/50 tracking-tighter filter drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]">
             UNBOX THE <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent via-purple-500 to-accent animate-gradient bg-300% text-glow">EXTRAORDINARY</span>
           </h1>

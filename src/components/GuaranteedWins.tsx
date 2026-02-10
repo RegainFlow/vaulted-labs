@@ -14,8 +14,8 @@ export function GuaranteedWins() {
                     viewport={{ once: true }}
                     className="flex flex-col items-center text-center mb-16 relative"
                 >
-                    {/* Guaranteed Payout Circle from Antigravity */}
-                    <div className="relative w-48 h-48 md:w-64 md:h-64 mb-10">
+                    {/* Guaranteed Payout Circle */}
+                    <div className="relative w-40 h-40 md:w-64 md:h-64 mb-10">
                         {/* Rotating Rings */}
                         <motion.div
                             animate={{ rotate: 360 }}
@@ -30,9 +30,15 @@ export function GuaranteedWins() {
 
                         {/* Central Badge */}
                         <div className="absolute inset-8 bg-surface-elevated rounded-full border-4 border-accent shadow-[0_0_50px_rgba(255,45,149,0.4)] flex flex-col items-center justify-center text-center p-4">
-                             {/* Gem Icon */}
-                             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-white mb-1">
-                                <path d="M6 3h12l4 6-10 13L2 9z" />
+                             {/* Gem Icon from image */}
+                             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" className="mb-1">
+                                <path d="M6 3h12l4 6-10 13L2 9z" fill="url(#gem-gradient)" />
+                                <defs>
+                                    <linearGradient id="gem-gradient" x1="2" y1="3" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                                        <stop stopColor="#00f0ff" />
+                                        <stop offset="1" stopColor="#a855f7" />
+                                    </linearGradient>
+                                </defs>
                             </svg>
                             <h3 className="text-sm md:text-lg font-black text-white leading-tight uppercase tracking-tighter italic"> 
                                 Guaranteed <br/> <span className="text-accent">Payout</span>
@@ -43,7 +49,7 @@ export function GuaranteedWins() {
                         </div>
                     </div>
 
-                    {/* Popover Animation from Claude-Code */}
+                    {/* Popover Animation */}
                     <motion.div
                         animate={{ y: [0, -10, 0] }}
                         transition={{ duration: 3, repeat: Infinity }}
@@ -66,8 +72,14 @@ export function GuaranteedWins() {
                         title="100% Win Rate"
                         desc="Every vault contains an item. No dead drops. Win rate is mathematically 100%."
                         icon={
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                                <path d="M6 3h12l4 6-10 13L2 9z" fill="url(#feature-gem)" />
+                                <defs>
+                                    <linearGradient id="feature-gem" x1="2" y1="3" x2="22" y2="22">
+                                        <stop stopColor="#00f0ff" />
+                                        <stop offset="1" stopColor="#00bfff" />
+                                    </linearGradient>
+                                </defs>
                             </svg>
                         }
                     />
@@ -75,8 +87,14 @@ export function GuaranteedWins() {
                         title="Instant Liquidity"
                         desc="Don't want the item? Sell it back to the house instantly for platform credits."
                         icon={
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="url(#feature-bolt)" />
+                                <defs>
+                                    <linearGradient id="feature-bolt" x1="3" y1="2" x2="21" y2="22">
+                                        <stop stopColor="#ff8a00" />
+                                        <stop offset="1" stopColor="#ff2d95" />
+                                    </linearGradient>
+                                </defs>
                             </svg>
                         }
                     />
@@ -84,9 +102,15 @@ export function GuaranteedWins() {
                         title="Provably Fair"
                         desc="All odds are verified on-chain. What you see is exactly what you get."
                         icon={
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" fill="url(#feature-lock)" />
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="url(#feature-lock)" strokeWidth="2" />
+                                <defs>
+                                    <linearGradient id="feature-lock" x1="3" y1="7" x2="21" y2="22">
+                                        <stop stopColor="#ffc700" />
+                                        <stop offset="1" stopColor="#ff8a00" />
+                                    </linearGradient>
+                                </defs>
                             </svg>
                         }
                     />
@@ -102,7 +126,7 @@ function FeatureCard({ title, desc, icon }: { title: string; desc: string; icon:
             whileHover={{ y: -5 }}
             className="p-8 rounded-2xl bg-bg border border-white/5 hover:border-accent/40 transition-colors group"
         >
-            <div className="text-4xl mb-6 bg-surface-elevated w-16 h-16 rounded-full flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform text-white">
+            <div className="text-4xl mb-6 bg-surface-elevated w-20 h-20 rounded-full flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform">
                 {icon}
             </div>
             <h3 className="text-xl font-bold text-white mb-3 uppercase tracking-wide">{title}</h3>

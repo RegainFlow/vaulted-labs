@@ -40,18 +40,8 @@ export function Navbar({ balance = 0, inventoryCount = 0, onJoinWaitlist }: Navb
 
       {/* Desktop HUD Bar */}
       <div className="hidden md:block relative">
-        {/* Animated border glow */}
-        <motion.div
-          className="absolute -inset-[1px] rounded-xl opacity-60"
-          style={{
-            background: "conic-gradient(from 0deg, transparent 60%, #ff2d95 75%, #00f0ff 85%, transparent 100%)"
-          }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 4, ease: "linear", repeat: Infinity }}
-        />
-
         {/* Inner frosted container */}
-        <div className="relative flex items-center bg-surface/80 backdrop-blur-xl rounded-xl border border-white/5">
+        <div className="relative flex items-center bg-surface/80 backdrop-blur-xl rounded-xl border border-white/10">
 
           {/* Credits slot */}
           <div className="flex items-center gap-2.5 px-4 py-2.5 border-r border-white/10">
@@ -82,7 +72,7 @@ export function Navbar({ balance = 0, inventoryCount = 0, onJoinWaitlist }: Navb
             </div>
           </div>
 
-          {/* Join Waitlist ΓÇö integrated HUD segment */}
+          {/* Join Waitlist – integrated HUD segment */}
           <button
             onClick={scrollToWaitlist}
             className="flex items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-accent hover:bg-accent/10 transition-all rounded-r-xl cursor-pointer"

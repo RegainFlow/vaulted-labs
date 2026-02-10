@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import type { Vault } from "../data/vaults";
+import { VaultIcon } from "./VaultIcons";
 
 type Stage = "paying" | "picking" | "revealing" | "result";
 
@@ -13,18 +14,23 @@ interface VaultOverlayProps {
 
 export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayProps) {
     const [stage, setStage] = useState<Stage>("paying");
+    const [boxState, setBoxState] = useState<"closed" | "opening" | "open">("closed");
 
     // Auto-advance payment
     useEffect(() => {
         if (stage === "paying") {
-            const timer = setTimeout(() => setStage("picking"), 2000); // Slightly longer for wheel animation
+            const timer = setTimeout(() => setStage("picking"), 2000); 
             return () => clearTimeout(timer);
         }
     }, [stage]);
 
     const pickBox = (_index: number) => {
         setStage("revealing");
-        setTimeout(() => setStage("result"), 2500); // Reveal delay
+        
+        // Revealing Sequence
+        setTimeout(() => setBoxState("opening"), 1200);
+        setTimeout(() => setBoxState("open"), 1500);
+        setTimeout(() => setStage("result"), 2500); 
     };
 
     const scrollToWaitlist = () => {
@@ -43,20 +49,15 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
     }
 
     return (
-        <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-bg/95 backdrop-blur-xl p-4 overflow-y-auto"
-        >
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-bg/95 backdrop-blur-xl">
             <button
                 onClick={onClose}
-                className="absolute top-6 right-6 text-text-muted hover:text-white transition-colors cursor-pointer z-50 p-2"
+                className="fixed top-6 right-6 text-text-muted hover:text-white transition-colors cursor-pointer z-[60] p-2"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
 
-            <div className="w-full max-w-4xl text-center py-12 relative">
+            <div className="min-h-full flex items-center justify-center p-4 py-12">
                 <AnimatePresence mode="wait">
 
                     {/* STAGE 1: PAYING / UNLOCKING */}
@@ -66,7 +67,7 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                             initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 1.1, opacity: 0 }}
-                            className="flex flex-col items-center gap-8 py-20"
+                            className="flex flex-col items-center gap-8"
                         >
                             <div className="relative w-48 h-48">
                                 {/* Vault Wheel Animation */}
@@ -74,6 +75,7 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                                     animate={{ rotate: [0, 90, -45, 180, 360] }}
                                     transition={{ duration: 2, ease: "easeInOut" }}
                                     className="w-full h-full rounded-full border-8 border-white/10 flex items-center justify-center bg-surface-elevated shadow-2xl relative"
+                                    style={{ borderColor: `${tier.color}20` }}
                                 >
                                     {/* Wheel Spokes */}
                                     <div className="absolute inset-2 border-4 border-dashed border-white/20 rounded-full" />
@@ -83,7 +85,7 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                                 </motion.div>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="space-y-2 text-center">
                                 <h2 className="text-3xl font-black text-white uppercase tracking-widest">
                                     Authenticating
                                 </h2>
@@ -99,36 +101,34 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                             initial={{ y: 20, opacity: 0 }}
                             animate={{ y: 0, opacity: 1 }}
                             exit={{ y: -20, opacity: 0 }}
-                            className="space-y-12"
+                            className="space-y-12 w-full max-w-lg"
                         >
-                            <div className="space-y-4">
-                                <h2 className="text-4xl md:text-5xl font-black text-white uppercase">Initialize Retrieval</h2>
-                                <p className="text-text-muted max-w-lg mx-auto">
+                            <div className="space-y-4 text-center">
+                                <h2 className="text-3xl md:text-5xl font-black text-white uppercase tracking-tight">Initialize Retrieval</h2>
+                                <p className="text-text-muted max-w-lg mx-auto text-sm md:text-base">
                                     Scanning sector 7. Select a containment unit to unseal.
                                 </p>
                             </div>
 
-                            <div className="grid grid-cols-3 gap-6 max-w-lg mx-auto perspective-[1000px]">
+                            <div className="grid grid-cols-3 gap-3 md:gap-6 perspective-[1000px]">
                                 {Array.from({ length: 9 }).map((_, i) => (
                                     <motion.button
                                         key={i}
-                                        whileHover={{ scale: 1.05, translateZ: 20 }}
+                                        whileHover={{ scale: 1.05, translateZ: 20, borderColor: tier.color, boxShadow: `0 0 20px ${tier.color}30` }}
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => pickBox(i)}
-                                        className="aspect-square relative rounded-lg bg-surface-elevated border border-white/10 flex items-center justify-center shadow-lg group overflow-hidden cursor-pointer"
+                                        className="aspect-square relative rounded-xl bg-surface-elevated border border-white/10 flex items-center justify-center shadow-lg group overflow-hidden cursor-pointer transition-all duration-300"
                                     >
                                         <div className="absolute inset-0 bg-linear-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                        {/* Scanning line effect */}
-                                        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/20 to-transparent translate-y-[-100%] group-hover:translate-y-[100%] transition-transform duration-1000" />
-
+                                        
                                         {/* Box Icon */}
-                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-white filter drop-shadow-md">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-white filter drop-shadow-md group-hover:text-white transition-colors md:w-8 md:h-8">
                                             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                                             <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
                                             <line x1="12" y1="22.08" x2="12" y2="12" />
                                         </svg>
 
-                                        <div className="absolute bottom-1 right-1 text-[8px] font-mono text-white/30">
+                                        <div className="absolute bottom-1 right-1 text-[6px] md:text-[8px] font-mono text-white/30 group-hover:text-white/60">
                                             UNIT-0{i + 1}
                                         </div>
                                     </motion.button>
@@ -144,25 +144,61 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="flex flex-col items-center justify-center py-20"
+                            className="flex flex-col items-center justify-center"
                         >
-                            <motion.div
-                                animate={{
-                                    rotate: [0, -10, 10, -10, 10, 0],
-                                    scale: [1, 1.2, 1]
-                                }}
-                                transition={{ duration: 2, times: [0, 0.2, 0.4, 0.6, 0.8, 1], repeat: Infinity }}
-                                className="mb-12 filter drop-shadow-[0_0_50px_rgba(255,255,255,0.3)]"
-                            >
-                                {/* Box Icon Large */}
-                                <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white">
-                                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
-                                    <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
-                                    <line x1="12" y1="22.08" x2="12" y2="12" />
-                                </svg>
-                            </motion.div>
-                            <div className="text-2xl text-accent font-bold tracking-[0.5em] uppercase animate-pulse">
-                                Decompressing
+                            <div className="relative mb-12">
+                                <AnimatePresence mode="wait">
+                                    {boxState === "closed" && (
+                                        <motion.div
+                                            key="closed"
+                                            animate={{
+                                                rotate: [0, -5, 5, -5, 5, 0],
+                                                scale: [1, 1.05, 1]
+                                            }}
+                                            transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 0.1 }}
+                                            className="filter drop-shadow-[0_0_50px_rgba(255,255,255,0.2)]"
+                                        >
+                                            {/* Box Closed */}
+                                            <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white md:w-32 md:h-32">
+                                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+                                                <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+                                                <line x1="12" y1="22.08" x2="12" y2="12" />
+                                            </svg>
+                                        </motion.div>
+                                    )}
+                                    
+                                    {(boxState === "opening" || boxState === "open") && (
+                                        <motion.div
+                                            key="open"
+                                            initial={{ scale: 0.8, opacity: 0, y: 20 }}
+                                            animate={{ scale: 1.2, opacity: 1, y: 0 }}
+                                            transition={{ type: "spring", damping: 12 }}
+                                            className="filter drop-shadow-[0_0_80px_rgba(255,255,255,0.6)]"
+                                        >
+                                             {/* Box Open - Reveal the Tier Icon inside */}
+                                             <div className="relative w-32 h-32 flex items-center justify-center">
+                                                <motion.div
+                                                    initial={{ scale: 0, opacity: 0 }}
+                                                    animate={{ scale: 1, opacity: 1 }}
+                                                    transition={{ delay: 0.2, type: "spring" }}
+                                                >
+                                                    <VaultIcon name={tier.name} color={tier.color} />
+                                                </motion.div>
+                                                
+                                                {/* Light Rays */}
+                                                <div className="absolute inset-0 animate-spin-slow">
+                                                    <svg width="100%" height="100%" viewBox="0 0 100 100">
+                                                        <circle cx="50" cy="50" r="45" stroke={tier.color} strokeWidth="1" strokeDasharray="4 8" opacity="0.5" />
+                                                    </svg>
+                                                </div>
+                                             </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
+                            <div className="text-xl md:text-3xl font-black tracking-[0.3em] uppercase animate-pulse text-center break-words max-w-xs" style={{ color: tier.color }}>
+                                {boxState === "closed" ? "Decompressing..." : "Sequence Complete"}
                             </div>
                         </motion.div>
                     )}
@@ -171,37 +207,38 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                     {stage === "result" && (
                         <motion.div
                             key="result"
-                            initial={{ scale: 0.5, opacity: 0 }}
+                            initial={{ scale: 0.9, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            transition={{ type: "spring", damping: 12 }}
-                            className="space-y-12 relative"
+                            transition={{ type: "spring", damping: 20 }}
+                            className="space-y-8 relative w-full max-w-4xl flex flex-col items-center"
                         >
                             {/* Confetti Explosion */}
-                            <ConfettiParticles />
+                            <ConfettiParticles color={tier.color} />
 
-                            <div className="relative inline-block group z-10">
-                                <div className="absolute inset-0 bg-neon-green/40 blur-3xl animate-pulse group-hover:bg-neon-green/60 transition-colors" />
-                                <div className="relative flex items-center justify-center bg-surface-elevated rounded-2xl border-4 border-neon-green shadow-[0_0_60px_rgba(57,255,20,0.4)] w-64 h-64 md:w-80 md:h-80">
-                                    {/* Gem Icon Large */}
-                                    <svg width="96" height="96" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-white">
-                                        <path d="M6 3h12l4 6-10 13L2 9z" />
-                                    </svg>
-                                    <div className="absolute bottom-4 left-0 w-full text-center">
-                                        <span className="inline-block px-3 py-1 bg-neon-green/20 border border-neon-green/50 rounded text-xs font-bold text-neon-green uppercase tracking-wider">
+                            <div className="relative inline-block group z-10 mt-8">
+                                <div className="absolute inset-0 blur-[100px] animate-pulse transition-colors opacity-40" style={{ backgroundColor: tier.color }} />
+                                <div className="relative flex items-center justify-center bg-surface-elevated rounded-3xl border-2 shadow-[0_0_60px_rgba(0,0,0,0.5)] w-64 h-64 md:w-80 md:h-80 mx-auto" style={{ borderColor: tier.color }}>
+                                    {/* Tier Icon Large */}
+                                    <div className="transform scale-150 filter drop-shadow-2xl">
+                                        <VaultIcon name={tier.name} color={tier.color} />
+                                    </div>
+                                    
+                                    <div className="absolute bottom-6 left-0 w-full text-center">
+                                        <span className="inline-block px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest border" style={{ backgroundColor: `${tier.color}10`, borderColor: `${tier.color}40`, color: tier.color }}>
                                             Mint Condition
                                         </span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="space-y-2 z-10 relative">
-                                <h3 className="text-4xl md:text-5xl font-black text-white">
-                                    <span className="text-neon-green text-glow-green">Legendary</span> Pull!
+                            <div className="space-y-2 z-10 relative text-center">
+                                <h3 className="text-3xl md:text-6xl font-black text-white uppercase tracking-tighter">
+                                    Legendary Pull!
                                 </h3>
-                                <p className="text-xl text-text-muted">Estimated Market Value: <span className="text-white font-bold">${tier.price * 10}.00</span></p>
+                                <p className="text-lg md:text-xl text-text-muted">Estimated Market Value: <span className="font-black" style={{ color: tier.color }}>${tier.price * 10}.00</span></p>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-4xl mx-auto px-4 z-10 relative">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full px-4 z-10 relative">
                                 <OptionCard
                                     title="Store to Vault"
                                     desc="Keep it secure in your digital portfolio."
@@ -227,6 +264,7 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                                     action="Get It Shipped"
                                     onClick={scrollToWaitlist}
                                     highlight
+                                    tierColor={tier.color}
                                 />
                                 <OptionCard
                                     title="Claim Credits"
@@ -246,57 +284,57 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
 
                 </AnimatePresence>
             </div>
-        </motion.div>
+        </div>
     );
 }
 
-function OptionCard({ title, desc, icon, action, onClick, highlight = false }: any) {
+function OptionCard({ title, desc, icon, action, onClick, highlight = false, tierColor }: any) {
     return (
         <button
             onClick={onClick}
-            className={`p-6 rounded-xl border text-left transition-all hover:-translate-y-1 hover:shadow-lg cursor-pointer flex flex-col h-full bg-surface ${highlight
-                ? "border-accent/50 shadow-[0_0_20px_rgba(255,45,149,0.1)] hover:border-accent"
-                : "border-white/10 hover:border-white/30"
+            className={`p-5 md:p-6 rounded-2xl border text-left transition-all duration-300 hover:-translate-y-1 hover:shadow-xl cursor-pointer flex flex-col h-full bg-surface-elevated/50 backdrop-blur-sm group ${highlight
+                ? ""
+                : "border-white/5 hover:border-white/20"
                 }`}
+            style={highlight ? { borderColor: tierColor, boxShadow: `0 0 20px ${tierColor}10` } : {}}
         >
-            <div className="text-3xl mb-4 text-white">{icon}</div>
-            <h4 className="text-xl font-bold text-white mb-2">{title}</h4>
-            <p className="text-text-muted text-sm mb-6 flex-1">{desc}</p>
-            <div className="mt-auto pt-4 border-t border-white/5 w-full">
-                <span className={`text-sm font-bold uppercase tracking-wider ${highlight ? "text-accent" : "text-white"}`}>
-                    {action} &rarr;
+            <div className="text-2xl md:text-3xl mb-3 md:mb-4 text-white group-hover:scale-110 transition-transform origin-left">{icon}</div>
+            <h4 className="text-base md:text-lg font-black text-white mb-1 md:mb-2 uppercase tracking-wide">{title}</h4>
+            <p className="text-text-muted text-xs leading-relaxed mb-4 flex-1">{desc}</p>
+            <div className="mt-auto pt-3 md:pt-4 border-t border-white/5 w-full">
+                <span className={`text-[10px] md:text-xs font-black uppercase tracking-[0.2em] flex items-center gap-2`} style={highlight ? { color: tierColor } : { color: 'white' }}>
+                    {action} <span>&rarr;</span>
                 </span>
             </div>
         </button>
     )
 }
 
-function ConfettiParticles() {
+function ConfettiParticles({ color }: { color: string }) {
     // Generate random particles
-    const particles = Array.from({ length: 30 }).map((_, i) => ({
+    const particles = Array.from({ length: 40 }).map((_, i) => ({
         id: i,
-        x: Math.random() * 200 - 100, // Spread X
-        y: Math.random() * 200 - 150, // Spread Y (upward bias)
-        color: Math.random() > 0.5 ? "var(--color-neon-green)" : "var(--color-accent)",
-        scale: Math.random() * 0.5 + 0.5,
+        x: Math.random() * 400 - 200, 
+        y: Math.random() * 400 - 200, 
+        color: Math.random() > 0.5 ? color : "#ffffff",
+        scale: Math.random() * 0.8 + 0.2,
     }));
 
     return (
-        <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible">
+        <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible z-0">
             {particles.map((p) => (
                 <motion.div
                     key={p.id}
                     initial={{ opacity: 1, x: 0, y: 0, scale: 0 }}
                     animate={{
                         opacity: 0,
-                        z: 100,
-                        x: p.x * 3,
-                        y: p.y * 3,
-                        rotate: Math.random() * 360,
+                        x: p.x,
+                        y: p.y,
+                        rotate: Math.random() * 720,
                         scale: p.scale
                     }}
-                    transition={{ duration: 1.5, ease: "easeOut" }}
-                    className="absolute w-3 h-3 rounded-full"
+                    transition={{ duration: 2, ease: "easeOut" }}
+                    className="absolute w-2 h-2 rounded-sm"
                     style={{ backgroundColor: p.color }}
                 />
             ))}
