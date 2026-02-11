@@ -14,53 +14,53 @@ $100 in platform credit is NOT $100 in cash cost. In the per-demand model (Model
 
 ### Numbers (from `constants.py`)
 
-| Input | Value |
-|-------|-------|
-| Blended vault price | $35.36 (weighted by 60/20/12/8% mix) |
-| Blended COGS per vault | $17.88 (~50.6% of price) |
-| Hold rate | 65% (NO COGS) |
-| Ship rate | 15% (COGS event) |
-| Cashout rate | 20% (re-issues credit) |
-| Breakage rate | 4% (credit expires unused) |
-| Shipping cost | $8.00/item (platform pays) |
+| Input                  | Value                                |
+| ---------------------- | ------------------------------------ |
+| Blended vault price    | $35.36 (weighted by 60/20/12/8% mix) |
+| Blended COGS per vault | $17.88 (~50.6% of price)             |
+| Hold rate              | 65% (NO COGS)                        |
+| Ship rate              | 15% (COGS event)                     |
+| Cashout rate           | 20% (re-issues credit)               |
+| Breakage rate          | 4% (credit expires unused)           |
+| Shipping cost          | $8.00/item (platform pays)           |
 
 ### Credit Flow Per $100 Given
 
 $100 credit buys ~2.83 vaults at the blended price:
 
-| Behavior | Vaults | Credit Consumed | COGS | Shipping |
-|----------|--------|-----------------|------|----------|
-| **HOLD (65%)** | 1.84 | $65.00 | $0 | $0 |
-| **SHIP (15%)** | 0.42 | $15.00 | $7.56 | $3.40 |
-| **CASHOUT (20%)** | 0.57 | $20.00 → re-issued as ~$20 new credit | $0 | $0 |
+| Behavior          | Vaults | Credit Consumed                       | COGS  | Shipping |
+| ----------------- | ------ | ------------------------------------- | ----- | -------- |
+| **HOLD (65%)**    | 1.84   | $65.00                                | $0    | $0       |
+| **SHIP (15%)**    | 0.42   | $15.00                                | $7.56 | $3.40    |
+| **CASHOUT (20%)** | 0.57   | $20.00 → re-issued as ~$20 new credit | $0    | $0       |
 
 The ~$20 re-issued credit recirculates (decaying geometrically each round via breakage + shipping):
 
-| Round | Credit Spent | COGS | Shipping |
-|-------|-------------|------|----------|
-| 1 | $10,000 | $756 | $340 |
-| 2 | $1,920 | $145 | $65 |
-| 3 | $369 | $28 | $13 |
-| 4+ | ~$71 | ~$8 | ~$4 |
-| **Total** | — | **~$937** | **~$422** |
+| Round     | Credit Spent | COGS      | Shipping  |
+| --------- | ------------ | --------- | --------- |
+| 1         | $10,000      | $756      | $340      |
+| 2         | $1,920       | $145      | $65       |
+| 3         | $369         | $28       | $13       |
+| 4+        | ~$71         | ~$8       | ~$4       |
+| **Total** | —            | **~$937** | **~$422** |
 
 ### Bottom Line: 100 Users
 
-| Metric | Amount |
-|--------|--------|
-| Gross credit issued | $10,000 |
-| **Real cash cost (COGS + shipping)** | **~$1,259** |
-| Breakage recovery (credit that expires) | ~$100 |
-| **Net real cash outflow** | **~$1,159** |
+| Metric                                  | Amount      |
+| --------------------------------------- | ----------- |
+| Gross credit issued                     | $10,000     |
+| **Real cash cost (COGS + shipping)**    | **~$1,259** |
+| Breakage recovery (credit that expires) | ~$100       |
+| **Net real cash outflow**               | **~$1,159** |
 
 ### vs Normal Customer Acquisition
 
-| | Credit Incentive | Standard CAC |
-|---|---|---|
-| Cost for 100 users | **~$1,259** | **$2,250** ($22.50 x 100) |
-| Cost per user | $12.59 | $22.50 |
-| Savings | **44% cheaper** | — |
-| % of $40K budget | **3.1%** | 5.6% |
+|                    | Credit Incentive | Standard CAC              |
+| ------------------ | ---------------- | ------------------------- |
+| Cost for 100 users | **~$1,259**      | **$2,250** ($22.50 x 100) |
+| Cost per user      | $12.59           | $22.50                    |
+| Savings            | **44% cheaper**  | —                         |
+| % of $40K budget   | **3.1%**         | 5.6%                      |
 
 ### Conversion Upside
 
@@ -77,12 +77,12 @@ If even 20% of credit users convert to paying customers:
 
 ### Stack
 
-| Tool | Purpose |
-|------|---------|
-| **Vite** | Build tool (fast dev, optimized production builds) |
-| **React 18** | UI framework |
-| **TypeScript** | Type safety |
-| **Tailwind CSS** | Utility-first styling |
+| Tool             | Purpose                                            |
+| ---------------- | -------------------------------------------------- |
+| **Vite**         | Build tool (fast dev, optimized production builds) |
+| **React 18**     | UI framework                                       |
+| **TypeScript**   | Type safety                                        |
+| **Tailwind CSS** | Utility-first styling                              |
 
 ### Location
 
@@ -169,7 +169,7 @@ const VAULTS = [
 
 ```
 VITE_SUPABASE_URL=https://your-project.supabase.co
-VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_SUPABASE_DEFAULT_API_KEY=your-anon-key
 ```
 
 Create `.env.example` in `landing/` with placeholder values.
@@ -206,11 +206,11 @@ Create `.env.example` in `landing/` with placeholder values.
 
 ## Cost Summary
 
-| Item | Cost | Notes |
-|------|------|-------|
-| $100 credit incentive (real cash) | ~$1,259 | 3.1% of $40K budget |
-| Landing page development | $0 (time only) | Open source tooling |
-| Hosting (Vercel free tier) | $0 | Free for hobby projects |
-| Supabase (email capture) | $0 | Free tier sufficient |
-| Domain name (optional) | ~$12/year | e.g., vaultedlabs.com |
-| **Total hard cost** | **~$1,271** | **3.2% of $40K budget** |
+| Item                              | Cost           | Notes                   |
+| --------------------------------- | -------------- | ----------------------- |
+| $100 credit incentive (real cash) | ~$1,259        | 3.1% of $40K budget     |
+| Landing page development          | $0 (time only) | Open source tooling     |
+| Hosting (Vercel free tier)        | $0             | Free for hobby projects |
+| Supabase (email capture)          | $0             | Free tier sufficient    |
+| Domain name (optional)            | ~$12/year      | e.g., vaultedlabs.com   |
+| **Total hard cost**               | **~$1,271**    | **3.2% of $40K budget** |

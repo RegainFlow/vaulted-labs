@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { track } from "@vercel/analytics";
 import type { Vault } from "../data/vaults";
 import { VaultIcon } from "./VaultIcons";
 
@@ -15,6 +16,11 @@ interface VaultOverlayProps {
 export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayProps) {
     const [stage, setStage] = useState<Stage>("paying");
     const [boxState, setBoxState] = useState<"closed" | "opening" | "open">("closed");
+
+    // Track vault open event
+    useEffect(() => {
+        track("vault_opened", { tier: tier.name });
+    }, [tier.name]);
 
     // Auto-advance payment
     useEffect(() => {
@@ -288,7 +294,17 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
     );
 }
 
-function OptionCard({ title, desc, icon, action, onClick, highlight = false, tierColor }: any) {
+interface OptionCardProps {
+    title: string;
+    desc: string;
+    icon: React.ReactNode;
+    action: string;
+    onClick: () => void;
+    highlight?: boolean;
+    tierColor?: string;
+}
+
+function OptionCard({ title, desc, icon, action, onClick, highlight = false, tierColor }: OptionCardProps) {
     return (
         <button
             onClick={onClick}

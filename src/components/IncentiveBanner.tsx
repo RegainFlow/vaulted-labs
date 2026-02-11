@@ -1,4 +1,4 @@
-﻿import { motion } from "motion/react";
+import { motion } from "motion/react";
 import { useWaitlistCount } from "../hooks/useWaitlistCount";
 
 export function IncentiveBanner() {

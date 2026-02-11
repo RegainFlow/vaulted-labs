@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AnimatePresence } from "motion/react";
+import { Analytics } from "@vercel/analytics/react";
 import { Navbar } from "./components/Navbar";
 import { Hero } from "./components/Hero";
 import { ProductMockupSection } from "./components/ProductMockupSection";
@@ -7,6 +8,7 @@ import { VaultTiers } from "./components/VaultTiers";
 import { VaultOverlay } from "./components/VaultOverlay";
 import { IncentiveBanner } from "./components/IncentiveBanner";
 import { GuaranteedWins } from "./components/GuaranteedWins";
+import { YourChoice } from "./components/YourChoice";
 import { WaitlistForm } from "./components/WaitlistForm";
 import { Footer } from "./components/Footer";
 import type { Vault } from "./data/vaults";
@@ -66,6 +68,7 @@ function App() {
 
   return (
     <div className="min-h-screen bg-bg text-text selection:bg-accent/30 font-sans">
+      <Analytics />
       <Navbar balance={balance} inventoryCount={inventoryCount} />
       <main>
         <Hero onAccessKeyInsert={handleUnlock} />
@@ -76,6 +79,7 @@ function App() {
           onLockedAttempt={() => document.getElementById("hero-access")?.scrollIntoView({ behavior: "smooth" })}
         />
         <GuaranteedWins />
+        <YourChoice />
         <IncentiveBanner />
         <WaitlistForm />
       </main>

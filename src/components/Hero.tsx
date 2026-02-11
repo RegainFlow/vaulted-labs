@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { track } from "@vercel/analytics";
 
 interface HeroProps {
   onAccessKeyInsert: () => void;
@@ -6,6 +7,7 @@ interface HeroProps {
 
 export function Hero({ onAccessKeyInsert }: HeroProps) {
   const handleKeyInsert = () => {
+    track("access_key_insert");
     document.getElementById("protocol")?.scrollIntoView({ behavior: "smooth" });
     setTimeout(() => {
       onAccessKeyInsert();
@@ -141,7 +143,7 @@ export function Hero({ onAccessKeyInsert }: HeroProps) {
         >
           <h1 className="text-4xl md:text-9xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/50 tracking-tighter filter drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]">
             UNBOX THE <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent via-purple-500 to-accent animate-gradient bg-300% text-glow">EXTRAORDINARY</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-accent via-purple-500 to-accent animate-gradient bg-300% text-glow-magenta">EXTRAORDINARY</span>
           </h1>
         </motion.div>
 

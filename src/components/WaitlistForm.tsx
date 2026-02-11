@@ -1,11 +1,18 @@
-﻿import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { track } from "@vercel/analytics";
 import { supabase } from "../lib/supabase";
+import { isDisposableEmail } from "../lib/disposable-emails";
+
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const MIN_SUBMIT_MS = 3000;
 
 export function WaitlistForm() {
   const [email, setEmail] = useState("");
+  const [honeypot, setHoneypot] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
+  const mountedAt = useRef(Date.now());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -14,22 +21,57 @@ export function WaitlistForm() {
     setStatus("loading");
     setMessage("");
 
+    // --- Anti-bot: honeypot ---
+    if (honeypot) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setStatus("success");
+      setMessage("ACCESS GRANTED. YOU'RE ON THE SECURE LIST.");
+      setEmail("");
+      return;
+    }
+
+    // --- Anti-bot: timing ---
+    if (Date.now() - mountedAt.current < MIN_SUBMIT_MS) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      setStatus("success");
+      setMessage("ACCESS GRANTED. YOU'RE ON THE SECURE LIST.");
+      setEmail("");
+      return;
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // --- Client-side email format validation ---
+    if (!EMAIL_RE.test(cleanEmail)) {
+      setStatus("error");
+      setMessage("INVALID EMAIL FORMAT. CHECK YOUR CREDENTIALS.");
+      return;
+    }
+
+    // --- Disposable email check ---
+    if (isDisposableEmail(cleanEmail)) {
+      setStatus("error");
+      setMessage("DISPOSABLE EMAILS NOT ACCEPTED. USE A PERMANENT ADDRESS.");
+      return;
+    }
+
     try {
       if (!supabase) {
-        // Mock success
+        // Mock success when Supabase isn't configured
         await new Promise(resolve => setTimeout(resolve, 1000));
         setStatus("success");
         setMessage("ACCESS GRANTED. YOU'RE ON THE SECURE LIST.");
         setEmail("");
+        track("waitlist_signup");
         return;
       }
 
       const { error } = await supabase
         .from('waitlist')
-        .insert([{ email }]);
+        .insert([{ email: cleanEmail }]);
 
       if (error) {
-        if (error.code === '23505') { // Unique violation
+        if (error.code === '23505') {
           throw new Error("THIS CREDENTIAL IS ALREADY REGISTERED.");
         }
         throw error;
@@ -38,6 +80,7 @@ export function WaitlistForm() {
       setStatus("success");
       setMessage("ACCESS GRANTED. YOU'RE ON THE SECURE LIST.");
       setEmail("");
+      track("waitlist_signup");
     } catch (err: any) {
       console.error(err);
       setStatus("error");
@@ -63,6 +106,18 @@ export function WaitlistForm() {
         </motion.div>
 
         <form onSubmit={handleSubmit} className="relative max-w-md mx-auto">
+          {/* Honeypot — invisible to real users */}
+          <input
+            type="text"
+            name="website"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+            autoComplete="off"
+            tabIndex={-1}
+            aria-hidden="true"
+            style={{ position: "absolute", left: "-9999px", opacity: 0 }}
+          />
+
           <div className="relative group">
             <div className="absolute -inset-2 blur-2xl bg-accent/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             <input
@@ -103,7 +158,7 @@ export function WaitlistForm() {
             </motion.div>
           )}
         </AnimatePresence>
-        
+
         <div className="pt-8 flex items-center justify-center gap-8 opacity-30 grayscale">
             <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white">Encrypted</div>
             <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white">Vaulted-SSL</div>

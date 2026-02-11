@@ -1,4 +1,9 @@
-export function VaultIcon({ name, color }: { name: string; color: string }) {
+interface VaultIconProps {
+  name: string;
+  color: string;
+}
+
+export function VaultIcon({ name, color }: VaultIconProps) {
   // Ore / Mineral Themed Icons
   switch (name) {
     case 'Bronze': // Nugget

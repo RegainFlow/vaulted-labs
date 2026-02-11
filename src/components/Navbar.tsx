@@ -1,11 +1,10 @@
 import { motion } from "motion/react";
 
-type NavbarProps = {
+interface NavbarProps {
   balance?: number;
   inventoryCount?: number;
-  unlockState?: "locked" | "inserting" | "unlocked";
   onJoinWaitlist?: () => void;
-};
+}
 
 export function Navbar({ balance = 0, inventoryCount = 0, onJoinWaitlist }: NavbarProps) {
   const scrollToWaitlist = () => {
