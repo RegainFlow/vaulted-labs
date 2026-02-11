@@ -2,7 +2,6 @@
 CREATE TABLE IF NOT EXISTS waitlist (
   id serial PRIMARY KEY,
   email text UNIQUE NOT NULL,
-  name text,
   created_at timestamptz DEFAULT now()
 );
 
