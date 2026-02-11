@@ -1,26 +1,39 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { track } from "@vercel/analytics";
 import type { Vault } from "../data/vaults";
+import { RARITY_CONFIG, pickRarity, pickValue, pickProduct } from "../data/vaults";
 import { VaultIcon } from "./VaultIcons";
 
 type Stage = "paying" | "picking" | "revealing" | "result";
 
 interface VaultOverlayProps {
     tier: Vault;
+    balance: number;
     onClose: () => void;
     onClaim: (amount: number) => void;
     onStore: () => void;
 }
 
-export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayProps) {
+export function VaultOverlay({ tier, balance, onClose, onClaim, onStore }: VaultOverlayProps) {
     const [stage, setStage] = useState<Stage>("paying");
     const [boxState, setBoxState] = useState<"closed" | "opening" | "open">("closed");
 
+    // Pick a random rarity outcome, value within range, and product type
+    const wonRarity = useMemo(() => pickRarity(tier.rarities), [tier]);
+    const product = useMemo(() => pickProduct(), [tier]);
+    const rarityConfig = RARITY_CONFIG[wonRarity];
+    const resultValue = useMemo(() => pickValue(tier.price, rarityConfig), [tier, rarityConfig]);
+    const isLoss = resultValue < tier.price;
+    const net = resultValue - tier.price;
+    // balance is already post-deduction (vault cost already subtracted)
+    const preBalance = balance + tier.price;
+    const postBalance = balance + resultValue;
+
     // Track vault open event
     useEffect(() => {
-        track("vault_opened", { tier: tier.name });
-    }, [tier.name]);
+        track("vault_opened", { tier: tier.name, rarity: wonRarity });
+    }, [tier.name, wonRarity]);
 
     // Auto-advance payment
     useEffect(() => {
@@ -45,7 +58,7 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
     };
 
     const handleClaim = () => {
-        onClaim(tier.price * 10);
+        onClaim(resultValue);
         scrollToWaitlist();
     }
 
@@ -123,10 +136,15 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                                         whileHover={{ scale: 1.05, translateZ: 20, borderColor: tier.color, boxShadow: `0 0 20px ${tier.color}30` }}
                                         whileTap={{ scale: 0.95 }}
                                         onClick={() => pickBox(i)}
-                                        className="aspect-square relative rounded-xl bg-surface-elevated border border-white/10 flex items-center justify-center shadow-lg group overflow-hidden cursor-pointer transition-all duration-300"
+                                        className="aspect-square relative rounded-xl border flex items-center justify-center shadow-lg group overflow-hidden cursor-pointer transition-all duration-300"
+                                        style={{
+                                            borderColor: `${tier.color}40`,
+                                            backgroundColor: `${tier.color}08`,
+                                            boxShadow: `0 0 10px ${tier.color}10`,
+                                        }}
                                     >
                                         <div className="absolute inset-0 bg-linear-to-b from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                                        
+
                                         {/* Box Icon */}
                                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-white filter drop-shadow-md group-hover:text-white transition-colors md:w-8 md:h-8">
                                             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
@@ -134,7 +152,7 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                                             <line x1="12" y1="22.08" x2="12" y2="12" />
                                         </svg>
 
-                                        <div className="absolute bottom-1 right-1 text-[6px] md:text-[8px] font-mono text-white/30 group-hover:text-white/60">
+                                        <div className="absolute bottom-1 right-1 text-[6px] md:text-[8px] font-mono group-hover:opacity-80" style={{ color: `${tier.color}60` }}>
                                             UNIT-0{i + 1}
                                         </div>
                                     </motion.button>
@@ -218,19 +236,31 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                             transition={{ type: "spring", damping: 20 }}
                             className="space-y-8 relative w-full max-w-4xl flex flex-col items-center"
                         >
-                            {/* Confetti Explosion */}
-                            <ConfettiParticles color={tier.color} />
+                            {/* Confetti — fewer particles for losses */}
+                            <ConfettiParticles color={rarityConfig.color} count={isLoss ? 12 : 40} />
 
-                            <div className="relative inline-block group z-10 mt-8">
-                                <div className="absolute inset-0 blur-[100px] animate-pulse transition-colors opacity-40" style={{ backgroundColor: tier.color }} />
-                                <div className="relative flex items-center justify-center bg-surface-elevated rounded-3xl border-2 shadow-[0_0_60px_rgba(0,0,0,0.5)] w-64 h-64 md:w-80 md:h-80 mx-auto" style={{ borderColor: tier.color }}>
+                            {/* Product type badge */}
+                            <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.2 }}
+                                className="z-10"
+                            >
+                                <span className="inline-block px-3 py-1 rounded-md bg-white/5 border border-white/10 text-[10px] font-mono font-bold uppercase tracking-widest text-text-muted">
+                                    {product}
+                                </span>
+                            </motion.div>
+
+                            <div className="relative inline-block group z-10">
+                                <div className="absolute inset-0 blur-[100px] animate-pulse transition-colors opacity-40" style={{ backgroundColor: rarityConfig.color }} />
+                                <div className="relative flex items-center justify-center bg-surface-elevated rounded-3xl border-2 shadow-[0_0_60px_rgba(0,0,0,0.5)] w-64 h-64 md:w-80 md:h-80 mx-auto" style={{ borderColor: rarityConfig.color }}>
                                     {/* Tier Icon Large */}
                                     <div className="transform scale-150 filter drop-shadow-2xl">
-                                        <VaultIcon name={tier.name} color={tier.color} />
+                                        <VaultIcon name={tier.name} color={rarityConfig.color} />
                                     </div>
-                                    
+
                                     <div className="absolute bottom-6 left-0 w-full text-center">
-                                        <span className="inline-block px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest border" style={{ backgroundColor: `${tier.color}10`, borderColor: `${tier.color}40`, color: tier.color }}>
+                                        <span className="inline-block px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest border" style={{ backgroundColor: `${rarityConfig.color}10`, borderColor: `${rarityConfig.color}40`, color: rarityConfig.color }}>
                                             Mint Condition
                                         </span>
                                     </div>
@@ -239,10 +269,42 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
 
                             <div className="space-y-2 z-10 relative text-center">
                                 <h3 className="text-3xl md:text-6xl font-black text-white uppercase tracking-tighter">
-                                    Legendary Pull!
+                                    {rarityConfig.label}{rarityConfig.exclaim}
                                 </h3>
-                                <p className="text-lg md:text-xl text-text-muted">Estimated Market Value: <span className="font-black" style={{ color: tier.color }}>${tier.price * 10}.00</span></p>
+                                <p className="text-lg md:text-xl text-text-muted">Estimated Market Value: <span className="font-black" style={{ color: rarityConfig.color }}>${resultValue}.00</span></p>
                             </div>
+
+                            {/* Balance Breakdown */}
+                            <motion.div
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.3 }}
+                                className="z-10 w-full max-w-md px-4"
+                            >
+                                <div className="bg-surface/80 backdrop-blur-xl rounded-xl border border-white/10 p-4 font-mono text-sm">
+                                    <div className="flex items-center justify-between py-1.5">
+                                        <span className="text-text-dim text-xs uppercase tracking-wider">Credits</span>
+                                        <span className="text-white font-bold">${preBalance.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between py-1.5">
+                                        <span className="text-text-dim text-xs uppercase tracking-wider">{tier.name} Vault</span>
+                                        <span className="text-error font-bold">-${tier.price.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between py-1.5">
+                                        <span className="text-text-dim text-xs uppercase tracking-wider">Item Value</span>
+                                        <span className="font-bold" style={{ color: rarityConfig.color }}>+${resultValue.toFixed(2)}</span>
+                                    </div>
+                                    <div className="border-t border-white/10 mt-1.5 pt-2.5 flex items-center justify-between">
+                                        <span className="text-text-muted text-xs uppercase tracking-wider font-bold">New Balance</span>
+                                        <div className="flex items-center gap-3">
+                                            <span className={`text-xs font-black px-2 py-0.5 rounded ${isLoss ? "bg-error/10 text-error" : "bg-neon-green/10 text-neon-green"}`}>
+                                                {net >= 0 ? "+" : ""}{net.toFixed(2)}
+                                            </span>
+                                            <span className="text-white font-black text-base">${postBalance.toFixed(2)}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full px-4 z-10 relative">
                                 <OptionCard
@@ -281,7 +343,7 @@ export function VaultOverlay({ tier, onClose, onClaim, onStore }: VaultOverlayPr
                                             <line x1="2" y1="10" x2="22" y2="10" />
                                         </svg>
                                     }
-                                    action={`Get $${tier.price * 10} Credits`}
+                                    action={`Get $${resultValue} Credits`}
                                     onClick={handleClaim}
                                 />
                             </div>
@@ -326,9 +388,9 @@ function OptionCard({ title, desc, icon, action, onClick, highlight = false, tie
     )
 }
 
-function ConfettiParticles({ color }: { color: string }) {
+function ConfettiParticles({ color, count = 40 }: { color: string; count?: number }) {
     // Generate random particles
-    const particles = Array.from({ length: 40 }).map((_, i) => ({
+    const particles = Array.from({ length: count }).map((_, i) => ({
         id: i,
         x: Math.random() * 400 - 200, 
         y: Math.random() * 400 - 200, 

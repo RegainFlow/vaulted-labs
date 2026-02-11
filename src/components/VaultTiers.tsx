@@ -4,17 +4,21 @@ import { VAULTS, type Vault } from "../data/vaults";
 import { VaultCard } from "./VaultCard";
 
 interface VaultTiersProps {
+  balance: number;
   onSelect: (vault: Vault) => void;
   locked?: boolean;
   onLockedAttempt?: () => void;
 }
 
 export function VaultTiers({
+  balance,
   onSelect,
   locked = false,
   onLockedAttempt,
 }: VaultTiersProps) {
   const [showLockHint, setShowLockHint] = useState(false);
+  const minPrice = Math.min(...VAULTS.map(v => v.price));
+  const isBroke = !locked && balance < minPrice;
 
   useEffect(() => {
     if (!showLockHint) return;
@@ -25,6 +29,10 @@ export function VaultTiers({
   const handleLockedAttempt = () => {
     setShowLockHint(true);
     onLockedAttempt?.();
+  };
+
+  const scrollToWaitlist = () => {
+    document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
@@ -53,7 +61,7 @@ export function VaultTiers({
           </p>
         </motion.div>
 
-        <div className={`relative transition-all duration-1000 ease-in-out ${locked ? 'blur-2xl grayscale pointer-events-none scale-95 opacity-30' : 'blur-0 grayscale-0 scale-100 opacity-100'}`}>
+        <div className={`relative transition-all duration-1000 ease-in-out ${locked ? 'blur-2xl grayscale pointer-events-none scale-95 opacity-30' : isBroke ? 'blur-xl grayscale pointer-events-none scale-[0.97] opacity-20' : 'blur-0 grayscale-0 scale-100 opacity-100'}`}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 gap-y-16 max-w-5xl mx-auto">
             {VAULTS.map((vault, index) => (
                 <VaultCard
@@ -61,12 +69,41 @@ export function VaultTiers({
                     vault={vault}
                     index={index}
                     locked={locked}
+                    balance={balance}
                     onSelect={onSelect}
                     onLockedAttempt={handleLockedAttempt}
                 />
             ))}
           </div>
         </div>
+
+        {isBroke && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 text-center w-full max-w-md px-4"
+          >
+            <div className="bg-surface/80 backdrop-blur-xl border-2 border-error/20 p-12 rounded-3xl shadow-[0_0_100px_rgba(255,59,92,0.1)]">
+              <div className="w-20 h-20 bg-error/5 rounded-full flex items-center justify-center mx-auto mb-6 border border-error/20">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-error">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M16 8l-8 8M8 8l8 8" />
+                </svg>
+              </div>
+              <h3 className="text-2xl font-black text-white uppercase tracking-widest mb-2">Credits Depleted</h3>
+              <p className="text-error font-mono text-sm font-bold mb-4">${balance.toFixed(2)} remaining</p>
+              <p className="text-text-muted text-sm leading-relaxed mb-8">
+                You need at least ${minPrice} to open a vault. Join the waitlist to claim your full deposit when we launch.
+              </p>
+              <button
+                onClick={scrollToWaitlist}
+                className="px-8 py-3 rounded-xl bg-accent text-white font-black uppercase tracking-widest text-xs hover:bg-accent-hover transition-colors cursor-pointer"
+              >
+                Deposit Credits &rarr;
+              </button>
+            </div>
+          </motion.div>
+        )}
 
         {locked && (
           <motion.div

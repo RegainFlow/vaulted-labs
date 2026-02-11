@@ -12,7 +12,7 @@ export function ProductMockupSection() {
             Mobile Preview
           </p>
           <h2 className="mt-4 text-4xl font-black uppercase tracking-tight text-white md:text-5xl">
-            Built for quick vault runs on iPhone.
+            Built for quick vault runs on mobile.
           </h2>
           <p className="mt-5 max-w-2xl text-lg text-text-muted">
             Experience the thrill of the unlock anywhere. Our mobile-first
@@ -136,8 +136,8 @@ function HomeScreen() {
         {[
           { name: "Bronze", color: "#cd7f32", price: "$24" },
           { name: "Gold", color: "#ffd700", price: "$54" },
-          { name: "Platinum", color: "#79b5db", price: "$75" },
-          { name: "Diamond", color: "#b9f2ff", price: "$120" }
+          { name: "Platinum", color: "#79b5db", price: "$68" },
+          { name: "Diamond", color: "#b9f2ff", price: "$86" }
         ].map((tier) => (
           <div
             key={tier.name}
@@ -193,7 +193,7 @@ function VaultScreen() {
         Reinforced probability for <br /> Tier-1 legendary loot.
       </p>
       <div className="w-full bg-[#b9f2ff] text-black font-bold text-xs uppercase tracking-widest py-4 rounded-xl text-center shadow-lg relative overflow-hidden">
-        Unlock - $120
+        Unlock - $86
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
@@ -300,7 +300,7 @@ function ResultScreen() {
         LEGENDARY PULL
       </h3>
       <p className="text-[#b9f2ff] font-bold text-sm mb-8 relative z-10">
-        $1,200.00
+        $284.00
       </p>
 
       <div className="flex flex-col gap-2 w-full max-w-[200px] relative z-10">

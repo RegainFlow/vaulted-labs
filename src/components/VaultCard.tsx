@@ -6,14 +6,19 @@ interface VaultCardProps {
   vault: Vault;
   index: number;
   locked: boolean;
+  balance: number;
   onSelect: (vault: Vault) => void;
   onLockedAttempt: () => void;
 }
 
-export function VaultCard({ vault, index, locked, onSelect, onLockedAttempt }: VaultCardProps) {
+export function VaultCard({ vault, index, locked, balance, onSelect, onLockedAttempt }: VaultCardProps) {
+  const canAfford = balance >= vault.price;
+
   const handleSelect = () => {
     if (locked) {
         onLockedAttempt();
+    } else if (!canAfford) {
+        document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
     } else {
         onSelect(vault);
     }
@@ -25,12 +30,12 @@ export function VaultCard({ vault, index, locked, onSelect, onLockedAttempt }: V
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: index * 0.1 }}
-      whileHover={locked ? {} : { y: -10 }}
+      whileHover={locked || !canAfford ? {} : { y: -10 }}
       onClick={handleSelect}
-      className="group relative cursor-pointer h-full"
+      className={`group relative h-full ${!canAfford && !locked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
     >
       {/* Main Vault Structure - Cubic Feel */}
-      <div className="relative bg-[#0d0d12] rounded-2xl overflow-hidden shadow-2xl border-2 border-white/5 h-full flex flex-col transition-all duration-500 hover:border-opacity-100 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.1)]" style={{ borderColor: `${vault.color}40` }}>
+      <div className={`relative bg-[#0d0d12] rounded-2xl overflow-hidden shadow-2xl border-2 border-white/5 h-full flex flex-col transition-all duration-500 ${!canAfford && !locked ? 'opacity-40 grayscale' : 'hover:border-opacity-100 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.1)]'}`} style={{ borderColor: `${vault.color}40` }}>
 
         {/* Metallic Header */}
         <div className={`relative h-48 bg-linear-to-br ${vault.gradient} flex flex-col items-center justify-center border-b-8 border-black/40 overflow-hidden`}>
@@ -50,7 +55,7 @@ export function VaultCard({ vault, index, locked, onSelect, onLockedAttempt }: V
           </div>
 
           {/* Ore Icon Container */}
-          <div className="relative z-10 transform transition-transform duration-500 group-hover:scale-110">
+          <div className={`relative z-10 transform transition-transform duration-500 ${!canAfford && !locked ? '' : 'group-hover:scale-110'}`}>
              <div className="drop-shadow-2xl filter">
                 <VaultIcon name={vault.name} color={vault.color} />
              </div>
@@ -107,19 +112,24 @@ export function VaultCard({ vault, index, locked, onSelect, onLockedAttempt }: V
           </div>
              
           <div className="mt-8 text-center">
-            <span className="text-[10px] font-mono uppercase tracking-widest animate-pulse" style={{ color: locked ? 'var(--color-text-dim)' : vault.color }}>
-                {locked ? "Sector Locked" : "Click to Initialize"}
+            <span className="text-[10px] font-mono uppercase tracking-widest animate-pulse" style={{ color: locked ? 'var(--color-text-dim)' : !canAfford ? 'var(--color-error)' : vault.color }}>
+                {locked ? "Sector Locked" : !canAfford ? "Insufficient Credits" : "Click to Initialize"}
             </span>
           </div>
 
         </div>
 
         {/* Caution Stripes at bottom */}
-        <div className="h-2 w-full bg-[repeating-linear-gradient(45deg,#000,#000_10px,transparent_10px,transparent_20px)] opacity-20" />    
+        <div className="h-2 w-full bg-[repeating-linear-gradient(45deg,#000,#000_10px,transparent_10px,transparent_20px)] opacity-20" />
+
+        {/* Unaffordable hazard stripe overlay */}
+        {!canAfford && !locked && (
+          <div className="absolute inset-0 z-10 rounded-2xl pointer-events-none" style={{ background: 'repeating-linear-gradient(45deg, transparent, transparent 18px, rgba(255,59,92,0.08) 18px, rgba(255,59,92,0.08) 20px)' }} />
+        )}
       </div>
 
       {/* Selection Glow */}
-      {!locked && <div className={`absolute inset-0 -z-10 rounded-2xl blur-[60px] opacity-0 group-hover:opacity-20 transition-opacity duration-700`} style={{ backgroundColor: vault.color }} />}
+      {!locked && canAfford && <div className={`absolute inset-0 -z-10 rounded-2xl blur-[60px] opacity-0 group-hover:opacity-20 transition-opacity duration-700`} style={{ backgroundColor: vault.color }} />}
     </motion.div>
   )
 }

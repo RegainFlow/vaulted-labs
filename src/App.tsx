@@ -73,9 +73,14 @@ function App() {
       <main>
         <Hero onAccessKeyInsert={handleUnlock} />
         <ProductMockupSection />
-        <VaultTiers 
-          onSelect={setSelectedVault} 
-          locked={!isUnlocked} 
+        <VaultTiers
+          balance={balance}
+          onSelect={(vault) => {
+            if (balance < vault.price) return;
+            setBalance(prev => prev - vault.price);
+            setSelectedVault(vault);
+          }}
+          locked={!isUnlocked}
           onLockedAttempt={() => document.getElementById("hero-access")?.scrollIntoView({ behavior: "smooth" })}
         />
         <GuaranteedWins />
@@ -89,6 +94,7 @@ function App() {
         {selectedVault && (
           <VaultOverlay
             tier={selectedVault}
+            balance={balance}
             onClose={() => setSelectedVault(null)}
             onClaim={handleClaim}
             onStore={handleStore}
