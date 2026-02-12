@@ -17,10 +17,37 @@ VaultedLabs is a mystery-box / collectibles platform. This repo contains a "Fake
 - **Routing**: React Router DOM v7 (`react-router-dom`) — two routes: `/` (landing) and `/play` (demo game)
 - **Styling**: Tailwind CSS v4 (CSS-native config via `@theme` in `index.css`)
 - **Animations**: Motion (formerly Framer Motion) — import from `motion/react`
+- **Typewriter**: Typed.js — hero subtitle typing animation
 - **Backend**: Supabase (email capture + waitlist count)
 - **Analytics**: Vercel Analytics (`@vercel/analytics`) — page views + custom conversion events
 - **Anti-bot**: Honeypot field, timing check (3s minimum), disposable email blocklist (`disposable-email-domains`)
 - **Deployment target**: Vercel (SPA rewrite in `vercel.json`)
+
+## Financial Model Constants
+
+### Vault Levels (4 tiers)
+
+| Level   | Price | Common | Uncommon | Rare  | Legendary |
+|---------|-------|--------|----------|-------|-----------|
+| Bronze  | $24   | 60.5%  | 18.0%    | 19.8% | 1.7%      |
+| Silver  | $38   | 59.8%  | 18.8%    | 18.3% | 3.1%      |
+| Gold    | $54   | 57.9%  | 29.3%    | 8.6%  | 4.2%      |
+| Diamond | $86   | 55.1%  | 27.3%    | 13.2% | 4.4%      |
+
+### Rarity Value Multipliers (of vault price)
+
+| Tier      | Min   | Max   | Example (Bronze $24) |
+|-----------|-------|-------|----------------------|
+| Common    | 0.40x | 0.85x | $9.60 – $20.40       |
+| Uncommon  | 0.85x | 1.40x | $20.40 – $33.60      |
+| Rare      | 1.40x | 2.20x | $33.60 – $52.80      |
+| Legendary | 2.20x | 3.50x | $52.80 – $84.00      |
+
+### User Behavior Rates
+
+- Hold (digital): 65% — no COGS
+- Cashout (credits): 20% — 100% of item value as credit
+- Ship (physical): 15% — triggers COGS (~50% of item value) + $8 shipping
 
 ## Design Tokens (defined in src/index.css @theme)
 
@@ -67,13 +94,14 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 | `.animate-vault-glow-pulse` | Pulsing opacity glow (vault door)            |
 | `.animate-spin-slow`        | Moderate 8s rotation (reveal rays)           |
 | `.animate-hud-shimmer`      | Subtle shimmer on HUD values                 |
+| `.pushable`                 | 3D pushable button (Josh Comeau pattern)     |
 
 ## Page Structure
 
 ### Landing Page (`/`)
 1. **Navbar** — Fixed nav with neon wordmark + "Join" button (no HUD)
-2. **Hero** — Full-viewport vault door visual with "Join Now" CTA
-3. **HowItWorks** — 3 steps: Pick → Reveal → Choose
+2. **Hero** — Full-viewport vault door visual with Typed.js subtitle + "Play Now" CTA
+3. **HowItWorks** — 3 steps: Pick → Reveal → Choose (inline SVG illustrations)
 4. **AppPreview** — Benefits list (left) + iPhone mockup (right)
 5. **CTASection** — "Try the Demo" button linking to `/play`
 6. **WaitlistSection** — IncentiveBanner + WaitlistForm
@@ -81,7 +109,7 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 
 ### Mini Game Page (`/play`)
 1. **Navbar** — Fixed nav with HUD (credits/loot)
-2. **VaultGrid** — 6 vault cards, inline reveal panel (no overlay)
+2. **VaultGrid** — 4 vault cards, inline reveal panel (no overlay)
 3. **Footer** — Brand and copyright
 
 ## Component Files
@@ -92,8 +120,8 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 | `pages/LandingPage.tsx`              | Landing page composition                                     |
 | `pages/PlayPage.tsx`                 | Game page with balance/inventory state                        |
 | `components/Navbar.tsx`              | Fixed nav with optional HUD (`showHUD` prop)                  |
-| `components/Hero.tsx`                | Hero section with vault door + "Join Now" CTA                 |
-| `components/HowItWorks.tsx`          | 3-step explainer section                                      |
+| `components/Hero.tsx`                | Hero section with vault door + Typed.js subtitle + CTA        |
+| `components/HowItWorks.tsx`          | 3-step explainer with inline SVG illustrations                |
 | `components/AppPreview.tsx`          | Benefits + phone mockup two-column layout                     |
 | `components/PhoneMockup.tsx`         | iPhone frame with auto-playing 5-screen demo                  |
 | `components/CTASection.tsx`          | "Try the Demo" CTA linking to /play                           |
@@ -101,10 +129,11 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 | `components/VaultGrid.tsx`           | Mini game: vault cards + inline reveal panel                  |
 | `components/VaultCard.tsx`           | Individual vault card with rarity bars                        |
 | `components/VaultIcons.tsx`          | SVG mineral/ore icons per tier                                |
+| `components/PlayNowButton.tsx`       | 3D pushable CTA button                                       |
 | `components/IncentiveBanner.tsx`     | $100 credit banner with progress bar                          |
 | `components/WaitlistForm.tsx`        | Email form with Supabase integration                          |
 | `components/Footer.tsx`              | Footer with branding                                          |
-| `data/vaults.ts`                     | Vault tier data (6 tiers, interfaces)                         |
+| `data/vaults.ts`                     | Vault tier data (4 tiers), rarity config, helpers             |
 | `hooks/useWaitlistCount.ts`          | Real-time waitlist count hook                                 |
 | `lib/supabase.ts`                    | Supabase client (null when unconfigured)                      |
 | `lib/disposable-emails.ts`           | Disposable email domain checker                               |
@@ -120,6 +149,7 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 - Props interfaces named `{ComponentName}Props`
 - Tailwind utility classes directly on elements (no @apply except in index.css)
 - Motion animations: keep lightweight — subtle hovers, gentle scroll reveals, polished form feedback
+- Mobile-first responsive design: use `sm:`, `md:`, `lg:` breakpoints for progressive enhancement
 - One hook per file in `hooks/`
 - Relative imports (no path aliases configured)
 

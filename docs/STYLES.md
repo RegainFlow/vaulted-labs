@@ -36,23 +36,21 @@ Source of truth: `src/index.css` `@theme` block.
 | `text-muted` | #9a9ab0 | Cool muted descriptions |
 | `text-dim` | #6a6a80 | Dimmed metadata and labels |
 
-### Vault Tiers
-| Tier | Color | Token |
-|------|-------|-------|
-| Bronze | #cd7f32 | `vault-bronze` |
-| Silver | #c0c0c0 | `vault-silver` |
-| Gold | #ffd700 | `vault-gold` |
-| Diamond | #b9f2ff | `vault-diamond` |
-
-Note: Platinum (#79b5db) and Obsidian (#6c4e85) are defined in `data/vaults.ts` as inline colors, not as CSS tokens.
+### Vault Tiers (4 levels)
+| Tier | Color | Token | Price |
+|------|-------|-------|-------|
+| Bronze | #cd7f32 | `vault-bronze` | $24 |
+| Silver | #c0c0c0 | `vault-silver` | $38 |
+| Gold | #ffd700 | `vault-gold` | $54 |
+| Diamond | #b9f2ff | `vault-diamond` | $86 |
 
 ### Rarity Colors
-| Rarity | Color | Token |
-|--------|-------|-------|
-| Common | #9a9ab0 | `rarity-common` |
-| Uncommon | #00f0ff | `rarity-uncommon` |
-| Rare | #a855f7 | `rarity-rare` |
-| Legendary | #ff2d95 | `rarity-legendary` |
+| Rarity | Color | Token | Value Multiplier |
+|--------|-------|-------|------------------|
+| Common | #9a9ab0 | `rarity-common` | 0.40x – 0.85x |
+| Uncommon | #00f0ff | `rarity-uncommon` | 0.85x – 1.40x |
+| Rare | #a855f7 | `rarity-rare` | 1.40x – 2.20x |
+| Legendary | #ff2d95 | `rarity-legendary` | 2.20x – 3.50x |
 
 ### Semantic
 | Token | Value | Usage |
@@ -67,23 +65,40 @@ Defined in `src/index.css` `@layer utilities`:
 - **Glow effects:** `.glow-magenta`, `.glow-cyan` (box-shadow), `.text-glow-magenta`, `.text-glow-cyan`, `.text-glow-white` (text-shadow)
 - **Animations:** `.animate-gradient`, `.animate-vault-spin-slow`, `.animate-vault-glow-pulse`, `.animate-spin-slow`, `.animate-hud-shimmer`
 - **Helpers:** `.bg-clip-text` (Firefox fix), `.bg-300%` (gradient sizing)
+- **Buttons:** `.pushable` / `.pushable-shadow` / `.pushable-edge` / `.pushable-front` — 3D pushable button (Josh Comeau pattern), responsive padding (12px 28px mobile, 14px 42px at sm+)
 
 ## Components
 
 ### Buttons
 - **Primary Action:** Rounded corners (`rounded-xl`), uppercase, bold tracking (`tracking-widest`).
+- **Pushable CTA:** 3D depth effect with shadow/edge/front layers, magenta accent gradient.
 - **Interactive:** Hover states include glow (`shadow-[0_0_20px_...]`) and scale transforms.
 
 ### Cards (Vaults)
 - **Style:** "Cubic" / "Vault Door" aesthetic.
-- **Header:** Metallic gradient background specific to tier.
-- **Body:** Dark surface with rarity probability stat bars.
-- **Icons:** Custom SVG "Ore/Mineral" icons representing tier material.
+- **Header:** Metallic gradient background specific to tier, responsive height (`h-40 sm:h-44 md:h-48`).
+- **Body:** Dark surface with rarity probability stat bars, responsive padding (`p-4 sm:p-5 md:p-6`).
+- **Icons:** Custom SVG "Ore/Mineral" icons representing tier material (Bronze nugget, Silver ingot, Gold crystal, Diamond cut).
 
-### Modals
-- **Backdrop:** Blurred (`backdrop-blur-xl`) with dark overlay.
-- **Animation:** `motion` used for entrance/exit and internal state transitions (paying -> picking -> revealing -> result).
+### Inline SVG Illustrations (HowItWorks)
+- **Style:** Stroke-only neon outlines with `feGaussianBlur` glow filters.
+- **Colors:** Step 1 magenta (#ff2d95), Step 2 cyan (#00f0ff), Step 3 green (#39ff14).
+- **Size:** `viewBox="0 0 120 120"` rendered at 140x140px.
 
 ## Mobile Responsiveness
-- **Layout:** Flex/Grid layouts switch from `flex-col` (mobile) to `flex-row` (desktop) or grid columns increase from 1 to 2/3.
-- **Spacing:** Padding adjusts from `p-4` or `p-6` on mobile to `p-12` or `p-20` on desktop.
+
+### Breakpoint Strategy
+- **Base (< 640px):** Smallest viable layout — reduced padding, smaller text, single-column grids.
+- **sm (640px+):** Intermediate sizing — slightly larger text and padding.
+- **md (768px+):** Tablet — multi-column grids begin, full-size headings.
+- **lg (1024px+):** Desktop — full layout with side-by-side sections.
+
+### Responsive Patterns
+- **Headings:** Progressive scaling, e.g. `text-2xl sm:text-3xl md:text-4xl lg:text-5xl`
+- **Section padding:** `py-12 md:py-24` or `py-16 sm:py-24 md:py-32`
+- **Card padding:** `p-4 sm:p-5 md:p-6` or `p-5 sm:p-6 md:p-8`
+- **Grid gaps:** `gap-4 sm:gap-6 md:gap-8`
+- **Layout:** Single column stacking on mobile, `sm:grid-cols-2` / `md:grid-cols-3` / `lg:grid-cols-2` for desktop
+- **Vault door (Hero):** `w-[280px] sm:w-[350px] md:w-[500px]` to prevent overflow on narrow screens
+- **Phone mockup:** `max-w-[280px] sm:max-w-[330px]` for small screens
+- **Navbar:** `h-16 sm:h-20` with `px-4 sm:px-6`
