@@ -32,23 +32,6 @@ export function VaultIcon({ name, color }: VaultIconProps) {
            <path d="M3 11h18" stroke="rgba(0,0,0,0.2)" strokeWidth="0.5" />
         </svg>
       );
-    case 'Platinum': // Hexagonal Prism
-      return (
-        <svg width="80" height="80" viewBox="0 0 24 24" fill={color} stroke="white" strokeWidth="0.5">
-           <path d="M12 2l8.5 5v10L12 22 3.5 17V7L12 2z" />
-           <path d="M12 2v20" stroke="rgba(0,0,0,0.2)" />
-           <path d="M3.5 7l17 0" stroke="rgba(0,0,0,0.2)" />
-           <path d="M3.5 17l17 0" stroke="rgba(0,0,0,0.2)" />
-        </svg>
-      );
-    case 'Obsidian': // Sharp Shard
-      return (
-        <svg width="80" height="80" viewBox="0 0 24 24" fill={color} stroke="white" strokeWidth="0.5">
-           <path d="M12 2L8 14l4 8 4-8-4-14z" />
-           <path d="M12 2l-2 12 2 8 2-8-2-12z" fill="rgba(255,255,255,0.2)" />
-           <path d="M8 14h8" stroke="rgba(255,255,255,0.3)" />
-        </svg>
-      );
     case 'Diamond': // Classic Cut
       return (
         <svg width="80" height="80" viewBox="0 0 24 24" fill={color} stroke="white" strokeWidth="0.5">

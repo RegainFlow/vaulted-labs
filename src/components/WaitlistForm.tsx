@@ -89,8 +89,8 @@ export function WaitlistForm() {
   };
 
   return (
-    <section id="waitlist" className="py-32 px-6 relative bg-bg">
-      <div className="max-w-xl mx-auto text-center space-y-12">
+    <section className="py-16 sm:py-24 md:py-32 px-4 sm:px-6 relative bg-bg">
+      <div className="max-w-xl mx-auto text-center space-y-8 md:space-y-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -99,8 +99,8 @@ export function WaitlistForm() {
           <div className="inline-block px-4 py-1.5 bg-accent/10 border border-accent/20 rounded-full text-accent text-[10px] font-black uppercase tracking-[0.3em] mb-6">
             Terminal Access
           </div>
-          <h2 className="text-4xl md:text-5xl font-black text-white uppercase italic tracking-tighter mb-4">Secure Your <span className="text-accent">Beta Slot</span></h2>
-          <p className="text-text-muted text-lg">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white uppercase italic tracking-tighter mb-4">Secure Your <span className="text-accent">Beta Slot</span></h2>
+          <p className="text-text-muted text-base md:text-lg">
             Founding member registration is currently limited. Provide your credentials to secure priority vault access.
           </p>
         </motion.div>
@@ -126,7 +126,7 @@ export function WaitlistForm() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="ENTER EMAIL ADDRESS"
               disabled={status === "loading" || status === "success"}
-              className="relative w-full bg-[#0d0d12] border-2 border-white/10 rounded-2xl py-6 pl-8 pr-16 text-white font-mono placeholder:text-text-dim focus:outline-none focus:border-accent/50 focus:ring-8 focus:ring-accent/5 transition-all disabled:opacity-50 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
+              className="relative w-full bg-[#0d0d12] border-2 border-white/10 rounded-2xl py-4 sm:py-5 md:py-6 pl-4 sm:pl-6 md:pl-8 pr-14 sm:pr-16 text-sm sm:text-base text-white font-mono placeholder:text-text-dim focus:outline-none focus:border-accent/50 focus:ring-8 focus:ring-accent/5 transition-all disabled:opacity-50 shadow-[0_0_50px_rgba(0,0,0,0.5)]"
             />
             <button
               type="submit"
@@ -137,7 +137,7 @@ export function WaitlistForm() {
               {status === "loading" ? (
                 <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <span className="relative z-10 font-black text-xs uppercase tracking-widest">Submit</span>
+                <span className="relative z-10 font-black text-xs uppercase tracking-widest">Join</span>
               )}
             </button>
           </div>
@@ -159,7 +159,7 @@ export function WaitlistForm() {
           )}
         </AnimatePresence>
 
-        <div className="pt-8 flex items-center justify-center gap-8 opacity-30 grayscale">
+        <div className="pt-8 flex items-center justify-center gap-4 sm:gap-8 opacity-30 grayscale">
             <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white">Encrypted</div>
             <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white">Vaulted-SSL</div>
             <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white">No Spam</div>

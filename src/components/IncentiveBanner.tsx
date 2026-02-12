@@ -8,24 +8,24 @@ export function IncentiveBanner() {
   const progress = Math.min(100, (count / maxSpots) * 100);
 
   return (
-    <section className="py-12 px-6">
+    <section className="py-8 sm:py-12 px-4 sm:px-6">
       <div className="max-w-4xl mx-auto">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
-          className="relative rounded-2xl overflow-hidden bg-surface-elevated border border-accent/30 p-8 md:p-12 text-center"
+          className="relative rounded-2xl overflow-hidden bg-surface-elevated border border-accent/30 p-5 sm:p-8 md:p-12 text-center"
         >
           {/* Animated glow background */}
           <div className="absolute inset-0 bg-accent/5 animate-pulse" />
           <div className="absolute top-0 left-0 w-full h-1 bg-accent shadow-[0_0_20px_rgba(255,45,149,0.5)]" />
 
           <div className="relative z-10 space-y-6">
-            <h2 className="text-3xl md:text-4xl font-black text-white uppercase tracking-tight">
+            <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white uppercase tracking-tight">
               First 100 Users Get <span className="text-accent text-glow-magenta">$100 Credit</span>    
             </h2>
 
-            <p className="text-lg text-text-muted">
+            <p className="text-base md:text-lg text-text-muted">
               Join the beta to claim your founding member bonus. Risk-free.
             </p>
 

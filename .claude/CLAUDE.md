@@ -14,12 +14,13 @@ VaultedLabs is a mystery-box / collectibles platform. This repo contains a "Fake
 
 - **Build**: Vite 6 with `@tailwindcss/vite` plugin
 - **Framework**: React 19 with TypeScript (strict mode)
+- **Routing**: React Router DOM v7 (`react-router-dom`) — two routes: `/` (landing) and `/play` (demo game)
 - **Styling**: Tailwind CSS v4 (CSS-native config via `@theme` in `index.css`)
 - **Animations**: Motion (formerly Framer Motion) — import from `motion/react`
 - **Backend**: Supabase (email capture + waitlist count)
 - **Analytics**: Vercel Analytics (`@vercel/analytics`) — page views + custom conversion events
 - **Anti-bot**: Honeypot field, timing check (3s minimum), disposable email blocklist (`disposable-email-domains`)
-- **Deployment target**: Vercel
+- **Deployment target**: Vercel (SPA rewrite in `vercel.json`)
 
 ## Design Tokens (defined in src/index.css @theme)
 
@@ -67,39 +68,50 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 | `.animate-spin-slow`        | Moderate 8s rotation (reveal rays)           |
 | `.animate-hud-shimmer`      | Subtle shimmer on HUD values                 |
 
-## Page Sections (top to bottom)
+## Page Structure
 
-1. **Navbar** — Fixed nav with neon wordmark, Credits/Loot HUD, waitlist CTA
-2. **Hero** — Full-viewport vault door visual with "Insert Access Key" badge
-3. **ProductMockupSection** — Auto-playing mobile app preview (5-screen loop)
-4. **VaultTiers** — 6 vault cards (Bronze→Diamond) with rarity probability bars, lock gate
-5. **GuaranteedWins** — Trust section: 100% win rate, instant liquidity, provably fair
-6. **YourChoice** — Hold / Ship / Cash Out liquidity options
-7. **IncentiveBanner** — $100 credit offer with live progress bar
-8. **WaitlistForm** — Email capture with success/error states
-9. **Footer** — Brand and copyright
+### Landing Page (`/`)
+1. **Navbar** — Fixed nav with neon wordmark + "Join" button (no HUD)
+2. **Hero** — Full-viewport vault door visual with "Join Now" CTA
+3. **HowItWorks** — 3 steps: Pick → Reveal → Choose
+4. **AppPreview** — Benefits list (left) + iPhone mockup (right)
+5. **CTASection** — "Try the Demo" button linking to `/play`
+6. **WaitlistSection** — IncentiveBanner + WaitlistForm
+7. **Footer** — Brand and copyright
+
+### Mini Game Page (`/play`)
+1. **Navbar** — Fixed nav with HUD (credits/loot)
+2. **VaultGrid** — 6 vault cards, inline reveal panel (no overlay)
+3. **Footer** — Brand and copyright
 
 ## Component Files
 
 | File                                  | Description                                                       |
 | ------------------------------------- | ----------------------------------------------------------------- |
-| `App.tsx`                             | Root — state management, section composition, VaultOverlay portal |
-| `components/Navbar.tsx`               | Fixed top nav with HUD stats                                      |
-| `components/Hero.tsx`                 | Hero section with vault door animation                            |
-| `components/ProductMockupSection.tsx` | iPhone mockup with auto-playing vault flow                        |
-| `components/VaultTiers.tsx`           | Vault card grid with lock/unlock gate                             |
-| `components/VaultCard.tsx`            | Individual vault card with rarity bars                            |
-| `components/VaultOverlay.tsx`         | Full-screen unboxing modal (4 stages)                             |
-| `components/VaultIcons.tsx`           | SVG mineral/ore icons per tier                                    |
-| `components/GuaranteedWins.tsx`       | Trust proposition with feature cards                              |
-| `components/YourChoice.tsx`           | Three liquidity option cards                                      |
-| `components/IncentiveBanner.tsx`      | $100 credit banner with progress                                  |
-| `components/WaitlistForm.tsx`         | Email form with Supabase integration                              |
-| `components/Footer.tsx`               | Footer with branding                                              |
-| `data/vaults.ts`                      | Vault tier data (6 tiers, interfaces)                             |
-| `hooks/useWaitlistCount.ts`           | Real-time waitlist count hook                                     |
-| `lib/supabase.ts`                     | Supabase client (null when unconfigured)                          |
-| `lib/disposable-emails.ts`            | Disposable email domain checker                                   |
+| `App.tsx`                             | Root — route shell (`/` → LandingPage, `/play` → PlayPage)  |
+| `pages/LandingPage.tsx`              | Landing page composition                                     |
+| `pages/PlayPage.tsx`                 | Game page with balance/inventory state                        |
+| `components/Navbar.tsx`              | Fixed nav with optional HUD (`showHUD` prop)                  |
+| `components/Hero.tsx`                | Hero section with vault door + "Join Now" CTA                 |
+| `components/HowItWorks.tsx`          | 3-step explainer section                                      |
+| `components/AppPreview.tsx`          | Benefits + phone mockup two-column layout                     |
+| `components/PhoneMockup.tsx`         | iPhone frame with auto-playing 5-screen demo                  |
+| `components/CTASection.tsx`          | "Try the Demo" CTA linking to /play                           |
+| `components/WaitlistSection.tsx`     | Wrapper for IncentiveBanner + WaitlistForm                    |
+| `components/VaultGrid.tsx`           | Mini game: vault cards + inline reveal panel                  |
+| `components/VaultCard.tsx`           | Individual vault card with rarity bars                        |
+| `components/VaultIcons.tsx`          | SVG mineral/ore icons per tier                                |
+| `components/IncentiveBanner.tsx`     | $100 credit banner with progress bar                          |
+| `components/WaitlistForm.tsx`        | Email form with Supabase integration                          |
+| `components/Footer.tsx`              | Footer with branding                                          |
+| `data/vaults.ts`                     | Vault tier data (6 tiers, interfaces)                         |
+| `hooks/useWaitlistCount.ts`          | Real-time waitlist count hook                                 |
+| `lib/supabase.ts`                    | Supabase client (null when unconfigured)                      |
+| `lib/disposable-emails.ts`           | Disposable email domain checker                               |
+
+## Documentation Lookup
+
+- **Always check Context7** (via `resolve-library-id` → `query-docs`) before writing or modifying code that uses any library or framework. This ensures implementations use up-to-date APIs and best practices rather than relying on potentially outdated training data.
 
 ## Coding Conventions
 

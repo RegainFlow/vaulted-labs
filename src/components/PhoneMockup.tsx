@@ -2,41 +2,22 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { VaultIcon } from "./VaultIcons";
 
-export function ProductMockupSection() {
+export function PhoneMockup() {
   return (
-    <section className="relative overflow-hidden border-y border-white/10 bg-surface/60 px-6 py-20">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(185,242,255,0.12)_0%,rgba(17,17,24,0)_52%)]" />
-      <div className="relative mx-auto grid w-full max-w-6xl items-center gap-10 lg:grid-cols-[1fr_360px]">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent">
-            Mobile Preview
-          </p>
-          <h2 className="mt-4 text-4xl font-black uppercase tracking-tight text-white md:text-5xl">
-            Built for quick vault runs on mobile.
-          </h2>
-          <p className="mt-5 max-w-2xl text-lg text-text-muted">
-            Experience the thrill of the unlock anywhere. Our mobile-first
-            interface ensures seamless access to your portfolio and instant
-            liquidity mechanisms.
-          </p>
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ duration: 0.55 }}
+      className="mx-auto w-full max-w-[280px] sm:max-w-[330px]"
+    >
+      <div className="relative rounded-[44px] border border-white/20 bg-black p-3 shadow-[0_26px_90px_rgba(0,0,0,0.6)]">
+        <div className="absolute left-1/2 top-2 h-5 w-24 -translate-x-1/2 rounded-full bg-black z-20" />
+        <div className="overflow-hidden rounded-[34px] border border-white/10 bg-bg relative h-[640px] flex flex-col">
+          <MiniAppPreview />
         </div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: "-80px" }}
-          transition={{ duration: 0.55 }}
-          className="mx-auto w-full max-w-[330px]"
-        >
-          <div className="relative rounded-[44px] border border-white/20 bg-black p-3 shadow-[0_26px_90px_rgba(0,0,0,0.6)]">
-            <div className="absolute left-1/2 top-2 h-5 w-24 -translate-x-1/2 rounded-full bg-black z-20" />
-            <div className="overflow-hidden rounded-[34px] border border-white/10 bg-bg relative h-[640px] flex flex-col">
-              <MiniAppPreview />
-            </div>
-          </div>
-        </motion.div>
       </div>
-    </section>
+    </motion.div>
   );
 }
 
@@ -135,8 +116,8 @@ function HomeScreen() {
       <div className="grid grid-cols-2 gap-3">
         {[
           { name: "Bronze", color: "#cd7f32", price: "$24" },
+          { name: "Silver", color: "#e0e0e0", price: "$38" },
           { name: "Gold", color: "#ffd700", price: "$54" },
-          { name: "Platinum", color: "#79b5db", price: "$68" },
           { name: "Diamond", color: "#b9f2ff", price: "$86" }
         ].map((tier) => (
           <div

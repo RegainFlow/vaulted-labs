@@ -1,28 +1,24 @@
+import { useState } from "react";
 import { motion } from "motion/react";
 import type { Vault } from "../data/vaults";
+import { RARITY_CONFIG } from "../data/vaults";
 import { VaultIcon } from "./VaultIcons";
 
 interface VaultCardProps {
   vault: Vault;
   index: number;
-  locked: boolean;
   balance: number;
   onSelect: (vault: Vault) => void;
-  onLockedAttempt: () => void;
 }
 
-export function VaultCard({ vault, index, locked, balance, onSelect, onLockedAttempt }: VaultCardProps) {
+export function VaultCard({ vault, index, balance, onSelect }: VaultCardProps) {
+  const [showOdds, setShowOdds] = useState(false);
   const canAfford = balance >= vault.price;
 
   const handleSelect = () => {
-    if (locked) {
-        onLockedAttempt();
-    } else if (!canAfford) {
-        document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
-    } else {
-        onSelect(vault);
-    }
-  }
+    if (!canAfford) return;
+    onSelect(vault);
+  };
 
   return (
     <motion.div
@@ -30,116 +26,181 @@ export function VaultCard({ vault, index, locked, balance, onSelect, onLockedAtt
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ delay: index * 0.1 }}
-      whileHover={locked || !canAfford ? {} : { y: -10 }}
+      whileHover={canAfford ? { y: -10 } : {}}
       onClick={handleSelect}
-      className={`group relative h-full ${!canAfford && !locked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+      className={`group relative h-full ${!canAfford ? "cursor-not-allowed" : "cursor-pointer"}`}
     >
-      {/* Main Vault Structure - Cubic Feel */}
-      <div className={`relative bg-[#0d0d12] rounded-2xl overflow-hidden shadow-2xl border-2 border-white/5 h-full flex flex-col transition-all duration-500 ${!canAfford && !locked ? 'opacity-40 grayscale' : 'hover:border-opacity-100 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.1)]'}`} style={{ borderColor: `${vault.color}40` }}>
-
+      {/* Main Vault Structure */}
+      <div
+        className={`relative bg-[#0d0d12] rounded-2xl overflow-hidden shadow-2xl border-2 border-white/5 h-full flex flex-col transition-all duration-500 ${!canAfford ? "opacity-40 grayscale" : "hover:border-opacity-100 hover:shadow-[0_0_40px_-10px_rgba(255,255,255,0.1)]"}`}
+        style={{ borderColor: `${vault.color}40` }}
+      >
         {/* Metallic Header */}
-        <div className={`relative h-48 bg-linear-to-br ${vault.gradient} flex flex-col items-center justify-center border-b-8 border-black/40 overflow-hidden`}>
-          
+        <div
+          className={`relative h-40 sm:h-44 md:h-48 bg-linear-to-br ${vault.gradient} flex flex-col items-center justify-center border-b-8 border-black/40 overflow-hidden`}
+        >
           {/* Industrial Rivets */}
           <div className="absolute top-4 left-4 w-2 h-2 rounded-full bg-black/30 shadow-inner" />
           <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-black/30 shadow-inner" />
-          
-          {/* Price Tag in Header (Top Right) */}
+
+          {/* Price Tag in Header */}
           <div className="absolute top-4 right-8 bg-black/40 backdrop-blur-md px-3 py-1 rounded-lg border border-white/10 z-10">
-             <span className="font-black italic text-xl text-white">${vault.price}</span>
+            <span className="font-black italic text-xl text-white">
+              ${vault.price}
+            </span>
           </div>
 
-          {/* Sequence Number (Top Left) */}
+          {/* Sequence Number */}
           <div className="absolute top-4 left-8 text-[10px] font-black uppercase tracking-[0.2em] text-black/50 z-10">
-             SEQ // 0{index + 1}
+            SEQ // 0{index + 1}
           </div>
 
           {/* Ore Icon Container */}
-          <div className={`relative z-10 transform transition-transform duration-500 ${!canAfford && !locked ? '' : 'group-hover:scale-110'}`}>
-             <div className="drop-shadow-2xl filter">
-                <VaultIcon name={vault.name} color={vault.color} />
-             </div>
+          <div
+            className={`relative z-10 transform transition-transform duration-500 ${canAfford ? "group-hover:scale-110" : ""}`}
+          >
+            <div className="drop-shadow-2xl filter">
+              <VaultIcon name={vault.name} color={vault.color} />
+            </div>
           </div>
 
-          {/* Background pattern for texture */}
+          {/* Background pattern */}
           <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,black_1px,transparent_0)] bg-[length:10px_10px]" />
         </div>
 
         {/* Body Content */}
-        <div className="p-6 bg-gradient-to-b from-white/5 to-transparent flex-1 flex flex-col">
-          
+        <div className="p-4 sm:p-5 md:p-6 bg-gradient-to-b from-white/5 to-transparent flex-1 flex flex-col">
           {/* Title Section */}
           <div className="text-center mb-6">
-            <h3 className="text-3xl font-black text-white uppercase tracking-tighter">{vault.name}</h3>
-            <p className="text-xs font-mono text-text-muted uppercase tracking-[0.3em]">{vault.tagline}</p>
+            <h3 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tighter">
+              {vault.name}
+            </h3>
+            <p className="text-xs font-mono text-text-muted uppercase tracking-[0.3em]">
+              {vault.tagline}
+            </p>
           </div>
 
-          {/* Stats Section - Always Visible */}
-          <div className="pt-6 space-y-4 border-t border-white/5">
-            {(Object.entries(vault.rarities) as [string, number][]).map(([rarity, chance]) => {
-            const rarityColor = getRarityColor(rarity);
-            return (
-                <div key={rarity} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-wider">
+          {/* 3D Pushable "Show Odds" button (Josh Comeau pattern) */}
+          <div className="flex justify-center mb-4">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowOdds(!showOdds);
+              }}
+              className="group/odds relative rounded-xl border-none p-0 cursor-pointer outline-none"
+              style={{
+                background: showOdds
+                  ? "rgba(255,45,149,0.35)"
+                  : "rgba(255,255,255,0.08)"
+              }}
+            >
+              <span
+                className={`relative block px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest translate-y-[-4px] group-active/odds:translate-y-[-2px] transition-transform duration-[250ms] ease-[cubic-bezier(0.3,0.7,0.4,1)] backdrop-blur-md ${
+                  showOdds
+                    ? "bg-accent/20 border border-accent/40 text-accent"
+                    : "bg-white/10 border border-white/20 text-text-muted"
+                }`}
+              >
+                {showOdds ? "Hide Odds" : "Show Odds"}
+              </span>
+            </button>
+          </div>
+
+          {/* Stats Section — visible only when showOdds is true */}
+          {showOdds && (
+            <div className="pt-6 space-y-4 border-t border-white/5">
+              {(Object.entries(vault.rarities) as [string, number][]).map(
+                ([rarity, chance]) => {
+                  const rarityColor = getRarityColor(rarity);
+                  const cfg =
+                    RARITY_CONFIG[rarity as keyof typeof RARITY_CONFIG];
+                  return (
+                    <div key={rarity} className="space-y-1">
+                      <div className="flex items-center justify-between text-[14px] uppercase font-bold tracking-wider">
                         <span style={{ color: rarityColor }}>{rarity}</span>
                         <span className="text-white">{chance}%</span>
-                    </div>
-                    {/* Wide Stat Bar with Ticks */}
-                    <div className="h-4 w-full bg-black/60 rounded-sm overflow-hidden border border-white/5 relative">
-                        {/* Tick Marks Overlay */}
-                        <div 
-                            className="absolute inset-0 z-20 pointer-events-none opacity-20" 
-                            style={{ backgroundImage: "repeating-linear-gradient(90deg, transparent, transparent 19%, #000 19%, #000 20%)" }} 
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[13px] font-mono text-text-dim">
+                          ${Math.round(vault.price * cfg.minMult)} - $
+                          {Math.round(vault.price * cfg.maxMult)}
+                        </span>
+                      </div>
+                      <div className="h-4 w-full bg-black/60 rounded-sm overflow-hidden border border-white/5 relative">
+                        <div
+                          className="absolute inset-0 z-20 pointer-events-none opacity-20"
+                          style={{
+                            backgroundImage:
+                              "repeating-linear-gradient(90deg, transparent, transparent 19%, #000 19%, #000 20%)"
+                          }}
                         />
-                        
-                        {/* Fill */}
                         <motion.div
-                            initial={{ width: 0 }}
-                            whileInView={{ width: `${chance}%` }}
-                            transition={{ duration: 1, ease: "easeOut" }}
-                            className="h-full relative"
-                            style={{
-                                backgroundColor: rarityColor,
-                                boxShadow: `0 0 10px ${rarityColor}40`
-                            }}
+                          initial={{ width: 0 }}
+                          whileInView={{ width: `${chance}%` }}
+                          transition={{ duration: 1, ease: "easeOut" }}
+                          className="h-full relative"
+                          style={{
+                            backgroundColor: rarityColor,
+                            boxShadow: `0 0 10px ${rarityColor}40`
+                          }}
                         >
-                            <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
+                          <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
                         </motion.div>
+                      </div>
                     </div>
-                </div>
-            );
-            })}
-          </div>
-             
+                  );
+                }
+              )}
+            </div>
+          )}
+
           <div className="mt-8 text-center">
-            <span className="text-[10px] font-mono uppercase tracking-widest animate-pulse" style={{ color: locked ? 'var(--color-text-dim)' : !canAfford ? 'var(--color-error)' : vault.color }}>
-                {locked ? "Sector Locked" : !canAfford ? "Insufficient Credits" : "Click to Initialize"}
+            <span
+              className="text-[10px] font-mono uppercase tracking-widest animate-pulse"
+              style={{ color: !canAfford ? "var(--color-error)" : vault.color }}
+            >
+              {!canAfford ? "Insufficient Credits" : "Click to Initialize"}
             </span>
           </div>
-
         </div>
 
         {/* Caution Stripes at bottom */}
         <div className="h-2 w-full bg-[repeating-linear-gradient(45deg,#000,#000_10px,transparent_10px,transparent_20px)] opacity-20" />
 
         {/* Unaffordable hazard stripe overlay */}
-        {!canAfford && !locked && (
-          <div className="absolute inset-0 z-10 rounded-2xl pointer-events-none" style={{ background: 'repeating-linear-gradient(45deg, transparent, transparent 18px, rgba(255,59,92,0.08) 18px, rgba(255,59,92,0.08) 20px)' }} />
+        {!canAfford && (
+          <div
+            className="absolute inset-0 z-10 rounded-2xl pointer-events-none"
+            style={{
+              background:
+                "repeating-linear-gradient(45deg, transparent, transparent 18px, rgba(255,59,92,0.08) 18px, rgba(255,59,92,0.08) 20px)"
+            }}
+          />
         )}
       </div>
 
       {/* Selection Glow */}
-      {!locked && canAfford && <div className={`absolute inset-0 -z-10 rounded-2xl blur-[60px] opacity-0 group-hover:opacity-20 transition-opacity duration-700`} style={{ backgroundColor: vault.color }} />}
+      {canAfford && (
+        <div
+          className="absolute inset-0 -z-10 rounded-2xl blur-[60px] opacity-0 group-hover:opacity-20 transition-opacity duration-700"
+          style={{ backgroundColor: vault.color }}
+        />
+      )}
     </motion.div>
-  )
+  );
 }
 
 function getRarityColor(rarity: string) {
   switch (rarity) {
-    case 'common': return '#9a9ab0';
-    case 'uncommon': return '#00f0ff';
-    case 'rare': return '#a855f7';
-    case 'legendary': return '#ff2d95';
-    default: return 'white';
+    case "common":
+      return "#9a9ab0";
+    case "uncommon":
+      return "#00f0ff";
+    case "rare":
+      return "#a855f7";
+    case "legendary":
+      return "#ff2d95";
+    default:
+      return "white";
   }
 }
