@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { Navbar } from "../components/Navbar";
 import { VaultGrid } from "../components/VaultGrid";
 import { Footer } from "../components/Footer";
+import { useGame } from "../context/GameContext";
 
 export function PlayPage() {
-  const [balance, setBalance] = useState(100);
-  const [inventoryCount, setInventoryCount] = useState(0);
+  const { balance, inventory, levelInfo } = useGame();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -13,13 +13,9 @@ export function PlayPage() {
 
   return (
     <>
-      <Navbar showHUD balance={balance} inventoryCount={inventoryCount} />
+      <Navbar showHUD balance={balance} inventoryCount={inventory.length} xp={levelInfo.currentXP} level={levelInfo.level} />
       <main>
-        <VaultGrid
-          balance={balance}
-          onBalanceChange={setBalance}
-          onLootAdd={() => setInventoryCount((prev) => prev + 1)}
-        />
+        <VaultGrid />
       </main>
       <Footer />
     </>

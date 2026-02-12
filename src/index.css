@@ -113,6 +113,13 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.7; }
   }
+  .animate-urgency-pulse {
+    animation: urgency-pulse 1s ease-in-out infinite;
+  }
+  @keyframes urgency-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
   /* Josh Comeau 3D pushable button */
   .pushable {
     position: relative;

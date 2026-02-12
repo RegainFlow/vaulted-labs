@@ -5,31 +5,33 @@ import { VAULTS, RARITY_CONFIG, PRODUCT_TYPES, pickRarity, pickValue, pickProduc
 import type { Vault } from "../data/vaults";
 import { VaultCard } from "./VaultCard";
 import { VaultIcon } from "./VaultIcons";
+import { useGame } from "../context/GameContext";
+import type { VaultTierName, Rarity } from "../types/game";
 
-interface VaultGridProps {
-  balance: number;
-  onBalanceChange: (newBalance: number) => void;
-  onLootAdd: () => void;
-}
-
-export function VaultGrid({ balance, onBalanceChange, onLootAdd }: VaultGridProps) {
+export function VaultGrid() {
+  const { balance, purchaseVault, claimCreditsFromReveal, addItem, shipItem } = useGame();
   const navigate = useNavigate();
   const [selectedVault, setSelectedVault] = useState<Vault | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>("Funko Pop!");
 
   const handleSelect = (vault: Vault) => {
-    if (balance < vault.price) return;
-    onBalanceChange(balance - vault.price);
+    if (!purchaseVault(vault.name, vault.price)) return;
     setSelectedVault(vault);
   };
 
   const handleClaim = (amount: number) => {
-    onBalanceChange(balance + amount);
+    claimCreditsFromReveal(amount);
     setSelectedVault(null);
   };
 
-  const handleStore = () => {
-    onLootAdd();
+  const handleStore = (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number) => {
+    addItem(product, vaultTier, rarity, value);
+    setSelectedVault(null);
+  };
+
+  const handleShip = (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number) => {
+    const item = addItem(product, vaultTier, rarity, value);
+    shipItem(item.id);
     setSelectedVault(null);
   };
 
@@ -153,6 +155,7 @@ export function VaultGrid({ balance, onBalanceChange, onLootAdd }: VaultGridProp
             onClose={() => setSelectedVault(null)}
             onClaim={handleClaim}
             onStore={handleStore}
+            onShip={handleShip}
           />
         )}
       </AnimatePresence>
@@ -170,10 +173,11 @@ interface VaultOverlayProps {
   category: string | null;
   onClose: () => void;
   onClaim: (amount: number) => void;
-  onStore: () => void;
+  onStore: (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number) => void;
+  onShip: (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number) => void;
 }
 
-function VaultOverlay({ tier, balance, category, onClaim, onStore }: VaultOverlayProps) {
+function VaultOverlay({ tier, balance, category, onClaim, onStore, onShip }: VaultOverlayProps) {
   const [stage, setStage] = useState<Stage>("paying");
   const [boxState, setBoxState] = useState<"closed" | "opening" | "open">("closed");
 
@@ -206,7 +210,11 @@ function VaultOverlay({ tier, balance, category, onClaim, onStore }: VaultOverla
   };
 
   const handleStore = () => {
-    onStore();
+    onStore(product, tier.name as VaultTierName, wonRarity as Rarity, resultValue);
+  };
+
+  const handleShip = () => {
+    onShip(product, tier.name as VaultTierName, wonRarity as Rarity, resultValue);
   };
 
   return (
@@ -464,7 +472,7 @@ function VaultOverlay({ tier, balance, category, onClaim, onStore }: VaultOverla
                     </svg>
                   }
                   action="Get It Shipped"
-                  onClick={handleStore}
+                  onClick={handleShip}
                   highlight
                   tierColor={tier.color}
                 />
