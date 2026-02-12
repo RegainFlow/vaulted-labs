@@ -39,7 +39,7 @@ export function VaultGrid() {
   const isBroke = balance < minPrice && !selectedVault;
 
   return (
-    <section className="relative overflow-hidden bg-bg px-4 sm:px-6 py-12 md:py-24 pt-24 md:pt-28 min-h-screen">
+    <section className="relative overflow-hidden bg-bg px-4 sm:px-6 py-12 md:py-24 pt-28 md:pt-28 min-h-screen">
       {/* Background pattern */}
       <div
         className="absolute inset-0 opacity-5 pointer-events-none"
