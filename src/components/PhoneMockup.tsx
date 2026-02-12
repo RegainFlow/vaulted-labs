@@ -253,7 +253,7 @@ function RevealScreen() {
         </div>
       </motion.div>
       <div className="text-[10px] font-mono text-[#b9f2ff] tracking-[0.4em] animate-pulse">
-        DECOMPRESSING...
+        OPENING...
       </div>
     </motion.div>
   );
