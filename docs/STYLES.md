@@ -36,12 +36,14 @@ Source of truth: `src/index.css` `@theme` block.
 | `text-muted` | #9a9ab0 | Cool muted descriptions |
 | `text-dim` | #6a6a80 | Dimmed metadata and labels |
 
-### Vault Tiers (4 levels)
+### Vault Tiers (6 levels)
 | Tier | Color | Token | Price |
 |------|-------|-------|-------|
 | Bronze | #cd7f32 | `vault-bronze` | $24 |
 | Silver | #c0c0c0 | `vault-silver` | $38 |
 | Gold | #ffd700 | `vault-gold` | $54 |
+| Platinum | #79b5db | *(inline)* | $68 |
+| Obsidian | #6c4e85 | *(inline)* | $78 |
 | Diamond | #b9f2ff | `vault-diamond` | $86 |
 
 ### Rarity Colors
@@ -78,7 +80,7 @@ Defined in `src/index.css` `@layer utilities`:
 - **Style:** "Cubic" / "Vault Door" aesthetic.
 - **Header:** Metallic gradient background specific to tier, responsive height (`h-40 sm:h-44 md:h-48`).
 - **Body:** Dark surface with rarity probability stat bars, responsive padding (`p-4 sm:p-5 md:p-6`).
-- **Icons:** Custom SVG "Ore/Mineral" icons representing tier material (Bronze nugget, Silver ingot, Gold crystal, Diamond cut).
+- **Icons:** Custom SVG "Ore/Mineral" icons representing tier material (Bronze nugget, Silver ingot, Gold crystal, Platinum hexagonal prism, Obsidian shard, Diamond cut).
 
 ### Inline SVG Illustrations (HowItWorks)
 - **Style:** Stroke-only neon outlines with `feGaussianBlur` glow filters.

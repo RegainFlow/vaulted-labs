@@ -116,8 +116,8 @@ function HomeScreen() {
       <div className="grid grid-cols-2 gap-3">
         {[
           { name: "Bronze", color: "#cd7f32", price: "$24" },
-          { name: "Silver", color: "#e0e0e0", price: "$38" },
           { name: "Gold", color: "#ffd700", price: "$54" },
+          { name: "Platinum", color: "#79b5db", price: "$68" },
           { name: "Diamond", color: "#b9f2ff", price: "$86" }
         ].map((tier) => (
           <div

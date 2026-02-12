@@ -40,6 +40,22 @@ export const VAULTS: Vault[] = [
     rarities: { common: 57.9, uncommon: 29.3, rare: 8.6, legendary: 4.2 }
   },
   {
+    name: "Platinum",
+    price: 68,
+    color: "#79b5db",
+    gradient: "from-[#4a6d85] to-[#a2d4e8]",
+    tagline: "Industrial purity",
+    rarities: { common: 56.5, uncommon: 28.3, rare: 10.9, legendary: 4.3 }
+  },
+  {
+    name: "Obsidian",
+    price: 78,
+    color: "#6c4e85",
+    gradient: "from-[#2e2b36] to-[#6c4e85]",
+    tagline: "Volcanic glass",
+    rarities: { common: 55.8, uncommon: 27.8, rare: 12.0, legendary: 4.4 }
+  },
+  {
     name: "Diamond",
     price: 86,
     color: "#b9f2ff",

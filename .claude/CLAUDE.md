@@ -25,14 +25,16 @@ VaultedLabs is a mystery-box / collectibles platform. This repo contains a "Fake
 
 ## Financial Model Constants
 
-### Vault Levels (4 tiers)
+### Vault Levels (6 tiers)
 
-| Level   | Price | Common | Uncommon | Rare  | Legendary |
-|---------|-------|--------|----------|-------|-----------|
-| Bronze  | $24   | 60.5%  | 18.0%    | 19.8% | 1.7%      |
-| Silver  | $38   | 59.8%  | 18.8%    | 18.3% | 3.1%      |
-| Gold    | $54   | 57.9%  | 29.3%    | 8.6%  | 4.2%      |
-| Diamond | $86   | 55.1%  | 27.3%    | 13.2% | 4.4%      |
+| Level    | Price | Common | Uncommon | Rare  | Legendary |
+|----------|-------|--------|----------|-------|-----------|
+| Bronze   | $24   | 60.5%  | 18.0%    | 19.8% | 1.7%      |
+| Silver   | $38   | 59.8%  | 18.8%    | 18.3% | 3.1%      |
+| Gold     | $54   | 57.9%  | 29.3%    | 8.6%  | 4.2%      |
+| Platinum | $68   | 56.5%  | 28.3%    | 10.9% | 4.3%      |
+| Obsidian | $78   | 55.8%  | 27.8%    | 12.0% | 4.4%      |
+| Diamond  | $86   | 55.1%  | 27.3%    | 13.2% | 4.4%      |
 
 ### Rarity Value Multipliers (of vault price)
 
@@ -109,7 +111,7 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 
 ### Mini Game Page (`/play`)
 1. **Navbar** — Fixed nav with HUD (credits/loot)
-2. **VaultGrid** — 4 vault cards, inline reveal panel (no overlay)
+2. **VaultGrid** — 6 vault cards, inline reveal panel (no overlay)
 3. **Footer** — Brand and copyright
 
 ## Component Files
@@ -133,7 +135,7 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 | `components/IncentiveBanner.tsx`     | $100 credit banner with progress bar                          |
 | `components/WaitlistForm.tsx`        | Email form with Supabase integration                          |
 | `components/Footer.tsx`              | Footer with branding                                          |
-| `data/vaults.ts`                     | Vault tier data (4 tiers), rarity config, helpers             |
+| `data/vaults.ts`                     | Vault tier data (6 tiers), rarity config, helpers             |
 | `hooks/useWaitlistCount.ts`          | Real-time waitlist count hook                                 |
 | `lib/supabase.ts`                    | Supabase client (null when unconfigured)                      |
 | `lib/disposable-emails.ts`           | Disposable email domain checker                               |

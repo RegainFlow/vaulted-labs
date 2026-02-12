@@ -6,7 +6,7 @@ VaultedLabs is a next-generation commerce platform that turns shopping into a hi
 
 - **Gamified Unboxing:** Interactive vault opening experience with tiered rarity systems.
 - **Provably Fair:** Transparent odds displayed for every vault tier.
-- **Tier System:** 4 vault levels (Bronze $24, Silver $38, Gold $54, Diamond $86) with unique visual themes and probability curves.
+- **Tier System:** 6 vault levels (Bronze $24, Silver $38, Gold $54, Platinum $68, Obsidian $78, Diamond $86) with unique visual themes and probability curves.
 - **Rarity Tiers:** Common, Uncommon, Rare, Legendary — each with value multipliers relative to vault price.
 - **Guaranteed Liquidity:** Instant buyback option for platform credits or global shipping for physical items.
 - **Three Liquidity Options:** Hold in your digital collection, ship to your door, or cash out for credits.
@@ -71,10 +71,10 @@ src/
     PlayNowButton.tsx      # 3D pushable CTA button
     VaultGrid.tsx          # Mini game: vault cards + inline reveal panel
     VaultCard.tsx          # Individual vault card with rarity bars
-    VaultIcons.tsx         # SVG mineral icons per tier (Bronze/Silver/Gold/Diamond)
+    VaultIcons.tsx         # SVG mineral icons per tier (Bronze/Silver/Gold/Platinum/Obsidian/Diamond)
     Footer.tsx             # Brand and copyright
   data/
-    vaults.ts              # Vault tier definitions (4 tiers), rarity config, helpers
+    vaults.ts              # Vault tier definitions (6 tiers), rarity config, helpers
   hooks/
     useWaitlistCount.ts    # Real-time Supabase waitlist count
   lib/
@@ -86,12 +86,14 @@ docs/
 
 ## Financial Model Constants
 
-| Vault Level | Price | Common | Uncommon | Rare | Legendary |
-|-------------|-------|--------|----------|------|-----------|
-| Bronze      | $24   | 60.5%  | 18.0%    | 19.8%| 1.7%     |
-| Silver      | $38   | 59.8%  | 18.8%    | 18.3%| 3.1%     |
-| Gold        | $54   | 57.9%  | 29.3%    | 8.6% | 4.2%     |
-| Diamond     | $86   | 55.1%  | 27.3%    | 13.2%| 4.4%     |
+| Vault Level | Price | Common | Uncommon | Rare  | Legendary |
+|-------------|-------|--------|----------|-------|-----------|
+| Bronze      | $24   | 60.5%  | 18.0%    | 19.8% | 1.7%      |
+| Silver      | $38   | 59.8%  | 18.8%    | 18.3% | 3.1%      |
+| Gold        | $54   | 57.9%  | 29.3%    | 8.6%  | 4.2%      |
+| Platinum    | $68   | 56.5%  | 28.3%    | 10.9% | 4.3%      |
+| Obsidian    | $78   | 55.8%  | 27.8%    | 12.0% | 4.4%      |
+| Diamond     | $86   | 55.1%  | 27.3%    | 13.2% | 4.4%      |
 
 **Rarity Value Multipliers** (of vault price):
 - Common: 0.40x – 0.85x
