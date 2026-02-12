@@ -1,11 +1,14 @@
 import { IncentiveBanner } from "./IncentiveBanner";
 import { WaitlistForm } from "./WaitlistForm";
+import { useWaitlistCount } from "../hooks/useWaitlistCount";
 
 export function WaitlistSection() {
+  const { count, loading } = useWaitlistCount();
+
   return (
     <div id="waitlist">
-      <IncentiveBanner />
-      <WaitlistForm />
+      <IncentiveBanner count={count} loading={loading} />
+      <WaitlistForm count={count} />
     </div>
   );
 }

@@ -3,11 +3,16 @@ import { motion, AnimatePresence } from "motion/react";
 import { track } from "@vercel/analytics";
 import { supabase } from "../lib/supabase";
 import { isDisposableEmail } from "../lib/disposable-emails";
+import { getActiveTierInfo } from "../data/vaults";
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const MIN_SUBMIT_MS = 3000;
 
-export function WaitlistForm() {
+interface WaitlistFormProps {
+  count: number;
+}
+
+export function WaitlistForm({ count }: WaitlistFormProps) {
   const [email, setEmail] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -55,20 +60,28 @@ export function WaitlistForm() {
       return;
     }
 
+    const { activeTier } = getActiveTierInfo(count);
+    const tierLabel = activeTier?.label.toLowerCase().replace(/\s/g, "_") ?? null;
+    const creditAmount = activeTier?.creditAmount ?? 0;
+
     try {
       if (!supabase) {
         // Mock success when Supabase isn't configured
         await new Promise(resolve => setTimeout(resolve, 1000));
         setStatus("success");
-        setMessage("ACCESS GRANTED. YOU'RE ON THE SECURE LIST.");
+        setMessage(
+          creditAmount > 0
+            ? `ACCESS GRANTED. $${creditAmount} CREDIT SECURED. YOU'RE ON THE SECURE LIST.`
+            : "ACCESS GRANTED. YOU'RE ON THE SECURE LIST."
+        );
         setEmail("");
-        track("waitlist_signup");
+        track("waitlist_signup", { tier: activeTier?.label, creditAmount });
         return;
       }
 
       const { error } = await supabase
         .from('waitlist')
-        .insert([{ email: cleanEmail }]);
+        .insert([{ email: cleanEmail, credit_amount: creditAmount, tier: tierLabel }]);
 
       if (error) {
         if (error.code === '23505') {
@@ -78,9 +91,13 @@ export function WaitlistForm() {
       }
 
       setStatus("success");
-      setMessage("ACCESS GRANTED. YOU'RE ON THE SECURE LIST.");
+      setMessage(
+        creditAmount > 0
+          ? `ACCESS GRANTED. $${creditAmount} CREDIT SECURED. YOU'RE ON THE SECURE LIST.`
+          : "ACCESS GRANTED. YOU'RE ON THE SECURE LIST."
+      );
       setEmail("");
-      track("waitlist_signup");
+      track("waitlist_signup", { tier: activeTier?.label, creditAmount });
     } catch (err: any) {
       console.error(err);
       setStatus("error");
@@ -154,7 +171,12 @@ export function WaitlistForm() {
                 : "bg-error/10 text-error border-2 border-error/20"
                 }`}
             >
-              {message}
+              <div>{message}</div>
+              {status === "success" && (
+                <div className="mt-3 text-[10px] font-mono text-text-dim tracking-wider font-normal">
+                  Credits are applied to vault purchases and cannot be withdrawn as cash.
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

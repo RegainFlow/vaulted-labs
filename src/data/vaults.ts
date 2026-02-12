@@ -121,4 +121,30 @@ export function pickProduct(): (typeof PRODUCT_TYPES)[number] {
   return PRODUCT_TYPES[Math.floor(Math.random() * PRODUCT_TYPES.length)];
 }
 
-export const WAITLIST_TOTAL_SPOTS = 100;
+export const WAITLIST_TOTAL_SPOTS = 450;
+
+export interface IncentiveTier {
+  label: string;
+  creditAmount: number;
+  spots: number;
+  startAt: number;
+  endAt: number;
+  color: string;
+}
+
+export const INCENTIVE_TIERS: IncentiveTier[] = [
+  { label: "Founder",      creditAmount: 200, spots: 50,  startAt: 1,   endAt: 50,  color: "#ffd700" },
+  { label: "Early Access",  creditAmount: 100, spots: 100, startAt: 51,  endAt: 150, color: "#ff2d95" },
+  { label: "Beta",          creditAmount: 50,  spots: 200, startAt: 151, endAt: 350, color: "#00f0ff" },
+  { label: "Early Bird",    creditAmount: 25,  spots: 100, startAt: 351, endAt: 450, color: "#39ff14" },
+];
+
+export function getActiveTierInfo(count: number) {
+  for (let i = 0; i < INCENTIVE_TIERS.length; i++) {
+    const tier = INCENTIVE_TIERS[i];
+    if (count < tier.endAt) {
+      return { activeTier: tier, activeTierRemaining: tier.endAt - count, completedTiers: i };
+    }
+  }
+  return { activeTier: null, activeTierRemaining: 0, completedTiers: INCENTIVE_TIERS.length };
+}
