@@ -9,11 +9,12 @@ interface VaultCardProps {
   index: number;
   balance: number;
   onSelect: (vault: Vault) => void;
+  disabled?: boolean;
 }
 
-export function VaultCard({ vault, index, balance, onSelect }: VaultCardProps) {
+export function VaultCard({ vault, index, balance, onSelect, disabled = false }: VaultCardProps) {
   const [showOdds, setShowOdds] = useState(false);
-  const canAfford = balance >= vault.price;
+  const canAfford = !disabled && balance >= vault.price;
 
   const handleSelect = () => {
     if (!canAfford) return;
@@ -29,6 +30,7 @@ export function VaultCard({ vault, index, balance, onSelect }: VaultCardProps) {
       whileHover={canAfford ? { y: -10 } : {}}
       onClick={handleSelect}
       className={`group relative h-full ${!canAfford ? "cursor-not-allowed" : "cursor-pointer"}`}
+      {...(vault.name === "Bronze" ? { "data-tutorial": "vault-bronze" } : {})}
     >
       {/* Main Vault Structure */}
       <div

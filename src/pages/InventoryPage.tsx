@@ -1,10 +1,10 @@
 import { useEffect } from "react";
 import { Navbar } from "../components/Navbar";
-import { MarketplaceTabs } from "../components/marketplace/MarketplaceTabs";
+import { InventoryGrid } from "../components/inventory/InventoryGrid";
 import { Footer } from "../components/Footer";
 import { useGame } from "../context/GameContext";
 
-export function MarketplacePage() {
+export function InventoryPage() {
   const { balance, inventory, levelInfo } = useGame();
 
   useEffect(() => {
@@ -18,13 +18,13 @@ export function MarketplacePage() {
         <div className="max-w-6xl mx-auto">
           <div className="mb-6 sm:mb-8 text-center">
             <h1 className="text-xl sm:text-3xl md:text-5xl font-black uppercase tracking-tight text-white mb-1 sm:mb-2">
-              The <span className="text-accent">Market</span>
+              Your <span className="text-neon-cyan">Loot</span>
             </h1>
             <p className="text-text-muted text-xs sm:text-sm max-w-xl mx-auto">
-              Trade, bid, and manage your vault collection.
+              Manage your collection. Hold, ship, or cashout.
             </p>
           </div>
-          <MarketplaceTabs />
+          <InventoryGrid />
         </div>
       </main>
       <Footer />

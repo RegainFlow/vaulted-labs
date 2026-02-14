@@ -8,7 +8,7 @@ Source of truth: `src/index.css` `@theme` block.
   - `font-black` (900): Main headers and large impact text.
   - `font-bold` (700): Subheaders and button text.
   - `font-medium` (500): Body text and descriptive paragraphs.
-  - `font-mono`: Technical labels, stats, and prices for a "protocol/machine" aesthetic.
+  - `font-mono`: Technical labels, stats, prices, countdowns for a "protocol/machine" aesthetic.
 
 ## Color Palette
 
@@ -65,7 +65,7 @@ Source of truth: `src/index.css` `@theme` block.
 Defined in `src/index.css` `@layer utilities`:
 
 - **Glow effects:** `.glow-magenta`, `.glow-cyan` (box-shadow), `.text-glow-magenta`, `.text-glow-cyan`, `.text-glow-white` (text-shadow)
-- **Animations:** `.animate-gradient`, `.animate-vault-spin-slow`, `.animate-vault-glow-pulse`, `.animate-spin-slow`, `.animate-hud-shimmer`
+- **Animations:** `.animate-gradient`, `.animate-vault-spin-slow`, `.animate-vault-glow-pulse`, `.animate-spin-slow`, `.animate-hud-shimmer`, `.animate-urgency-pulse`
 - **Helpers:** `.bg-clip-text` (Firefox fix), `.bg-300%` (gradient sizing)
 - **Buttons:** `.pushable` / `.pushable-shadow` / `.pushable-edge` / `.pushable-front` — 3D pushable button (Josh Comeau pattern), responsive padding (12px 28px mobile, 14px 42px at sm+)
 
@@ -75,17 +75,69 @@ Defined in `src/index.css` `@layer utilities`:
 - **Primary Action:** Rounded corners (`rounded-xl`), uppercase, bold tracking (`tracking-widest`).
 - **Pushable CTA:** 3D depth effect with shadow/edge/front layers, magenta accent gradient.
 - **Interactive:** Hover states include glow (`shadow-[0_0_20px_...]`) and scale transforms.
+- **Marketplace Actions:** Hold/Ship/Cashout buttons use tier-specific colors with `whileHover` Motion animation.
 
-### Cards (Vaults)
+### Cards
+
+#### Vault Cards
 - **Style:** "Cubic" / "Vault Door" aesthetic.
 - **Header:** Metallic gradient background specific to tier, responsive height (`h-40 sm:h-44 md:h-48`).
 - **Body:** Dark surface with rarity probability stat bars, responsive padding (`p-4 sm:p-5 md:p-6`).
 - **Icons:** Custom SVG "Ore/Mineral" icons representing tier material (Bronze nugget, Silver ingot, Gold crystal, Platinum hexagonal prism, Obsidian shard, Diamond cut).
 
+#### Inventory Item Cards
+- **Header:** Vault tier gradient stripe, rarity badge (colored per rarity token).
+- **Body:** VaultIcon, product name, value in credits, status badge (held/shipped/cashed_out).
+- **Actions:** Button row at bottom — Hold (passive), Ship, Cashout, List (Coming Soon badge).
+- **States:** Held items are full color; shipped/cashed_out items are dimmed with `opacity-50`.
+
+#### Listing Cards
+- **Layout:** Item info + seller name (`@username` in muted text) + price in vault-gold.
+- **Buy button:** Full-width accent button, disabled state when insufficient credits.
+
+#### Auction Cards
+- **Layout:** Item info + current bid display + countdown timer.
+- **Timer:** Font-mono, turns `text-error` + `.animate-urgency-pulse` when < 5 minutes.
+- **Bid input:** Number input with "Place Bid" button, validation feedback inline.
+- **Winning indicator:** "You're winning!" badge in neon-green when player is highest bidder.
+
+#### Boss Fight Cards
+- **Locked:** Grayscale filter, padlock SVG icon, "Unlocks at Level N" text, `opacity-50`.
+- **Unlocked:** Glow border (neon-cyan), "FIGHT" button with Coming Soon tooltip on click.
+- **Content:** Boss name (font-black), description (text-muted), reward description.
+
+#### Incentive Tier Cards
+- **Layout:** 2x2 grid mobile, 4-col desktop. Each shows credit amount, tier label, spots info, mini progress bar.
+- **Active tier:** Pulsing dot + glow border in tier color.
+- **Completed tier:** Dimmed, strikethrough credit amount.
+- **Locked tier:** Low opacity + lock icon.
+
 ### Inline SVG Illustrations (HowItWorks)
 - **Style:** Stroke-only neon outlines with `feGaussianBlur` glow filters.
 - **Colors:** Step 1 magenta (#ff2d95), Step 2 cyan (#00f0ff), Step 3 green (#39ff14).
 - **Size:** `viewBox="0 0 120 120"` rendered at 140x140px.
+
+### Navbar
+- **Fixed positioning:** `fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-bg/90 border-b border-white/5`
+- **Height:** `h-14 md:h-20` with mobile HUD bar below on HUD pages
+- **Contextual nav link:** Shows "Market" on /play, "Play" on /market — styled as bordered rounded button with hover glow
+- **HUD mode** (`showHUD=true`):
+  - Desktop: glassmorphic bar with Credits (vault-gold), Loot (neon-cyan), Level (accent) slots
+  - Mobile: compact bar below navbar with same 3 slots in a row
+  - All values use `animate-hud-shimmer` with staggered delays
+- **Landing mode** (`showHUD=false`):
+  - Right side: contextual nav link + "Join" button (scrolls to #waitlist)
+
+### Marketplace Tabs
+- **Tab bar:** Horizontal, uppercase tracking-widest, `text-[10px] md:text-xs`
+- **Active tab:** White text, accent underline (`border-b-2 border-accent`)
+- **Inactive tab:** Muted text, transparent underline, hover brightens
+- **Mobile:** Horizontally scrollable if needed
+
+### Profile Panel
+- **XP bar:** Full-width progress bar with gradient fill (accent to neon-cyan), rounded-full
+- **Level display:** Large number with glow, "Level N" label
+- **Stats:** Row of 3 stat cards (items collected, vaults opened, credits earned)
 
 ## Mobile Responsiveness
 
@@ -100,7 +152,10 @@ Defined in `src/index.css` `@layer utilities`:
 - **Section padding:** `py-12 md:py-24` or `py-16 sm:py-24 md:py-32`
 - **Card padding:** `p-4 sm:p-5 md:p-6` or `p-5 sm:p-6 md:p-8`
 - **Grid gaps:** `gap-4 sm:gap-6 md:gap-8`
-- **Layout:** Single column stacking on mobile, `sm:grid-cols-2` / `md:grid-cols-3` / `lg:grid-cols-2` for desktop
+- **Layout:** Single column stacking on mobile, `sm:grid-cols-2` / `md:grid-cols-3` / `lg:grid-cols-4` for desktop
 - **Vault door (Hero):** `w-[280px] sm:w-[350px] md:w-[500px]` to prevent overflow on narrow screens
 - **Phone mockup:** `max-w-[280px] sm:max-w-[330px]` for small screens
-- **Navbar:** `h-16 sm:h-20` with `px-4 sm:px-6`
+- **Navbar:** `h-14 md:h-20` with `px-4 md:px-6`, mobile HUD as separate row below
+- **Inventory/Listing/Auction grids:** `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`
+- **Incentive cards:** `grid-cols-2 md:grid-cols-4`
+- **Boss fight cards:** `grid-cols-1 sm:grid-cols-2` on mobile, `grid-cols-2 md:grid-cols-4` on desktop

@@ -6,7 +6,7 @@ export function WaitlistSection() {
   const { count, loading } = useWaitlistCount();
 
   return (
-    <div id="waitlist">
+    <div>
       <IncentiveBanner count={count} loading={loading} />
       <WaitlistForm count={count} />
     </div>

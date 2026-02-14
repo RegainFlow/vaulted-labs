@@ -240,7 +240,7 @@ export function Hero() {
           transition={{ delay: 1 }}
           className="mt-10"
         >
-          <PlayNowButton />
+          <PlayNowButton location="hero" />
         </motion.div>
       </div>
     </section>

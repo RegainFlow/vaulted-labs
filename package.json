@@ -12,9 +12,9 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",
     "@tailwindcss/vite": "^4.1.18",
-    "@vercel/analytics": "^1.6.1",
     "disposable-email-domains": "^1.0.62",
     "motion": "^12.33.0",
+    "posthog-js": "^1.347.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.13.0",

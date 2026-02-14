@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import type { Auction } from "../../types/game";
 import { RARITY_CONFIG } from "../../data/vaults";
 import { VaultIcon } from "../VaultIcons";
+import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
 
 interface AuctionCardProps {
   auction: Auction;
@@ -63,6 +64,7 @@ export function AuctionCard({ auction, balance, onBid }: AuctionCardProps) {
       setBidError("Insufficient credits");
       return;
     }
+    trackEvent(AnalyticsEvents.AUCTION_BID, { auction_id: auction.id, bid_amount: amount, item_rarity: item.rarity, vault_tier: item.vaultTier, current_bid: currentBid });
     const success = onBid(auction.id, amount);
     if (success) {
       setBidAmount("");

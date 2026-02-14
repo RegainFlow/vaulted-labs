@@ -1,32 +1,27 @@
 import { motion } from "motion/react";
 
+/* ─── SVG Illustrations (line-art + glow filter) ─── */
+
 const VaultIllustration = () => (
   <svg width="140" height="140" viewBox="0 0 120 120" fill="none">
     <defs>
-      <filter id="glow-magenta" x="-50%" y="-50%" width="200%" height="200%">
+      <filter id="glow-magenta-hiw" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
         <feComposite in="SourceGraphic" in2="blur" operator="over" />
       </filter>
     </defs>
-    <g filter="url(#glow-magenta)" stroke="#ff2d95" strokeWidth="2">
-      {/* Safe body */}
+    <g filter="url(#glow-magenta-hiw)" stroke="#ff2d95" strokeWidth="2">
       <rect x="20" y="25" width="80" height="70" rx="6" />
-      {/* Inner door panel */}
       <rect x="30" y="33" width="60" height="54" rx="3" />
-      {/* Combination dial outer */}
       <circle cx="60" cy="60" r="16" />
-      {/* Dial inner */}
       <circle cx="60" cy="60" r="6" />
-      {/* Dial tick marks */}
       <line x1="60" y1="44" x2="60" y2="48" />
       <line x1="60" y1="72" x2="60" y2="76" />
       <line x1="44" y1="60" x2="48" y2="60" />
       <line x1="72" y1="60" x2="76" y2="60" />
-      {/* Handle */}
       <line x1="84" y1="55" x2="95" y2="55" strokeLinecap="round" />
       <line x1="84" y1="65" x2="95" y2="65" strokeLinecap="round" />
       <line x1="95" y1="55" x2="95" y2="65" strokeLinecap="round" />
-      {/* Hinges */}
       <rect x="20" y="35" width="4" height="8" rx="1" />
       <rect x="20" y="77" width="4" height="8" rx="1" />
     </g>
@@ -36,35 +31,117 @@ const VaultIllustration = () => (
 const MysteryBoxIllustration = () => (
   <svg width="140" height="140" viewBox="0 0 120 120" fill="none">
     <defs>
-      <filter id="glow-cyan" x="-50%" y="-50%" width="200%" height="200%">
+      <filter id="glow-cyan-hiw" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
         <feComposite in="SourceGraphic" in2="blur" operator="over" />
       </filter>
     </defs>
-    <g filter="url(#glow-cyan)" stroke="#00f0ff" strokeWidth="2">
-      {/* Box body — front face */}
+    <g filter="url(#glow-cyan-hiw)" stroke="#00f0ff" strokeWidth="2">
       <path d="M30 60 L60 72 L90 60 L90 95 L60 107 L30 95 Z" />
-      {/* Box body — center divider */}
       <line x1="60" y1="72" x2="60" y2="107" />
-      {/* Box top edge — back */}
       <line x1="30" y1="60" x2="60" y2="48" />
       <line x1="90" y1="60" x2="60" y2="48" />
-      {/* Open lid — left flap hinged back */}
       <path d="M30 60 L18 38 L48 26 L60 48" />
-      {/* Open lid — right flap hinged back */}
       <path d="M90 60 L102 38 L72 26 L60 48" />
-      {/* Sparkle top center */}
       <line x1="60" y1="18" x2="60" y2="8" strokeLinecap="round" />
       <line x1="55" y1="13" x2="65" y2="13" strokeLinecap="round" />
-      {/* Sparkle top left */}
       <line x1="36" y1="24" x2="30" y2="16" strokeLinecap="round" />
       <line x1="29" y1="22" x2="37" y2="18" strokeLinecap="round" />
-      {/* Sparkle top right */}
       <line x1="84" y1="24" x2="90" y2="16" strokeLinecap="round" />
       <line x1="91" y1="22" x2="83" y2="18" strokeLinecap="round" />
-      {/* Small glow rays */}
-      <line x1="46" y1="10" x2="43" y2="4" strokeLinecap="round" strokeWidth="1.5" />
-      <line x1="74" y1="10" x2="77" y2="4" strokeLinecap="round" strokeWidth="1.5" />
+    </g>
+  </svg>
+);
+
+const DecisionIllustration = () => (
+  <svg width="140" height="140" viewBox="0 0 120 120" fill="none">
+    <defs>
+      <filter id="glow-green-hiw" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+    </defs>
+    <g filter="url(#glow-green-hiw)" stroke="#39ff14" strokeWidth="2">
+      {/* Central circle — decision point */}
+      <circle cx="60" cy="40" r="12" />
+      <circle cx="60" cy="40" r="4" fill="#39ff14" />
+      {/* Three branching paths */}
+      <path d="M48 48 L25 80" strokeLinecap="round" />
+      <path d="M60 52 L60 80" strokeLinecap="round" />
+      <path d="M72 48 L95 80" strokeLinecap="round" />
+      {/* Store icon — left (box) */}
+      <rect x="14" y="82" width="22" height="18" rx="3" />
+      <line x1="14" y1="90" x2="36" y2="90" />
+      {/* Ship icon — center (truck) */}
+      <rect x="47" y="82" width="18" height="18" rx="2" />
+      <path d="M65 90 L74 90 L78 96 L78 100 L65 100" />
+      <circle cx="52" cy="103" r="3" />
+      <circle cx="73" cy="103" r="3" />
+      {/* Cashout icon — right (coins) */}
+      <ellipse cx="95" cy="88" rx="12" ry="5" />
+      <path d="M83 88 L83 94" />
+      <path d="M107 88 L107 94" />
+      <path d="M83 94 Q83 99 95 99 Q107 99 107 94" />
+    </g>
+  </svg>
+);
+
+const ShopIllustration = () => (
+  <svg width="140" height="140" viewBox="0 0 120 120" fill="none">
+    <defs>
+      <filter id="glow-magenta2-hiw" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+    </defs>
+    <g filter="url(#glow-magenta2-hiw)" stroke="#ff2d95" strokeWidth="2">
+      {/* Storefront roof */}
+      <path d="M15 50 L60 25 L105 50" strokeLinecap="round" />
+      <line x1="15" y1="50" x2="105" y2="50" />
+      {/* Awning scallops */}
+      <path d="M20 50 Q30 62 40 50" />
+      <path d="M40 50 Q50 62 60 50" />
+      <path d="M60 50 Q70 62 80 50" />
+      <path d="M80 50 Q90 62 100 50" />
+      {/* Building body */}
+      <rect x="20" y="50" width="80" height="48" rx="2" />
+      {/* Door */}
+      <rect x="46" y="70" width="28" height="28" rx="2" />
+      <circle cx="70" cy="84" r="2" />
+      {/* Window left */}
+      <rect x="26" y="58" width="16" height="12" rx="1" />
+      <line x1="34" y1="58" x2="34" y2="70" />
+      {/* Price tag */}
+      <circle cx="96" cy="36" r="8" />
+      <line x1="96" y1="32" x2="96" y2="40" strokeLinecap="round" strokeWidth="1.5" />
+      <line x1="93" y1="35" x2="99" y2="35" strokeLinecap="round" strokeWidth="1.5" />
+    </g>
+  </svg>
+);
+
+const LevelUpIllustration = () => (
+  <svg width="140" height="140" viewBox="0 0 120 120" fill="none">
+    <defs>
+      <filter id="glow-cyan2-hiw" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+        <feComposite in="SourceGraphic" in2="blur" operator="over" />
+      </filter>
+    </defs>
+    <g filter="url(#glow-cyan2-hiw)" stroke="#00f0ff" strokeWidth="2">
+      {/* Star */}
+      <path d="M60 15 L67 40 L92 40 L72 55 L79 80 L60 65 L41 80 L48 55 L28 40 L53 40 Z" />
+      {/* Progress arc */}
+      <path d="M30 95 A35 35 0 0 1 90 95" strokeDasharray="6 4" />
+      {/* Progress fill */}
+      <path d="M30 95 A35 35 0 0 1 75 87" strokeWidth="4" strokeLinecap="round" />
+      {/* Up arrow */}
+      <line x1="60" y1="105" x2="60" y2="88" strokeLinecap="round" strokeWidth="2.5" />
+      <polyline points="52 96 60 88 68 96" strokeLinecap="round" strokeWidth="2.5" />
+      {/* XP sparkles */}
+      <line x1="95" y1="25" x2="100" y2="20" strokeLinecap="round" strokeWidth="1.5" />
+      <line x1="100" y1="25" x2="95" y2="20" strokeLinecap="round" strokeWidth="1.5" />
+      <line x1="20" y1="30" x2="25" y2="25" strokeLinecap="round" strokeWidth="1.5" />
+      <line x1="25" y1="30" x2="20" y2="25" strokeLinecap="round" strokeWidth="1.5" />
     </g>
   </svg>
 );
@@ -72,105 +149,164 @@ const MysteryBoxIllustration = () => (
 const CoinsIllustration = () => (
   <svg width="140" height="140" viewBox="0 0 120 120" fill="none">
     <defs>
-      <filter id="glow-green" x="-50%" y="-50%" width="200%" height="200%">
+      <filter id="glow-gold-hiw" x="-50%" y="-50%" width="200%" height="200%">
         <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
         <feComposite in="SourceGraphic" in2="blur" operator="over" />
       </filter>
     </defs>
-    <g filter="url(#glow-green)" stroke="#39ff14" strokeWidth="2">
-      {/* Coin stack — back (top of pile) */}
-      <ellipse cx="60" cy="38" rx="24" ry="9" />
-      <path d="M36 38 L36 44" />
-      <path d="M84 38 L84 44" />
-      <path d="M36 44 Q36 53 60 53 Q84 53 84 44" />
-      {/* Coin stack — middle */}
-      <path d="M36 44 L36 56" />
-      <path d="M84 44 L84 56" />
-      <path d="M36 56 Q36 65 60 65 Q84 65 84 56" />
-      {/* Coin stack — front (bottom of pile) */}
-      <path d="M36 56 L36 68" />
-      <path d="M84 56 L84 68" />
-      <path d="M36 68 Q36 77 60 77 Q84 77 84 68" />
-      {/* Dollar sign on top coin face */}
-      <path d="M57 34 Q54 35 54 37 Q54 39 60 39 Q66 39 66 41 Q66 43 63 44" strokeLinecap="round" strokeWidth="1.5" />
-      <line x1="60" y1="31" x2="60" y2="47" strokeLinecap="round" strokeWidth="1.5" />
-      {/* Scattered loose coins — left */}
-      <ellipse cx="28" cy="82" rx="14" ry="5" />
-      <path d="M14 82 L14 86" />
-      <path d="M42 82 L42 86" />
-      <path d="M14 86 Q14 91 28 91 Q42 91 42 86" />
-      {/* Scattered loose coins — right */}
-      <ellipse cx="82" cy="80" rx="12" ry="4.5" />
-      <path d="M70 80 L70 84" />
-      <path d="M94 80 L94 84" />
-      <path d="M70 84 Q70 88.5 82 88.5 Q94 88.5 94 84" />
-      {/* Tilted coin — leaning against pile */}
-      <ellipse cx="48" cy="86" rx="4" ry="10" transform="rotate(-15 48 86)" />
+    <g filter="url(#glow-gold-hiw)" stroke="#ffd700" strokeWidth="2">
+      {/* Circular arrow — closed loop */}
+      <path d="M60 20 A35 35 0 1 1 30 75" fill="none" />
+      <polyline points="22 68 30 75 37 68" strokeLinecap="round" />
+      {/* Center coin */}
+      <circle cx="60" cy="58" r="20" />
+      <circle cx="60" cy="58" r="14" />
+      {/* Dollar sign */}
+      <path d="M57 52 Q54 53 54 55 Q54 57 60 57 Q66 57 66 59 Q66 61 63 62" strokeLinecap="round" strokeWidth="1.5" />
+      <line x1="60" y1="49" x2="60" y2="65" strokeLinecap="round" strokeWidth="1.5" />
+      {/* Small coins orbiting */}
+      <circle cx="30" cy="40" r="8" />
+      <circle cx="90" cy="40" r="8" />
+      <circle cx="38" cy="88" r="6" />
+      <circle cx="82" cy="88" r="6" />
     </g>
   </svg>
 );
 
-const steps = [
+/* ─── Step data ─── */
+
+interface Step {
+  number: string;
+  title: string;
+  description: string;
+  illustration: React.ReactNode;
+  iconColor: string;
+  icon: React.ReactNode;
+}
+
+const vaultSteps: Step[] = [
   {
     number: "01",
     title: "Pick Your Vault",
-    description: "Choose from 6 vaults ranging from bronze - diamond.",
+    description:
+      "Choose from 6 tiers — Bronze ($24) to Diamond ($86). Every vault shows exact drop rates before you open. No hidden odds.",
     illustration: <VaultIllustration />,
+    iconColor: "text-accent",
     icon: (
-      <svg
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        className="text-accent"
-      >
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent">
         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
       </svg>
-    )
+    ),
   },
   {
     number: "02",
-    title: "Reveal Your Loot",
-    description: "Every vault contains a real physical collectible.",
+    title: "Reveal Your Collectible",
+    description:
+      "Select a mystery box and watch the reveal. Every vault contains a real, licensed collectible — from common pulls to legendary finds.",
     illustration: <MysteryBoxIllustration />,
+    iconColor: "text-neon-cyan",
     icon: (
-      <svg
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        className="text-neon-cyan"
-      >
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-neon-cyan">
         <path d="M6 3h12l4 6-10 13L2 9z" />
       </svg>
-    )
+    ),
   },
   {
     number: "03",
-    title: "Your Choice",
+    title: "Hold, Ship, or Cashout",
     description:
-      "Store it in your inventory, ship it to your door, or sell it.",
-    illustration: <CoinsIllustration />,
+      "Your item, your call. Store it in your vault, ship it to your door with real tracking, or cash out instantly for credits.",
+    illustration: <DecisionIllustration />,
+    iconColor: "text-neon-green",
     icon: (
-      <svg
-        width="28"
-        height="28"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        className="text-neon-green"
-      >
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-neon-green">
         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
         <polyline points="22 4 12 14.01 9 11.01" />
       </svg>
-    )
-  }
+    ),
+  },
 ];
+
+const platformSteps: Step[] = [
+  {
+    number: "04",
+    title: "Trade on the Shop",
+    description:
+      "Browse the marketplace to buy collectibles from other players. Bid on auctions. Build the collection you actually want.",
+    illustration: <ShopIllustration />,
+    iconColor: "text-accent",
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent">
+        <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <path d="M16 10a4 4 0 01-8 0" />
+      </svg>
+    ),
+  },
+  {
+    number: "05",
+    title: "Level Up & Earn Rewards",
+    description:
+      "Earn XP with every vault and purchase. Complete quests, unlock boss fights, and climb the ranks. The more you play, the more you earn.",
+    illustration: <LevelUpIllustration />,
+    iconColor: "text-neon-cyan",
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-neon-cyan">
+        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+      </svg>
+    ),
+  },
+  {
+    number: "06",
+    title: "Credits Fuel Everything",
+    description:
+      "Earn credits from cashouts, quests, and rewards. Spend them on vaults, marketplace items, and bids. The loop never stops.",
+    illustration: <CoinsIllustration />,
+    iconColor: "text-vault-gold",
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-vault-gold">
+        <line x1="12" y1="1" x2="12" y2="23" />
+        <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
+      </svg>
+    ),
+  },
+];
+
+/* ─── Step Card Component ─── */
+
+function StepCard({ step, index }: { step: Step; index: number }) {
+  return (
+    <motion.div
+      key={step.number}
+      initial={{ opacity: 0, y: 30 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ delay: index * 0.1 }}
+      className="relative p-5 sm:p-6 md:p-8 rounded-2xl bg-surface border border-white/5 hover:border-white/10 transition-colors group"
+    >
+      <div className="absolute -top-4 left-5 sm:left-6 md:left-8 px-3 py-1 bg-accent text-white text-xs font-black rounded-lg shadow-[0_0_15px_rgba(255,45,149,0.3)]">
+        {step.number}
+      </div>
+
+      <div className="mt-4 mb-4 h-40 sm:h-44 md:h-48 rounded-xl overflow-hidden bg-surface-elevated flex items-center justify-center">
+        {step.illustration}
+      </div>
+
+      <div className="mb-6 w-14 h-14 rounded-xl bg-surface-elevated border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+        {step.icon}
+      </div>
+
+      <h3 className="text-xl font-black text-white uppercase tracking-wide mb-3">
+        {step.title}
+      </h3>
+      <p className="text-text-muted leading-relaxed">
+        {step.description}
+      </p>
+    </motion.div>
+  );
+}
+
+/* ─── Section Component ─── */
 
 export function HowItWorks() {
   return (
@@ -181,7 +317,7 @@ export function HowItWorks() {
         style={{
           backgroundImage:
             "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
-          backgroundSize: "40px 40px"
+          backgroundSize: "40px 40px",
         }}
       />
 
@@ -197,37 +333,46 @@ export function HowItWorks() {
           </div>
         </motion.div>
 
+        {/* Row 1: The Vault */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="mb-4"
+        >
+          <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-text-dim mb-6 text-center">
+            The Vault
+          </p>
+        </motion.div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 mb-12 md:mb-16">
+          {vaultSteps.map((step, i) => (
+            <StepCard key={step.number} step={step} index={i} />
+          ))}
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center gap-4 mb-12 md:mb-16">
+          <div className="flex-1 h-px bg-white/5" />
+          <div className="w-2 h-2 rounded-full bg-accent/30" />
+          <div className="flex-1 h-px bg-white/5" />
+        </div>
+
+        {/* Row 2: The Platform */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          className="mb-4"
+        >
+          <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.3em] text-text-dim mb-6 text-center">
+            The Platform
+          </p>
+        </motion.div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-          {steps.map((step, i) => (
-            <motion.div
-              key={step.number}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: i * 0.15 }}
-              className="relative p-5 sm:p-6 md:p-8 rounded-2xl bg-surface border border-white/5 hover:border-white/10 transition-colors group"
-            >
-              {/* Step number badge */}
-              <div className="absolute -top-4 left-5 sm:left-6 md:left-8 px-3 py-1 bg-accent text-white text-xs font-black rounded-lg shadow-[0_0_15px_rgba(255,45,149,0.3)]">
-                {step.number}
-              </div>
-
-              {/* Step illustration */}
-              <div className="mt-4 mb-4 h-40 sm:h-44 md:h-48 rounded-xl overflow-hidden bg-surface-elevated flex items-center justify-center">
-                {step.illustration}
-              </div>
-
-              <div className="mb-6 w-14 h-14 rounded-xl bg-surface-elevated border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
-                {step.icon}
-              </div>
-
-              <h3 className="text-xl font-black text-white uppercase tracking-wide mb-3">
-                {step.title}
-              </h3>
-              <p className="text-text-muted leading-relaxed">
-                {step.description}
-              </p>
-            </motion.div>
+          {platformSteps.map((step, i) => (
+            <StepCard key={step.number} step={step} index={i} />
           ))}
         </div>
       </div>

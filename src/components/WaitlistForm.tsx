@@ -1,23 +1,31 @@
 import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { track } from "@vercel/analytics";
-import { supabase } from "../lib/supabase";
 import { isDisposableEmail } from "../lib/disposable-emails";
-import { getActiveTierInfo } from "../data/vaults";
+import { trackEvent, AnalyticsEvents } from "../lib/analytics";
+import { TurnstileWidget } from "./TurnstileWidget";
+import type { TurnstileWidgetHandle } from "./TurnstileWidget";
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const MIN_SUBMIT_MS = 3000;
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as
+  | string
+  | undefined;
 
 interface WaitlistFormProps {
   count: number;
 }
 
-export function WaitlistForm({ count }: WaitlistFormProps) {
+export function WaitlistForm({ count: _count }: WaitlistFormProps) {
   const [email, setEmail] = useState("");
   const [honeypot, setHoneypot] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [message, setMessage] = useState("");
   const mountedAt = useRef(Date.now());
+  const turnstileRef = useRef<TurnstileWidgetHandle>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,10 +33,11 @@ export function WaitlistForm({ count }: WaitlistFormProps) {
 
     setStatus("loading");
     setMessage("");
+    trackEvent(AnalyticsEvents.WAITLIST_SUBMIT);
 
     // --- Anti-bot: honeypot ---
     if (honeypot) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setStatus("success");
       setMessage("ACCESS GRANTED. YOU'RE ON THE SECURE LIST.");
       setEmail("");
@@ -37,7 +46,7 @@ export function WaitlistForm({ count }: WaitlistFormProps) {
 
     // --- Anti-bot: timing ---
     if (Date.now() - mountedAt.current < MIN_SUBMIT_MS) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setStatus("success");
       setMessage("ACCESS GRANTED. YOU'RE ON THE SECURE LIST.");
       setEmail("");
@@ -50,6 +59,9 @@ export function WaitlistForm({ count }: WaitlistFormProps) {
     if (!EMAIL_RE.test(cleanEmail)) {
       setStatus("error");
       setMessage("INVALID EMAIL FORMAT. CHECK YOUR CREDENTIALS.");
+      trackEvent(AnalyticsEvents.WAITLIST_SUBMIT_ERROR, {
+        reason: "invalid_email"
+      });
       return;
     }
 
@@ -57,51 +69,73 @@ export function WaitlistForm({ count }: WaitlistFormProps) {
     if (isDisposableEmail(cleanEmail)) {
       setStatus("error");
       setMessage("DISPOSABLE EMAILS NOT ACCEPTED. USE A PERMANENT ADDRESS.");
+      trackEvent(AnalyticsEvents.WAITLIST_SUBMIT_ERROR, {
+        reason: "disposable_email"
+      });
       return;
     }
 
-    const { activeTier } = getActiveTierInfo(count);
-    const tierLabel = activeTier?.label.toLowerCase().replace(/\s/g, "_") ?? null;
-    const creditAmount = activeTier?.creditAmount ?? 0;
+    // --- Graceful degradation: no Supabase URL → mock success ---
+    if (!SUPABASE_URL) {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setStatus("success");
+      setMessage("ACCESS GRANTED. YOU'RE ON THE SECURE LIST.");
+      setEmail("");
+      trackEvent(AnalyticsEvents.WAITLIST_SUBMIT_SUCCESS, {
+        tier: "mock",
+        credit_amount: 0
+      });
+      return;
+    }
+
+    // --- Get Turnstile token (null if widget not rendered) ---
+    const turnstileToken = turnstileRef.current?.getResponse() ?? null;
 
     try {
-      if (!supabase) {
-        // Mock success when Supabase isn't configured
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setStatus("success");
-        setMessage(
-          creditAmount > 0
-            ? `ACCESS GRANTED. $${creditAmount} CREDIT SECURED. YOU'RE ON THE SECURE LIST.`
-            : "ACCESS GRANTED. YOU'RE ON THE SECURE LIST."
-        );
-        setEmail("");
-        track("waitlist_signup", { tier: activeTier?.label, creditAmount });
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/waitlist-signup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: cleanEmail, turnstileToken })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        const reasonMap: Record<number, string> = {
+          403: "bot_detected",
+          409: "duplicate_email",
+          429: "rate_limited",
+          400: "validation_error"
+        };
+        const reason = reasonMap[res.status] ?? "system_error";
+
+        setStatus("error");
+        setMessage(data.error ?? "SYSTEM ERROR. PLEASE TRY AGAIN.");
+        trackEvent(AnalyticsEvents.WAITLIST_SUBMIT_ERROR, { reason });
+
+        // Reset Turnstile so user can retry
+        turnstileRef.current?.reset();
         return;
-      }
-
-      const { error } = await supabase
-        .from('waitlist')
-        .insert([{ email: cleanEmail, credit_amount: creditAmount, tier: tierLabel }]);
-
-      if (error) {
-        if (error.code === '23505') {
-          throw new Error("THIS CREDENTIAL IS ALREADY REGISTERED.");
-        }
-        throw error;
       }
 
       setStatus("success");
       setMessage(
-        creditAmount > 0
-          ? `ACCESS GRANTED. $${creditAmount} CREDIT SECURED. YOU'RE ON THE SECURE LIST.`
+        data.creditAmount > 0
+          ? `ACCESS GRANTED. $${data.creditAmount} CREDIT SECURED. YOU'RE ON THE SECURE LIST.`
           : "ACCESS GRANTED. YOU'RE ON THE SECURE LIST."
       );
       setEmail("");
-      track("waitlist_signup", { tier: activeTier?.label, creditAmount });
-    } catch (err: any) {
-      console.error(err);
+      trackEvent(AnalyticsEvents.WAITLIST_SUBMIT_SUCCESS, {
+        tier: data.tier,
+        credit_amount: data.creditAmount
+      });
+    } catch {
       setStatus("error");
-      setMessage(err.message || "SYSTEM ERROR. PLEASE TRY AGAIN.");
+      setMessage("SYSTEM ERROR. PLEASE TRY AGAIN.");
+      trackEvent(AnalyticsEvents.WAITLIST_SUBMIT_ERROR, {
+        reason: "system_error"
+      });
+      turnstileRef.current?.reset();
     }
   };
 
@@ -116,13 +150,20 @@ export function WaitlistForm({ count }: WaitlistFormProps) {
           <div className="inline-block px-4 py-1.5 bg-accent/10 border border-accent/20 rounded-full text-accent text-[10px] font-black uppercase tracking-[0.3em] mb-6">
             Terminal Access
           </div>
-          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white uppercase italic tracking-tighter mb-4">Secure Your <span className="text-accent">Beta Slot</span></h2>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-white uppercase italic tracking-tighter mb-4">
+            Secure Your <span className="text-accent">Beta Slot</span>
+          </h2>
           <p className="text-text-muted text-base md:text-lg">
-            Founding member registration is currently limited. Provide your credentials to secure priority vault access.
+            Founding member registration is currently limited. Provide your
+            credentials to secure priority vault access.
           </p>
         </motion.div>
 
-        <form onSubmit={handleSubmit} className="relative max-w-md mx-auto">
+        <form
+          id="waitlist-form"
+          onSubmit={handleSubmit}
+          className="relative max-w-md mx-auto"
+        >
           {/* Honeypot — invisible to real users */}
           <input
             type="text"
@@ -154,10 +195,14 @@ export function WaitlistForm({ count }: WaitlistFormProps) {
               {status === "loading" ? (
                 <div className="w-5 h-5 border-3 border-white/30 border-t-white rounded-full animate-spin" />
               ) : (
-                <span className="relative z-10 font-black text-xs uppercase tracking-widest">Join</span>
+                <span className="relative z-10 font-black text-xs uppercase tracking-widest">
+                  Join
+                </span>
               )}
             </button>
           </div>
+
+          <TurnstileWidget ref={turnstileRef} siteKey={TURNSTILE_SITE_KEY} />
         </form>
 
         <AnimatePresence>
@@ -166,15 +211,17 @@ export function WaitlistForm({ count }: WaitlistFormProps) {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className={`p-6 rounded-xl text-xs font-black tracking-widest ${status === "success"
-                ? "bg-accent/10 text-accent border-2 border-accent/20 shadow-[0_0_30px_rgba(255,45,149,0.1)]"
-                : "bg-error/10 text-error border-2 border-error/20"
-                }`}
+              className={`p-6 rounded-xl text-xs font-black tracking-widest ${
+                status === "success"
+                  ? "bg-accent/10 text-accent border-2 border-accent/20 shadow-[0_0_30px_rgba(255,45,149,0.1)]"
+                  : "bg-error/10 text-error border-2 border-error/20"
+              }`}
             >
               <div>{message}</div>
               {status === "success" && (
                 <div className="mt-3 text-[10px] font-mono text-text-dim tracking-wider font-normal">
-                  Credits are applied to vault purchases and cannot be withdrawn as cash.
+                  Credits are applied to vault purchases and cannot be withdrawn
+                  as cash.
                 </div>
               )}
             </motion.div>
@@ -182,9 +229,15 @@ export function WaitlistForm({ count }: WaitlistFormProps) {
         </AnimatePresence>
 
         <div className="pt-8 flex items-center justify-center gap-4 sm:gap-8 opacity-30 grayscale">
-            <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white">Encrypted</div>
-            <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white">Vaulted-SSL</div>
-            <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white">No Spam</div>
+          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white">
+            Encrypted
+          </div>
+          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white">
+            Vaulted-SSL
+          </div>
+          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-white">
+            No Spam
+          </div>
         </div>
       </div>
     </section>

@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import type { MarketplaceListing } from "../../types/game";
 import { RARITY_CONFIG } from "../../data/vaults";
 import { VaultIcon } from "../VaultIcons";
+import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
 
 interface ListingCardProps {
   listing: MarketplaceListing;
@@ -76,7 +77,7 @@ export function ListingCard({ listing, balance, onBuy }: ListingCardProps) {
             <span className="text-base sm:text-lg font-mono font-black text-vault-gold">${askingPrice}</span>
           </div>
           <button
-            onClick={() => canAfford && onBuy(listing.id)}
+            onClick={() => { if (!canAfford) return; trackEvent(AnalyticsEvents.MARKETPLACE_BUY, { listing_id: listing.id, item_rarity: item.rarity, vault_tier: item.vaultTier, price: askingPrice }); onBuy(listing.id); }}
             disabled={!canAfford}
             className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest border transition-all shrink-0 ${
               canAfford

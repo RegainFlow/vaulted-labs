@@ -20,7 +20,7 @@ export function CTASection() {
           Choose your category, pick a vault, and reveal your loot.
         </p>
         <div className="flex justify-center pb-16">
-          <PlayNowButton />
+          <PlayNowButton location="cta_section" />
         </div>
       </motion.div>
     </section>

@@ -1,21 +1,18 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { InventoryGrid } from "./InventoryGrid";
+import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
 import { ListingGrid } from "./ListingGrid";
 import { AuctionGrid } from "./AuctionGrid";
-import { ProfilePanel } from "./ProfilePanel";
 
 const TABS = [
-  { id: "inventory", label: "Inventory", mobileLabel: "Items" },
   { id: "marketplace", label: "Marketplace", mobileLabel: "Shop" },
   { id: "auctions", label: "Auctions", mobileLabel: "Bids" },
-  { id: "profile", label: "Profile", mobileLabel: "Profile" },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
 
-export function MarketplaceTabs() {
-  const [activeTab, setActiveTab] = useState<TabId>("inventory");
+export function ShopTabs() {
+  const [activeTab, setActiveTab] = useState<TabId>("marketplace");
 
   return (
     <div>
@@ -26,7 +23,7 @@ export function MarketplaceTabs() {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => { trackEvent(AnalyticsEvents.TAB_SWITCH, { tab: tab.id }); setActiveTab(tab.id); }}
               className={`relative flex-1 px-2 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-bold uppercase tracking-wider sm:tracking-widest whitespace-nowrap transition-all duration-200 cursor-pointer ${
                 isActive
                   ? "text-white bg-surface-elevated border border-white/10 shadow-lg"
@@ -37,7 +34,7 @@ export function MarketplaceTabs() {
               <span className="hidden sm:inline">{tab.label}</span>
               {isActive && (
                 <motion.div
-                  layoutId="tab-indicator"
+                  layoutId="shop-tab-indicator"
                   className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-accent"
                   style={{ boxShadow: "0 0 10px rgba(255,45,149,0.5)" }}
                 />
@@ -54,10 +51,8 @@ export function MarketplaceTabs() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.2 }}
       >
-        {activeTab === "inventory" && <InventoryGrid />}
         {activeTab === "marketplace" && <ListingGrid />}
         {activeTab === "auctions" && <AuctionGrid />}
-        {activeTab === "profile" && <ProfilePanel />}
       </motion.div>
     </div>
   );
