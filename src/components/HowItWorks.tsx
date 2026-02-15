@@ -5,7 +5,13 @@ import { motion } from "motion/react";
 const VaultIllustration = () => (
   <svg width="140" height="140" viewBox="0 0 120 120" fill="none">
     <defs>
-      <filter id="glow-magenta-hiw" x="-50%" y="-50%" width="200%" height="200%">
+      <filter
+        id="glow-magenta-hiw"
+        x="-50%"
+        y="-50%"
+        width="200%"
+        height="200%"
+      >
         <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
         <feComposite in="SourceGraphic" in2="blur" operator="over" />
       </filter>
@@ -89,7 +95,13 @@ const DecisionIllustration = () => (
 const ShopIllustration = () => (
   <svg width="140" height="140" viewBox="0 0 120 120" fill="none">
     <defs>
-      <filter id="glow-magenta2-hiw" x="-50%" y="-50%" width="200%" height="200%">
+      <filter
+        id="glow-magenta2-hiw"
+        x="-50%"
+        y="-50%"
+        width="200%"
+        height="200%"
+      >
         <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
         <feComposite in="SourceGraphic" in2="blur" operator="over" />
       </filter>
@@ -113,8 +125,22 @@ const ShopIllustration = () => (
       <line x1="34" y1="58" x2="34" y2="70" />
       {/* Price tag */}
       <circle cx="96" cy="36" r="8" />
-      <line x1="96" y1="32" x2="96" y2="40" strokeLinecap="round" strokeWidth="1.5" />
-      <line x1="93" y1="35" x2="99" y2="35" strokeLinecap="round" strokeWidth="1.5" />
+      <line
+        x1="96"
+        y1="32"
+        x2="96"
+        y2="40"
+        strokeLinecap="round"
+        strokeWidth="1.5"
+      />
+      <line
+        x1="93"
+        y1="35"
+        x2="99"
+        y2="35"
+        strokeLinecap="round"
+        strokeWidth="1.5"
+      />
     </g>
   </svg>
 );
@@ -133,15 +159,58 @@ const LevelUpIllustration = () => (
       {/* Progress arc */}
       <path d="M30 95 A35 35 0 0 1 90 95" strokeDasharray="6 4" />
       {/* Progress fill */}
-      <path d="M30 95 A35 35 0 0 1 75 87" strokeWidth="4" strokeLinecap="round" />
+      <path
+        d="M30 95 A35 35 0 0 1 75 87"
+        strokeWidth="4"
+        strokeLinecap="round"
+      />
       {/* Up arrow */}
-      <line x1="60" y1="105" x2="60" y2="88" strokeLinecap="round" strokeWidth="2.5" />
-      <polyline points="52 96 60 88 68 96" strokeLinecap="round" strokeWidth="2.5" />
+      <line
+        x1="60"
+        y1="105"
+        x2="60"
+        y2="88"
+        strokeLinecap="round"
+        strokeWidth="2.5"
+      />
+      <polyline
+        points="52 96 60 88 68 96"
+        strokeLinecap="round"
+        strokeWidth="2.5"
+      />
       {/* XP sparkles */}
-      <line x1="95" y1="25" x2="100" y2="20" strokeLinecap="round" strokeWidth="1.5" />
-      <line x1="100" y1="25" x2="95" y2="20" strokeLinecap="round" strokeWidth="1.5" />
-      <line x1="20" y1="30" x2="25" y2="25" strokeLinecap="round" strokeWidth="1.5" />
-      <line x1="25" y1="30" x2="20" y2="25" strokeLinecap="round" strokeWidth="1.5" />
+      <line
+        x1="95"
+        y1="25"
+        x2="100"
+        y2="20"
+        strokeLinecap="round"
+        strokeWidth="1.5"
+      />
+      <line
+        x1="100"
+        y1="25"
+        x2="95"
+        y2="20"
+        strokeLinecap="round"
+        strokeWidth="1.5"
+      />
+      <line
+        x1="20"
+        y1="30"
+        x2="25"
+        y2="25"
+        strokeLinecap="round"
+        strokeWidth="1.5"
+      />
+      <line
+        x1="25"
+        y1="30"
+        x2="20"
+        y2="25"
+        strokeLinecap="round"
+        strokeWidth="1.5"
+      />
     </g>
   </svg>
 );
@@ -162,8 +231,19 @@ const CoinsIllustration = () => (
       <circle cx="60" cy="58" r="20" />
       <circle cx="60" cy="58" r="14" />
       {/* Dollar sign */}
-      <path d="M57 52 Q54 53 54 55 Q54 57 60 57 Q66 57 66 59 Q66 61 63 62" strokeLinecap="round" strokeWidth="1.5" />
-      <line x1="60" y1="49" x2="60" y2="65" strokeLinecap="round" strokeWidth="1.5" />
+      <path
+        d="M57 52 Q54 53 54 55 Q54 57 60 57 Q66 57 66 59 Q66 61 63 62"
+        strokeLinecap="round"
+        strokeWidth="1.5"
+      />
+      <line
+        x1="60"
+        y1="49"
+        x2="60"
+        y2="65"
+        strokeLinecap="round"
+        strokeWidth="1.5"
+      />
       {/* Small coins orbiting */}
       <circle cx="30" cy="40" r="8" />
       <circle cx="90" cy="40" r="8" />
@@ -180,6 +260,7 @@ interface Step {
   title: string;
   description: string;
   illustration: React.ReactNode;
+  image: string;
   iconColor: string;
   icon: React.ReactNode;
 }
@@ -191,12 +272,21 @@ const vaultSteps: Step[] = [
     description:
       "Choose from 6 tiers — Bronze ($24) to Diamond ($86). Every vault shows exact drop rates before you open. No hidden odds.",
     illustration: <VaultIllustration />,
+    image: "1_pick_vault.png",
     iconColor: "text-accent",
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent">
+      <svg
+        width="28"
+        height="28"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className="text-accent"
+      >
         <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
       </svg>
-    ),
+    )
   },
   {
     number: "02",
@@ -204,12 +294,21 @@ const vaultSteps: Step[] = [
     description:
       "Select a mystery box and watch the reveal. Every vault contains a real, licensed collectible — from common pulls to legendary finds.",
     illustration: <MysteryBoxIllustration />,
+    image: "2_reveal_collectible.png",
     iconColor: "text-neon-cyan",
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-neon-cyan">
+      <svg
+        width="28"
+        height="28"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className="text-neon-cyan"
+      >
         <path d="M6 3h12l4 6-10 13L2 9z" />
       </svg>
-    ),
+    )
   },
   {
     number: "03",
@@ -217,14 +316,23 @@ const vaultSteps: Step[] = [
     description:
       "Your item, your call. Store it in your vault, ship it to your door with real tracking, or cash out instantly for credits.",
     illustration: <DecisionIllustration />,
+    image: "3_hold_ship_cash.png",
     iconColor: "text-neon-green",
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-neon-green">
+      <svg
+        width="28"
+        height="28"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className="text-neon-green"
+      >
         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
         <polyline points="22 4 12 14.01 9 11.01" />
       </svg>
-    ),
-  },
+    )
+  }
 ];
 
 const platformSteps: Step[] = [
@@ -234,14 +342,23 @@ const platformSteps: Step[] = [
     description:
       "Browse the marketplace to buy collectibles from other players. Bid on auctions. Build the collection you actually want.",
     illustration: <ShopIllustration />,
+    image: "4_trade_shop.jpg",
     iconColor: "text-accent",
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-accent">
+      <svg
+        width="28"
+        height="28"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className="text-accent"
+      >
         <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
         <line x1="3" y1="6" x2="21" y2="6" />
         <path d="M16 10a4 4 0 01-8 0" />
       </svg>
-    ),
+    )
   },
   {
     number: "05",
@@ -249,12 +366,21 @@ const platformSteps: Step[] = [
     description:
       "Earn XP with every vault and purchase. Complete quests, unlock boss fights, and climb the ranks. The more you play, the more you earn.",
     illustration: <LevelUpIllustration />,
+    image: "5_level_up.jpg",
     iconColor: "text-neon-cyan",
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-neon-cyan">
+      <svg
+        width="28"
+        height="28"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className="text-neon-cyan"
+      >
         <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
       </svg>
-    ),
+    )
   },
   {
     number: "06",
@@ -262,14 +388,23 @@ const platformSteps: Step[] = [
     description:
       "Earn credits from cashouts, quests, and rewards. Spend them on vaults, marketplace items, and bids. The loop never stops.",
     illustration: <CoinsIllustration />,
+    image: "6_credits.jpg",
     iconColor: "text-vault-gold",
     icon: (
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-vault-gold">
+      <svg
+        width="28"
+        height="28"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        className="text-vault-gold"
+      >
         <line x1="12" y1="1" x2="12" y2="23" />
         <path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" />
       </svg>
-    ),
-  },
+    )
+  }
 ];
 
 /* ─── Step Card Component ─── */
@@ -288,8 +423,13 @@ function StepCard({ step, index }: { step: Step; index: number }) {
         {step.number}
       </div>
 
-      <div className="mt-4 mb-4 h-40 sm:h-44 md:h-48 rounded-xl overflow-hidden bg-surface-elevated flex items-center justify-center">
-        {step.illustration}
+      {/* {step.illustration} */}
+      <div className="rounded-xl overflow-hidden border border-accent/20 shadow-[0_0_40px_rgba(255,45,149,0.25)] mb-5 group-hover:shadow-[0_0_50px_rgba(255,45,149,0.35)] transition-shadow">
+        <img
+          src={"/images/how-it-works/" + step.image}
+          alt={step.title}
+          className="w-full h-auto object-cover rounded-xl"
+        />
       </div>
 
       <div className="mb-6 w-14 h-14 rounded-xl bg-surface-elevated border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
@@ -299,9 +439,7 @@ function StepCard({ step, index }: { step: Step; index: number }) {
       <h3 className="text-xl font-black text-white uppercase tracking-wide mb-3">
         {step.title}
       </h3>
-      <p className="text-text-muted leading-relaxed">
-        {step.description}
-      </p>
+      <p className="text-text-muted leading-relaxed">{step.description}</p>
     </motion.div>
   );
 }
@@ -317,7 +455,7 @@ export function HowItWorks() {
         style={{
           backgroundImage:
             "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
-          backgroundSize: "40px 40px",
+          backgroundSize: "40px 40px"
         }}
       />
 

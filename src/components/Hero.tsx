@@ -8,13 +8,11 @@ export function Hero() {
 
   useEffect(() => {
     const typed = new Typed(typedEl.current!, {
-      strings: [
-        "Real collectibles. Real value. Pick a vault and win.",
-      ],
+      strings: ["Real collectibles. Real value. Pick a vault and win."],
       typeSpeed: 40,
       showCursor: true,
       cursorChar: "|",
-      startDelay: 800,
+      startDelay: 800
     });
 
     return () => typed.destroy();
@@ -243,6 +241,49 @@ export function Hero() {
           <PlayNowButton location="hero" />
         </motion.div>
       </div>
+
+      {/* Scroll Down Indicator */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0.5, 1, 0.5] }}
+        transition={{ delay: 2, duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
+      >
+        <motion.div
+          animate={{ y: [0, 6, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+          className="flex flex-col items-center"
+        >
+          <svg
+            width="30"
+            height="30"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-accent"
+            style={{ filter: "drop-shadow(0 0 8px rgba(255,45,149,0.6))" }}
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+          <svg
+            width="30"
+            height="30"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="text-accent -mt-4.5"
+            style={{ filter: "drop-shadow(0 0 8px rgba(255,45,149,0.6))" }}
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </motion.div>
+      </motion.div>
     </section>
   );
 }

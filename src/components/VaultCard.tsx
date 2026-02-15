@@ -15,6 +15,8 @@ interface VaultCardProps {
 export function VaultCard({ vault, index, balance, onSelect, disabled = false }: VaultCardProps) {
   const [showOdds, setShowOdds] = useState(false);
   const canAfford = !disabled && balance >= vault.price;
+  const minPull = Math.round(vault.price * 0.40);
+  const maxPull = Math.round(vault.price * 3.50);
 
   const handleSelect = () => {
     if (!canAfford) return;
@@ -64,6 +66,16 @@ export function VaultCard({ vault, index, balance, onSelect, disabled = false }:
             <div className="drop-shadow-2xl filter">
               <VaultIcon name={vault.name} color={vault.color} />
             </div>
+          </div>
+
+          {/* Pull Range Badge */}
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 z-10 flex flex-col items-center gap-0.5">
+            <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-white/40">
+              Value Range
+            </span>
+            <span className="text-[11px] font-black uppercase tracking-wider text-white/90">
+              ${minPull} — ${maxPull}
+            </span>
           </div>
 
           {/* Background pattern */}
@@ -195,13 +207,13 @@ export function VaultCard({ vault, index, balance, onSelect, disabled = false }:
 function getRarityColor(rarity: string) {
   switch (rarity) {
     case "common":
-      return "#9a9ab0";
+      return "#6B7280";
     case "uncommon":
-      return "#00f0ff";
+      return "#3B82F6";
     case "rare":
       return "#a855f7";
     case "legendary":
-      return "#ff2d95";
+      return "#FFD700";
     default:
       return "white";
   }

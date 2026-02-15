@@ -30,10 +30,10 @@
   --color-vault-diamond: #b9f2ff;
 
   /* Rarity colors */
-  --color-rarity-common: #9a9ab0;
-  --color-rarity-uncommon: #00f0ff;
+  --color-rarity-common: #6B7280;
+  --color-rarity-uncommon: #3B82F6;
   --color-rarity-rare: #a855f7;
-  --color-rarity-legendary: #ff2d95;
+  --color-rarity-legendary: #FFD700;
 
   /* Semantic */
   --color-success: #00f0ff;

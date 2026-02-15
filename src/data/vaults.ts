@@ -17,51 +17,51 @@ export interface Vault {
 export const VAULTS: Vault[] = [
   {
     name: "Bronze",
-    price: 24,
+    price: 19.99,
     color: "#cd7f32",
     gradient: "from-[#8B4513] to-[#cd7f32]",
     tagline: "Raw potential",
-    rarities: { common: 60.5, uncommon: 18.0, rare: 19.8, legendary: 1.7 }
+    rarities: { common: 55.0, uncommon: 25.0, rare: 17.0, legendary: 3.0 }
   },
   {
     name: "Silver",
-    price: 38,
+    price: 29.99,
     color: "#e0e0e0",
     gradient: "from-[#757575] to-[#e0e0e0]",
     tagline: "Refined assets",
-    rarities: { common: 59.8, uncommon: 18.8, rare: 18.3, legendary: 3.1 }
+    rarities: { common: 52.0, uncommon: 26.0, rare: 17.5, legendary: 4.5 }
   },
   {
     name: "Gold",
-    price: 54,
+    price: 44.99,
     color: "#ffd700",
     gradient: "from-[#b8860b] to-[#ffd700]",
     tagline: "Standard of value",
-    rarities: { common: 57.9, uncommon: 29.3, rare: 8.6, legendary: 4.2 }
+    rarities: { common: 48.0, uncommon: 28.0, rare: 18.0, legendary: 6.0 }
   },
   {
     name: "Platinum",
-    price: 68,
+    price: 59.99,
     color: "#79b5db",
     gradient: "from-[#4a6d85] to-[#a2d4e8]",
     tagline: "Industrial purity",
-    rarities: { common: 56.5, uncommon: 28.3, rare: 10.9, legendary: 4.3 }
+    rarities: { common: 45.0, uncommon: 28.0, rare: 19.5, legendary: 7.5 }
   },
   {
     name: "Obsidian",
-    price: 78,
+    price: 74.99,
     color: "#6c4e85",
     gradient: "from-[#2e2b36] to-[#6c4e85]",
     tagline: "Volcanic glass",
-    rarities: { common: 55.8, uncommon: 27.8, rare: 12.0, legendary: 4.4 }
+    rarities: { common: 42.0, uncommon: 27.0, rare: 21.0, legendary: 10.0 }
   },
   {
     name: "Diamond",
-    price: 86,
+    price: 89.99,
     color: "#b9f2ff",
     gradient: "from-[#00bfff] to-[#b9f2ff]",
     tagline: "The ultimate unboxing",
-    rarities: { common: 55.1, uncommon: 27.3, rare: 13.2, legendary: 4.4 }
+    rarities: { common: 38.0, uncommon: 26.0, rare: 23.0, legendary: 13.0 }
   }
 ];
 
@@ -69,14 +69,14 @@ export const RARITY_CONFIG = {
   common: {
     label: "Nice Find",
     exclaim: "!",
-    color: "#9a9ab0",
+    color: "#6B7280",
     minMult: 0.4,
     maxMult: 0.85
   },
   uncommon: {
     label: "Great Pull",
     exclaim: "!",
-    color: "#00f0ff",
+    color: "#3B82F6",
     minMult: 0.85,
     maxMult: 1.4
   },
@@ -88,15 +88,15 @@ export const RARITY_CONFIG = {
     maxMult: 2.2
   },
   legendary: {
-    label: "Legendary Pull",
-    exclaim: "!!",
-    color: "#ff2d95",
+    label: "LEGENDARY",
+    exclaim: "!!!",
+    color: "#FFD700",
     minMult: 2.2,
     maxMult: 3.5
   }
 } as const;
 
-export const PRODUCT_TYPES = ["Funko Pop!", "TBD", "TBD"] as const;
+export const PRODUCT_TYPES = ["Funko Pop!", "Community Pick", "Community Pick"] as const;
 
 export function pickRarity(rarities: RarityBreakdown): keyof RarityBreakdown {
   const rand = Math.random() * 100;

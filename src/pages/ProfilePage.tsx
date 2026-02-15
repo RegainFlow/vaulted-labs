@@ -14,7 +14,13 @@ export function ProfilePage() {
 
   return (
     <>
-      <Navbar showHUD balance={balance} inventoryCount={inventory.length} xp={levelInfo.currentXP} level={levelInfo.level} />
+      <Navbar
+        showHUD
+        balance={balance}
+        inventoryCount={inventory.length}
+        xp={levelInfo.currentXP}
+        level={levelInfo.level}
+      />
       <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-28 md:pt-28 pb-8 sm:pb-12">
         <div className="max-w-6xl mx-auto">
           <div className="mb-6 sm:mb-8 text-center">
@@ -36,11 +42,27 @@ export function ProfilePage() {
           <div className="mt-12 pt-6 border-t border-white/5 text-center">
             <button
               onClick={resetDemo}
-              className="px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest bg-white/5 border border-white/10 text-text-dim hover:text-error hover:border-error/30 transition-all cursor-pointer"
+              className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest bg-error/10 border border-error/30 text-error hover:bg-error/20 hover:border-error/50 transition-all cursor-pointer inline-flex items-center gap-2"
             >
+              <svg
+                width="14"
+                height="14"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
               Reset Demo
             </button>
-            <p className="text-[10px] text-text-dim mt-2">Clears all progress and resets to starting state.</p>
+            <p className="text-[11px] text-text-muted mt-2">
+              Clears all progress and resets to starting state.
+            </p>
           </div>
         </div>
       </main>

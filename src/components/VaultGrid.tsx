@@ -23,13 +23,26 @@ interface VaultGridProps {
   onTutorialSetAction?: (action: string) => void;
 }
 
-export function VaultGrid({ tutorialStep, onTutorialAdvance, onTutorialSetAction }: VaultGridProps) {
-  const { balance, purchaseVault, tutorialOpenVault, claimCreditsFromReveal, addItem, shipItem } =
-    useGame();
+export function VaultGrid({
+  tutorialStep,
+  onTutorialAdvance,
+  onTutorialSetAction
+}: VaultGridProps) {
+  const {
+    balance,
+    purchaseVault,
+    tutorialOpenVault,
+    claimCreditsFromReveal,
+    addItem,
+    shipItem
+  } = useGame();
   const navigate = useNavigate();
   const [selectedVault, setSelectedVault] = useState<Vault | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     "Funko Pop!"
+  );
+  const [comingSoonCategory, setComingSoonCategory] = useState<string | null>(
+    null
   );
 
   const isTutorialActive = tutorialStep != null;
@@ -136,20 +149,33 @@ export function VaultGrid({ tutorialStep, onTutorialAdvance, onTutorialSetAction
           </p>
         </motion.div>
 
-        <div className="flex flex-wrap justify-center gap-3 mb-12" data-tutorial="categories">
-          {PRODUCT_TYPES.map((cat) => {
+        <div
+          className="flex flex-wrap justify-center gap-3 mb-6"
+          data-tutorial="categories"
+        >
+          {PRODUCT_TYPES.map((cat, idx) => {
             const isEnabled = cat === "Funko Pop!";
             return (
               <button
-                key={cat}
-                onClick={() =>
-                  isEnabled &&
-                  setSelectedCategory(selectedCategory === cat ? null : cat)
-                }
-                disabled={!isEnabled}
+                key={`${cat}-${idx}`}
+                onClick={() => {
+                  if (isEnabled) {
+                    setSelectedCategory(selectedCategory === cat ? null : cat);
+                    setComingSoonCategory(null);
+                  } else {
+                    setSelectedCategory(null);
+                    setComingSoonCategory(
+                      comingSoonCategory === `${cat}-${idx}`
+                        ? null
+                        : `${cat}-${idx}`
+                    );
+                  }
+                }}
                 className={`px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider border transition-all duration-300 ${
                   !isEnabled
-                    ? "bg-surface/50 border-white/5 text-text-dim cursor-not-allowed opacity-50"
+                    ? comingSoonCategory === `${cat}-${idx}`
+                      ? "bg-neon-cyan/10 border-neon-cyan/40 text-neon-cyan cursor-pointer shadow-[0_0_15px_rgba(0,240,255,0.15)]"
+                      : "bg-surface border-white/10 text-text-muted hover:border-neon-cyan/30 hover:text-neon-cyan cursor-pointer"
                     : selectedCategory === cat
                       ? "bg-accent/20 border-accent text-accent shadow-[0_0_15px_rgba(255,45,149,0.2)] cursor-pointer"
                       : "bg-surface border-white/10 text-text-muted hover:border-white/20 hover:text-white cursor-pointer"
@@ -158,7 +184,7 @@ export function VaultGrid({ tutorialStep, onTutorialAdvance, onTutorialSetAction
                 {cat}
                 {!isEnabled && (
                   <span className="ml-2 text-[9px] tracking-normal normal-case font-normal">
-                    (Soon)
+                    (Vote)
                   </span>
                 )}
               </button>
@@ -166,15 +192,82 @@ export function VaultGrid({ tutorialStep, onTutorialAdvance, onTutorialSetAction
           })}
         </div>
 
+        {/* Category Explanation */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-center mb-8 max-w-lg mx-auto"
+        >
+          <p className="text-xs text-text-muted leading-relaxed">
+            We're launching with{" "}
+            <span className="font-bold text-accent">Funko Pop!</span>{" "}
+            collectibles. More categories will be unlocked based on user
+            adoption and community votes.
+          </p>
+        </motion.div>
+
+        {/* Coming Soon Card */}
         <AnimatePresence>
-          {selectedCategory && (
+          {comingSoonCategory && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              className="text-center py-20"
+            >
+              <div className="inline-flex flex-col items-center gap-4 bg-surface-elevated/50 backdrop-blur-sm border border-neon-cyan/20 rounded-2xl p-8 sm:p-12 max-w-md mx-auto">
+                <div className="w-16 h-16 rounded-full bg-neon-cyan/5 border border-neon-cyan/20 flex items-center justify-center">
+                  <svg
+                    width="28"
+                    height="28"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    className="text-neon-cyan"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <path d="M12 6v6l4 2" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-black text-white uppercase tracking-wider">
+                  Coming Soon
+                </h3>
+                <p className="text-sm text-text-muted leading-relaxed">
+                  This category is coming soon! Join the waitlist to vote on
+                  which categories launch next.
+                </p>
+                <button
+                  onClick={() => {
+                    navigate("/");
+                    setTimeout(() => {
+                      document
+                        .getElementById("waitlist-form")
+                        ?.scrollIntoView({ behavior: "smooth" });
+                    }, 100);
+                  }}
+                  className="px-6 py-2.5 bg-neon-cyan/10 border border-neon-cyan/40 text-neon-cyan text-xs font-black uppercase tracking-widest rounded-xl hover:bg-neon-cyan/20 transition-colors cursor-pointer"
+                >
+                  Join Waitlist to Vote
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Vault Grid */}
+        <AnimatePresence>
+          {selectedCategory && !comingSoonCategory && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 20 }}
               className={`relative transition-all duration-500 ${isBroke ? "blur-xl grayscale pointer-events-none scale-[0.97] opacity-20" : ""}`}
             >
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 gap-y-6 sm:gap-y-8 max-w-6xl mx-auto" data-tutorial="vaults">
+              <div
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 gap-y-6 sm:gap-y-8 max-w-6xl mx-auto"
+                data-tutorial="vaults"
+              >
                 {VAULTS.map((vault, index) => (
                   <VaultCard
                     key={vault.name}
@@ -190,6 +283,16 @@ export function VaultGrid({ tutorialStep, onTutorialAdvance, onTutorialSetAction
           )}
         </AnimatePresence>
 
+        {/* Odds & Pricing Disclaimer */}
+        <div className="mt-8 max-w-xl mx-auto border-l-2 border-error/40 pl-3 text-left">
+          <p className="text-xs text-text-muted leading-relaxed">
+            <span className="font-bold text-error">Disclaimer:</span> All odds,
+            pricing, and item values shown are for demonstration purposes only.
+            Actual odds and pricing will be finalized in the official release
+            and are subject to change.
+          </p>
+        </div>
+
         {isBroke && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -198,19 +301,35 @@ export function VaultGrid({ tutorialStep, onTutorialAdvance, onTutorialSetAction
           >
             <div className="bg-surface/80 backdrop-blur-xl border-2 border-error/20 p-12 rounded-3xl shadow-[0_0_100px_rgba(255,59,92,0.1)]">
               <div className="w-20 h-20 bg-error/5 rounded-full flex items-center justify-center mx-auto mb-6 border border-error/20">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-error">
+                <svg
+                  width="40"
+                  height="40"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="text-error"
+                >
                   <circle cx="12" cy="12" r="10" />
                   <path d="M16 8l-8 8M8 8l8 8" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-black text-white uppercase tracking-widest mb-2">Credits Depleted</h3>
-              <p className="text-error font-mono text-sm font-bold mb-4">${balance.toFixed(2)} remaining</p>
-              <p className="text-text-muted text-sm leading-relaxed mb-6">You need at least ${minPrice} to open a vault.</p>
+              <h3 className="text-2xl font-black text-white uppercase tracking-widest mb-2">
+                Credits Depleted
+              </h3>
+              <p className="text-error font-mono text-sm font-bold mb-4">
+                ${balance.toFixed(2)} remaining
+              </p>
+              <p className="text-text-muted text-sm leading-relaxed mb-6">
+                You need at least ${minPrice} to open a vault.
+              </p>
               <button
                 onClick={() => {
                   navigate("/");
                   setTimeout(() => {
-                    document.getElementById("waitlist-form")?.scrollIntoView({ behavior: "smooth" });
+                    document
+                      .getElementById("waitlist-form")
+                      ?.scrollIntoView({ behavior: "smooth" });
                   }, 100);
                 }}
                 className="inline-block px-8 py-3 bg-accent text-white text-sm font-black uppercase tracking-widest rounded-xl border-b-[4px] border-[#a01d5e] shadow-[0_6px_16px_rgba(255,45,149,0.3)] hover:shadow-[0_4px_12px_rgba(255,45,149,0.4)] active:border-b-[2px] transition-all duration-100 cursor-pointer"
@@ -247,25 +366,93 @@ export function VaultGrid({ tutorialStep, onTutorialAdvance, onTutorialSetAction
 
 /* ─── Full-screen overlay with 4-stage flow ─── */
 
-type Stage = "picking" | "revealing" | "result";
+type Stage = "picking" | "revealing" | "spinning" | "result";
+
+interface ReelItem {
+  rarity: Rarity;
+  color: string;
+  label: string;
+}
+
+function generateReelItems(wonRarity: Rarity): ReelItem[] {
+  const rarities: Rarity[] = ["common", "uncommon", "rare", "legendary"];
+  const weights = [50, 30, 15, 5];
+
+  function weightedRandom(): Rarity {
+    const total = weights.reduce((a, b) => a + b, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < rarities.length; i++) {
+      r -= weights[i];
+      if (r <= 0) return rarities[i];
+    }
+    return "common";
+  }
+
+  const items: ReelItem[] = [];
+
+  // Positions 0-7: random weighted mix
+  for (let i = 0; i < 8; i++) {
+    const r = weightedRandom();
+    items.push({
+      rarity: r,
+      color: RARITY_CONFIG[r].color,
+      label: r.charAt(0).toUpperCase() + r.slice(1)
+    });
+  }
+
+  // Position 8: always legendary (the "near miss")
+  items.push({
+    rarity: "legendary",
+    color: RARITY_CONFIG.legendary.color,
+    label: "Legendary"
+  });
+
+  // Position 9: buffer between near-miss and result
+  const bufferRarity = weightedRandom();
+  items.push({
+    rarity: bufferRarity,
+    color: RARITY_CONFIG[bufferRarity].color,
+    label: bufferRarity.charAt(0).toUpperCase() + bufferRarity.slice(1)
+  });
+
+  // Position 10: the actual result
+  items.push({
+    rarity: wonRarity,
+    color: RARITY_CONFIG[wonRarity].color,
+    label: wonRarity.charAt(0).toUpperCase() + wonRarity.slice(1)
+  });
+
+  // Position 11: buffer after landing
+  const tailRarity = weightedRandom();
+  items.push({
+    rarity: tailRarity,
+    color: RARITY_CONFIG[tailRarity].color,
+    label: tailRarity.charAt(0).toUpperCase() + tailRarity.slice(1)
+  });
+
+  return items;
+}
 
 /* Tutorial result sub-step configs */
-const RESULT_TOOLTIP: Record<string, { title: string; desc: string; highlight: number }> = {
+const RESULT_TOOLTIP: Record<
+  string,
+  { title: string; desc: string; highlight: number }
+> = {
   "result-store": {
     title: "Store to Vault",
     desc: "Keep this collectible safe in your digital vault. Build your collection and watch its value grow.",
-    highlight: 0,
+    highlight: 0
   },
   "result-ship": {
     title: "Ship to Home",
     desc: "Want the real thing? We'll ship the physical item straight to your door — worldwide.",
-    highlight: 1,
+    highlight: 1
   },
   "result-cashout": {
     title: "Claim Credits",
     desc: "Instantly convert your item into platform credits. Use them to open more vaults.",
-    highlight: 2,
-  },
+    highlight: 2
+  }
 };
 
 interface VaultOverlayProps {
@@ -275,8 +462,18 @@ interface VaultOverlayProps {
   onClose: () => void;
   onPurchase: (vaultName: string, price: number) => boolean;
   onClaim: (amount: number) => void;
-  onStore: (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number) => void;
-  onShip: (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number) => void;
+  onStore: (
+    product: string,
+    vaultTier: VaultTierName,
+    rarity: Rarity,
+    value: number
+  ) => void;
+  onShip: (
+    product: string,
+    vaultTier: VaultTierName,
+    rarity: Rarity,
+    value: number
+  ) => void;
   isTutorial?: boolean;
   tutorialStep?: TutorialStep | null;
   onTutorialAdvance?: (step: TutorialStep) => void;
@@ -301,12 +498,21 @@ function VaultOverlay({
 }: VaultOverlayProps) {
   const [stage, setStage] = useState<Stage>("picking");
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
-  const [boxState, setBoxState] = useState<"closed" | "opening" | "open">("closed");
+  const [boxState, setBoxState] = useState<"closed" | "opening" | "open">(
+    "closed"
+  );
 
   const wonRarity = useMemo(() => pickRarity(tier.rarities), [tier]);
   const product = useMemo(() => category || pickProduct(), [tier, category]);
   const rarityConfig = RARITY_CONFIG[wonRarity];
-  const resultValue = useMemo(() => pickValue(tier.price, rarityConfig), [tier, rarityConfig]);
+  const resultValue = useMemo(
+    () => pickValue(tier.price, rarityConfig),
+    [tier, rarityConfig]
+  );
+  const reelItems = useMemo(
+    () => generateReelItems(wonRarity as Rarity),
+    [wonRarity]
+  );
   const isLoss = resultValue < tier.price;
   const net = resultValue - tier.price;
   const [purchasedBalance, setPurchasedBalance] = useState<number | null>(null);
@@ -344,24 +550,31 @@ function VaultOverlay({
       onTutorialAdvance?.("revealing");
       setTimeout(() => setBoxState("opening"), 1200);
       setTimeout(() => setBoxState("open"), 1500);
+      setTimeout(() => setStage("spinning"), 2000);
       setTimeout(() => {
         setStage("result");
         onTutorialAdvance?.("result-store");
-      }, 2500);
+      }, 5000);
       return;
     }
 
     if (!onPurchase(tier.name, tier.price)) {
-      setPurchaseError(`Insufficient credits. You need $${tier.price} but have $${balance.toFixed(2)}.`);
+      setPurchaseError(
+        `Insufficient credits. You need $${tier.price} but have $${balance.toFixed(2)}.`
+      );
       return;
     }
     setPurchasedBalance(balance);
     setPurchaseError(null);
-    trackEvent(AnalyticsEvents.VAULT_OPENED, { vault_tier: tier.name, vault_price: tier.price });
+    trackEvent(AnalyticsEvents.VAULT_OPENED, {
+      vault_tier: tier.name,
+      vault_price: tier.price
+    });
     setStage("revealing");
     setTimeout(() => setBoxState("opening"), 1200);
     setTimeout(() => setBoxState("open"), 1500);
-    setTimeout(() => setStage("result"), 2500);
+    setTimeout(() => setStage("spinning"), 2000);
+    setTimeout(() => setStage("result"), 5000);
   };
 
   const handleClaim = () => {
@@ -376,40 +589,92 @@ function VaultOverlay({
 
   const handleStore = () => {
     if (isTutorial) {
-      onStore(product, tier.name as VaultTierName, wonRarity as Rarity, resultValue);
+      onStore(
+        product,
+        tier.name as VaultTierName,
+        wonRarity as Rarity,
+        resultValue
+      );
       onTutorialSetAction?.("stored");
       onTutorialAdvance?.("complete");
       return;
     }
-    onStore(product, tier.name as VaultTierName, wonRarity as Rarity, resultValue);
+    onStore(
+      product,
+      tier.name as VaultTierName,
+      wonRarity as Rarity,
+      resultValue
+    );
   };
 
   const handleShip = () => {
     if (isTutorial) {
-      onShip(product, tier.name as VaultTierName, wonRarity as Rarity, resultValue);
+      onShip(
+        product,
+        tier.name as VaultTierName,
+        wonRarity as Rarity,
+        resultValue
+      );
       onTutorialSetAction?.("shipped");
       onTutorialAdvance?.("complete");
       return;
     }
-    onShip(product, tier.name as VaultTierName, wonRarity as Rarity, resultValue);
+    onShip(
+      product,
+      tier.name as VaultTierName,
+      wonRarity as Rarity,
+      resultValue
+    );
   };
 
   const handleNextResultStep = () => {
     if (tutorialStep === "result-store") onTutorialAdvance?.("result-ship");
-    else if (tutorialStep === "result-ship") onTutorialAdvance?.("result-cashout");
+    else if (tutorialStep === "result-ship")
+      onTutorialAdvance?.("result-cashout");
   };
 
   /* ── HUD-matching icons ── */
   const storeIcon = (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-neon-cyan">
-      <path d="M21 8V21H3V8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M23 3H1V8H23V3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M10 12H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      className="text-neon-cyan"
+    >
+      <path
+        d="M21 8V21H3V8"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M23 3H1V8H23V3Z"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <path
+        d="M10 12H14"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
     </svg>
   );
 
   const shipIcon = (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
       <rect x="1" y="3" width="15" height="13" />
       <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
       <circle cx="5.5" cy="18.5" r="2.5" />
@@ -418,9 +683,20 @@ function VaultOverlay({
   );
 
   const cashoutIcon = (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-vault-gold">
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      className="text-vault-gold"
+    >
       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-      <path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5s-2 .5-2 1.5 1 1.5 2 2 2 1 2 2-1 1.5-2 1.5-2-.5-2.5-1.5M12 7v1m0 8v1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path
+        d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5s-2 .5-2 1.5 1 1.5 2 2 2 1 2 2-1 1.5-2 1.5-2-.5-2.5-1.5M12 7v1m0 8v1"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
     </svg>
   );
 
@@ -449,10 +725,19 @@ function VaultOverlay({
                   className="absolute -top-1 right-0 md:-right-14 flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-elevated/80 border border-white/15 text-text-muted hover:text-white hover:border-white/40 hover:bg-surface-elevated transition-all cursor-pointer z-20"
                   aria-label="Close vault"
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                  >
                     <path d="M18 6L6 18M6 6l12 12" />
                   </svg>
-                  <span className="text-[10px] font-bold uppercase tracking-wider hidden md:inline">Close</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider hidden md:inline">
+                    Close
+                  </span>
                 </button>
               )}
 
@@ -466,13 +751,17 @@ function VaultOverlay({
                   ) : (
                     <>
                       Nine sealed chambers. Your collectible is hiding in one.{" "}
-                      <span className="font-bold" style={{ color: tier.color }}>${tier.price}</span>{" "}
+                      <span className="font-bold" style={{ color: tier.color }}>
+                        ${tier.price}
+                      </span>{" "}
                       to crack it open.
                     </>
                   )}
                 </p>
                 {purchaseError && (
-                  <p className="text-error text-sm font-bold">{purchaseError}</p>
+                  <p className="text-error text-sm font-bold">
+                    {purchaseError}
+                  </p>
                 )}
               </div>
 
@@ -494,18 +783,28 @@ function VaultOverlay({
 
               <div className="grid grid-cols-3 gap-3 md:gap-4 perspective-[1000px]">
                 {Array.from({ length: 9 }).map((_, i) => {
-                  const isTutorialHighlighted = isTutorial && tutorialStep === "pick-box" && i === tutorialBoxIndex;
-                  const isTutorialDimmed = isTutorial && tutorialStep === "pick-box" && i !== tutorialBoxIndex;
+                  const isTutorialHighlighted =
+                    isTutorial &&
+                    tutorialStep === "pick-box" &&
+                    i === tutorialBoxIndex;
+                  const isTutorialDimmed =
+                    isTutorial &&
+                    tutorialStep === "pick-box" &&
+                    i !== tutorialBoxIndex;
 
                   return (
                     <motion.button
                       key={i}
-                      whileHover={!isTutorialDimmed ? {
-                        scale: 1.05,
-                        translateZ: 20,
-                        borderColor: tier.color,
-                        boxShadow: `0 0 20px ${tier.color}30`
-                      } : {}}
+                      whileHover={
+                        !isTutorialDimmed
+                          ? {
+                              scale: 1.05,
+                              translateZ: 20,
+                              borderColor: tier.color,
+                              boxShadow: `0 0 20px ${tier.color}30`
+                            }
+                          : {}
+                      }
                       whileTap={!isTutorialDimmed ? { scale: 0.95 } : {}}
                       onClick={() => !isTutorialDimmed && pickBox()}
                       className={`aspect-square relative rounded-xl border flex items-center justify-center shadow-lg group overflow-hidden transition-all duration-300 ${
@@ -514,7 +813,9 @@ function VaultOverlay({
                           : "cursor-pointer"
                       }`}
                       style={{
-                        borderColor: isTutorialHighlighted ? tier.color : `${tier.color}40`,
+                        borderColor: isTutorialHighlighted
+                          ? tier.color
+                          : `${tier.color}40`,
                         backgroundColor: `${tier.color}08`,
                         boxShadow: isTutorialHighlighted
                           ? `0 0 25px ${tier.color}40, inset 0 0 15px ${tier.color}10`
@@ -527,7 +828,10 @@ function VaultOverlay({
                         <VaultIcon name={tier.name} color={tier.color} />
                       </div>
                       {isTutorialHighlighted && (
-                        <div className="absolute inset-0 rounded-xl border-2 animate-pulse pointer-events-none" style={{ borderColor: tier.color }} />
+                        <div
+                          className="absolute inset-0 rounded-xl border-2 animate-pulse pointer-events-none"
+                          style={{ borderColor: tier.color }}
+                        />
                       )}
                     </motion.button>
                   );
@@ -554,9 +858,15 @@ function VaultOverlay({
                         rotate: [0, -5, 5, -5, 5, 0],
                         scale: [1, 1.05, 1]
                       }}
-                      transition={{ duration: 0.5, repeat: Infinity, repeatDelay: 0.1 }}
+                      transition={{
+                        duration: 0.5,
+                        repeat: Infinity,
+                        repeatDelay: 0.1
+                      }}
                       className="filter"
-                      style={{ filter: `drop-shadow(0 0 50px ${tier.color}40)` }}
+                      style={{
+                        filter: `drop-shadow(0 0 50px ${tier.color}40)`
+                      }}
                     >
                       {/* Vault tier icon for closed state */}
                       <div className="w-[100px] h-[100px] md:w-[128px] md:h-[128px] flex items-center justify-center">
@@ -573,7 +883,9 @@ function VaultOverlay({
                       initial={{ scale: 0.8, opacity: 0, y: 20 }}
                       animate={{ scale: 1.2, opacity: 1, y: 0 }}
                       transition={{ type: "spring", damping: 12 }}
-                      style={{ filter: `drop-shadow(0 0 80px ${tier.color}60)` }}
+                      style={{
+                        filter: `drop-shadow(0 0 80px ${tier.color}60)`
+                      }}
                     >
                       <div className="relative w-32 h-32 flex items-center justify-center">
                         <motion.div
@@ -585,7 +897,15 @@ function VaultOverlay({
                         </motion.div>
                         <div className="absolute inset-0 animate-spin-slow">
                           <svg width="100%" height="100%" viewBox="0 0 100 100">
-                            <circle cx="50" cy="50" r="45" stroke={tier.color} strokeWidth="1" strokeDasharray="4 8" opacity="0.5" />
+                            <circle
+                              cx="50"
+                              cy="50"
+                              r="45"
+                              stroke={tier.color}
+                              strokeWidth="1"
+                              strokeDasharray="4 8"
+                              opacity="0.5"
+                            />
                           </svg>
                         </div>
                       </div>
@@ -603,6 +923,82 @@ function VaultOverlay({
             </motion.div>
           )}
 
+          {/* STAGE 2.5: SPINNING REEL */}
+          {stage === "spinning" && (
+            <motion.div
+              key="spinning"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="flex flex-col items-center justify-center"
+            >
+              <div className="text-sm md:text-base font-black uppercase tracking-[0.2em] text-text-muted mb-6">
+                Scanning Rarity...
+              </div>
+
+              {/* Reel container */}
+              <div className="relative w-64 h-48 overflow-hidden rounded-2xl border border-white/10 bg-surface/80 backdrop-blur-xl">
+                {/* Top/bottom gradient masks */}
+                <div className="absolute inset-0 z-20 pointer-events-none bg-gradient-to-b from-bg via-transparent to-bg" />
+
+                {/* Center payline */}
+                <div
+                  className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-12 z-10 pointer-events-none border-y"
+                  style={{
+                    borderColor: `${rarityConfig.color}60`,
+                    boxShadow: `0 0 30px ${rarityConfig.color}30, inset 0 0 20px ${rarityConfig.color}10`
+                  }}
+                />
+
+                {/* Scrolling reel */}
+                <motion.div
+                  initial={{ y: 0 }}
+                  animate={{ y: -(10 * 48 + 24) + 96 }}
+                  transition={{
+                    duration: 2.8,
+                    ease: [0.15, 0.85, 0.35, 1]
+                  }}
+                  className="flex flex-col"
+                >
+                  {reelItems.map((item, i) => (
+                    <div
+                      key={i}
+                      className="h-12 flex items-center gap-3 px-4 shrink-0"
+                    >
+                      <div
+                        className="w-1 h-6 rounded-full shrink-0"
+                        style={{
+                          backgroundColor: item.color,
+                          boxShadow: `0 0 8px ${item.color}60`
+                        }}
+                      />
+                      <span
+                        className="text-sm font-black uppercase tracking-wider"
+                        style={{ color: item.color }}
+                      >
+                        {item.label}
+                      </span>
+                      {item.rarity === "legendary" && (
+                        <span className="text-xs" style={{ color: item.color }}>
+                          &#9733;
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </motion.div>
+              </div>
+
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 2 }}
+                className="mt-6 text-xs font-mono text-text-dim uppercase tracking-widest"
+              >
+                Locking in...
+              </motion.div>
+            </motion.div>
+          )}
+
           {/* STAGE 3: RESULT & OPTIONS */}
           {stage === "result" && (
             <motion.div
@@ -612,7 +1008,10 @@ function VaultOverlay({
               transition={{ type: "spring", damping: 20 }}
               className="space-y-2 sm:space-y-3 md:space-y-4 relative w-full max-w-4xl flex flex-col items-center"
             >
-              <ConfettiParticles color={rarityConfig.color} count={isLoss ? 12 : 40} />
+              <ConfettiParticles
+                color={rarityConfig.color}
+                count={isLoss ? 12 : 40}
+              />
 
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
@@ -634,11 +1033,31 @@ function VaultOverlay({
               </motion.div>
 
               <div className="relative inline-block group z-10">
-                <div className="absolute inset-0 blur-[100px] animate-pulse transition-colors opacity-40" style={{ backgroundColor: rarityConfig.color }} />
+                <div
+                  className="absolute inset-0 blur-[100px] animate-pulse transition-colors opacity-40"
+                  style={{ backgroundColor: rarityConfig.color }}
+                />
                 <div className="flex flex-col items-center gap-2">
                   <div
-                    className="relative flex items-center justify-center bg-surface-elevated rounded-3xl border-2 shadow-[0_0_60px_rgba(0,0,0,0.5)] w-28 h-28 sm:w-36 sm:h-36 md:w-48 md:h-48 mx-auto"
-                    style={{ borderColor: rarityConfig.color }}
+                    className={`relative flex items-center justify-center bg-surface-elevated rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.5)] w-28 h-28 sm:w-36 sm:h-36 md:w-48 md:h-48 mx-auto ${wonRarity === "legendary" ? "animate-pulse" : ""}`}
+                    style={{
+                      borderWidth:
+                        wonRarity === "legendary"
+                          ? 4
+                          : wonRarity === "rare"
+                            ? 3
+                            : 2,
+                      borderStyle: "solid",
+                      borderColor: rarityConfig.color,
+                      boxShadow:
+                        wonRarity === "legendary"
+                          ? `0 0 80px rgba(255,215,0,0.6), 0 0 120px rgba(255,215,0,0.3)`
+                          : wonRarity === "rare"
+                            ? `0 0 50px rgba(168,85,247,0.5)`
+                            : wonRarity === "uncommon"
+                              ? `0 0 40px rgba(59,130,246,0.4)`
+                              : `0 0 30px rgba(107,114,128,0.3)`
+                    }}
                   >
                     <div className="transform scale-110 filter drop-shadow-2xl">
                       <VaultIcon name={tier.name} color={rarityConfig.color} />
@@ -673,11 +1092,15 @@ function VaultOverlay({
 
               <div className="space-y-1 z-10 relative text-center">
                 <h3 className="text-xl sm:text-2xl md:text-4xl font-black text-white uppercase tracking-tighter">
-                  {rarityConfig.label}{rarityConfig.exclaim}
+                  {rarityConfig.label}
+                  {rarityConfig.exclaim}
                 </h3>
                 <p className="text-sm md:text-base text-text-muted">
                   Estimated Market Value:{" "}
-                  <span className="font-black" style={{ color: rarityConfig.color }}>
+                  <span
+                    className="font-black"
+                    style={{ color: rarityConfig.color }}
+                  >
                     ${resultValue}.00
                   </span>
                 </p>
@@ -692,40 +1115,68 @@ function VaultOverlay({
               >
                 <div className="bg-surface/80 backdrop-blur-xl rounded-xl border border-white/10 p-3 font-mono text-xs">
                   <div className="flex items-center justify-between py-1">
-                    <span className="text-text-dim text-[10px] uppercase tracking-wider">Credits</span>
-                    <span className="text-white font-bold">${preBalance.toFixed(2)}</span>
+                    <span className="text-text-dim text-[10px] uppercase tracking-wider">
+                      Credits
+                    </span>
+                    <span className="text-white font-bold">
+                      ${preBalance.toFixed(2)}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between py-1">
-                    <span className="text-text-dim text-[10px] uppercase tracking-wider">{tier.name} Vault</span>
+                    <span className="text-text-dim text-[10px] uppercase tracking-wider">
+                      {tier.name} Vault
+                    </span>
                     {isTutorial ? (
                       <span className="text-neon-green font-black">FREE</span>
                     ) : (
-                      <span className="text-error font-bold">-${tier.price.toFixed(2)}</span>
+                      <span className="text-error font-bold">
+                        -${tier.price.toFixed(2)}
+                      </span>
                     )}
                   </div>
                   <div className="flex items-center justify-between py-1">
-                    <span className="text-text-dim text-[10px] uppercase tracking-wider">Item Value</span>
-                    <span className="font-bold" style={{ color: rarityConfig.color }}>+${resultValue.toFixed(2)}</span>
+                    <span className="text-text-dim text-[10px] uppercase tracking-wider">
+                      Item Value
+                    </span>
+                    <span
+                      className="font-bold"
+                      style={{ color: rarityConfig.color }}
+                    >
+                      +${resultValue.toFixed(2)}
+                    </span>
                   </div>
                   <div className="border-t border-white/10 mt-1 pt-2 flex items-center justify-between">
-                    <span className="text-text-muted text-[10px] uppercase tracking-wider font-bold">New Balance</span>
+                    <span className="text-text-muted text-[10px] uppercase tracking-wider font-bold">
+                      New Balance
+                    </span>
                     <div className="flex items-center gap-2">
                       {isTutorial ? (
-                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-neon-green/10 text-neon-green">+{resultValue.toFixed(2)}</span>
+                        <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-neon-green/10 text-neon-green">
+                          +{resultValue.toFixed(2)}
+                        </span>
                       ) : (
-                        <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${isLoss ? "bg-error/10 text-error" : "bg-neon-green/10 text-neon-green"}`}>
-                          {net >= 0 ? "+" : ""}{net.toFixed(2)}
+                        <span
+                          className={`text-[10px] font-black px-1.5 py-0.5 rounded ${isLoss ? "bg-error/10 text-error" : "bg-neon-green/10 text-neon-green"}`}
+                        >
+                          {net >= 0 ? "+" : ""}
+                          {net.toFixed(2)}
                         </span>
                       )}
                       <span className="text-white font-black text-sm">
-                        ${isTutorial ? (preBalance + resultValue).toFixed(2) : postBalance.toFixed(2)}
+                        $
+                        {isTutorial
+                          ? (preBalance + resultValue).toFixed(2)
+                          : postBalance.toFixed(2)}
                       </span>
                     </div>
                   </div>
                 </div>
               </motion.div>
 
-              <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full px-2 sm:px-4 z-10 relative" data-tutorial="result-actions">
+              <div
+                className="grid grid-cols-3 gap-2 sm:gap-3 w-full px-2 sm:px-4 z-10 relative"
+                data-tutorial="result-actions"
+              >
                 <OptionCard
                   title="Store to Vault"
                   desc="Keep it secure in your digital portfolio."
@@ -772,7 +1223,9 @@ function VaultOverlay({
                   </p>
                   {tutorialStep !== "result-cashout" ? (
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-text-dim">Click it, or...</span>
+                      <span className="text-[10px] text-text-dim">
+                        Click it, or...
+                      </span>
                       <button
                         onClick={handleNextResultStep}
                         className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer shadow-[0_0_15px_rgba(255,45,149,0.3)]"
@@ -781,7 +1234,9 @@ function VaultOverlay({
                       </button>
                     </div>
                   ) : (
-                    <p className="text-[10px] text-accent font-bold">Pick any option above to continue!</p>
+                    <p className="text-[10px] text-accent font-bold">
+                      Pick any option above to continue!
+                    </p>
                   )}
                 </motion.div>
               )}
@@ -825,7 +1280,11 @@ function OptionCard({
       } ${tutorialActive ? "scale-[1.02] animate-pulse" : ""}`}
       style={
         tutorialActive
-          ? { borderColor: "#ff2d95", boxShadow: "0 0 25px rgba(255,45,149,0.4), inset 0 0 15px rgba(255,45,149,0.08)" }
+          ? {
+              borderColor: "#ff2d95",
+              boxShadow:
+                "0 0 25px rgba(255,45,149,0.4), inset 0 0 15px rgba(255,45,149,0.08)"
+            }
           : isEmphasized
             ? { borderColor: tierColor, boxShadow: `0 0 20px ${tierColor}10` }
             : {}
@@ -843,7 +1302,13 @@ function OptionCard({
       <div className="mt-auto pt-1.5 sm:pt-2 md:pt-3 border-t border-white/5 w-full">
         <span
           className="text-[7px] sm:text-[9px] md:text-[11px] font-black uppercase tracking-[0.1em] sm:tracking-[0.2em] flex items-center gap-1 sm:gap-2"
-          style={tutorialActive ? { color: "#ff2d95" } : isEmphasized ? { color: tierColor } : { color: "white" }}
+          style={
+            tutorialActive
+              ? { color: "#ff2d95" }
+              : isEmphasized
+                ? { color: tierColor }
+                : { color: "white" }
+          }
         >
           {action} <span>&rarr;</span>
         </span>
@@ -852,7 +1317,13 @@ function OptionCard({
   );
 }
 
-function ConfettiParticles({ color, count = 40 }: { color: string; count?: number }) {
+function ConfettiParticles({
+  color,
+  count = 40
+}: {
+  color: string;
+  count?: number;
+}) {
   const particles = useMemo(
     () =>
       Array.from({ length: count }).map((_, i) => ({
@@ -871,7 +1342,13 @@ function ConfettiParticles({ color, count = 40 }: { color: string; count?: numbe
         <motion.div
           key={p.id}
           initial={{ opacity: 1, x: 0, y: 0, scale: 0 }}
-          animate={{ opacity: 0, x: p.x, y: p.y, rotate: Math.random() * 720, scale: p.scale }}
+          animate={{
+            opacity: 0,
+            x: p.x,
+            y: p.y,
+            rotate: Math.random() * 720,
+            scale: p.scale
+          }}
           transition={{ duration: 2, ease: "easeOut" }}
           className="absolute w-2 h-2 rounded-sm"
           style={{ backgroundColor: p.color }}

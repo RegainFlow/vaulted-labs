@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { isDisposableEmail } from "../lib/disposable-emails";
 import { trackEvent, AnalyticsEvents } from "../lib/analytics";
 import { TurnstileWidget } from "./TurnstileWidget";
+import { FeedbackButton } from "./FeedbackButton";
 import type { TurnstileWidgetHandle } from "./TurnstileWidget";
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -219,10 +220,19 @@ export function WaitlistForm({ count: _count }: WaitlistFormProps) {
             >
               <div>{message}</div>
               {status === "success" && (
-                <div className="mt-3 text-[10px] font-mono text-text-dim tracking-wider font-normal">
-                  Credits are applied to vault purchases and cannot be withdrawn
-                  as cash.
-                </div>
+                <>
+                  <div className="mt-3 text-[10px] font-mono text-text-dim tracking-wider font-normal">
+                    Credits are applied to vault purchases and cannot be withdrawn
+                    as cash.
+                  </div>
+                  <div className="mt-3 text-[10px] text-text-muted font-normal tracking-normal">
+                    Want to help shape VaultedLabs?{" "}
+                    <FeedbackButton
+                      label="Share your feedback"
+                      className="text-accent hover:text-accent-hover transition-colors underline underline-offset-2 cursor-pointer"
+                    />
+                  </div>
+                </>
               )}
             </motion.div>
           )}

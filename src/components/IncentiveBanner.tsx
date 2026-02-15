@@ -27,10 +27,17 @@ export function IncentiveBanner({ count, loading }: IncentiveBannerProps) {
               </h2>
             ) : (
               <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-white uppercase tracking-tight">
-                Join Early. Earn{" "}
-                <span style={{ color: activeTier?.color }} className="text-glow-magenta">
-                  More.
-                </span>
+                Join Early.
+                <div>
+                  Earn{" "}
+                  <span
+                    style={{ color: activeTier?.color }}
+                    className="text-glow-magenta"
+                  >
+                    Free
+                  </span>{" "}
+                  Credits.
+                </div>
               </h2>
             )}
           </div>
@@ -66,7 +73,9 @@ export function IncentiveBanner({ count, loading }: IncentiveBannerProps) {
                   }`}
                   style={
                     isActive
-                      ? { boxShadow: `0 0 25px ${tier.color}15, 0 0 50px ${tier.color}08` }
+                      ? {
+                          boxShadow: `0 0 25px ${tier.color}15, 0 0 50px ${tier.color}08`
+                        }
                       : undefined
                   }
                 >
@@ -74,15 +83,34 @@ export function IncentiveBanner({ count, loading }: IncentiveBannerProps) {
                   {isActive && (
                     <span
                       className="absolute top-3 right-3 w-2 h-2 rounded-full animate-pulse"
-                      style={{ backgroundColor: tier.color, boxShadow: `0 0 8px ${tier.color}` }}
+                      style={{
+                        backgroundColor: tier.color,
+                        boxShadow: `0 0 8px ${tier.color}`
+                      }}
                     />
                   )}
 
                   {/* Lock icon for future tiers */}
                   {isLocked && (
                     <span className="absolute top-3 right-3 text-text-dim text-xs">
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                      <svg
+                        width="12"
+                        height="12"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      >
+                        <rect
+                          x="3"
+                          y="11"
+                          width="18"
+                          height="11"
+                          rx="2"
+                          ry="2"
+                        />
                         <path d="M7 11V7a5 5 0 0110 0v4" />
                       </svg>
                     </span>
@@ -97,21 +125,23 @@ export function IncentiveBanner({ count, loading }: IncentiveBannerProps) {
                   </div>
 
                   {/* Tier label */}
-                  <div className={`text-xs font-bold uppercase tracking-wider mb-3 ${isFilled ? "text-text-dim" : "text-text-muted"}`}>
+                  <div
+                    className={`text-xs font-bold uppercase tracking-wider mb-3 ${isFilled ? "text-text-dim" : "text-text-muted"}`}
+                  >
                     {tier.label}
                   </div>
 
                   {/* Spots info */}
-                  <div className={`text-[10px] font-mono mb-2 ${isFilled ? "text-text-dim" : "text-text-muted"}`}>
-                    {loading ? (
-                      "..."
-                    ) : isFilled ? (
-                      "FILLED"
-                    ) : isActive ? (
-                      `${remaining} of ${tier.spots} left`
-                    ) : (
-                      `${tier.spots} spots`
-                    )}
+                  <div
+                    className={`text-[10px] font-mono mb-2 ${isFilled ? "text-text-dim" : "text-text-muted"}`}
+                  >
+                    {loading
+                      ? "..."
+                      : isFilled
+                        ? "FILLED"
+                        : isActive
+                          ? `${remaining} of ${tier.spots} left`
+                          : `${tier.spots} spots`}
                   </div>
 
                   {/* Mini progress bar */}
@@ -119,7 +149,11 @@ export function IncentiveBanner({ count, loading }: IncentiveBannerProps) {
                     <motion.div
                       initial={{ width: 0 }}
                       whileInView={{ width: `${tierProgress}%` }}
-                      transition={{ duration: 1, ease: "easeOut", delay: i * 0.1 }}
+                      transition={{
+                        duration: 1,
+                        ease: "easeOut",
+                        delay: i * 0.1
+                      }}
                       className="h-full rounded-full"
                       style={{ backgroundColor: tier.color }}
                     />
@@ -131,7 +165,8 @@ export function IncentiveBanner({ count, loading }: IncentiveBannerProps) {
 
           {/* Withdrawal disclaimer */}
           <p className="text-center text-[10px] text-text-dim mt-5 sm:mt-6 font-mono uppercase tracking-wider">
-            Credits are applied to vault purchases and cannot be withdrawn as cash.
+            Credits are applied to vault purchases and cannot be withdrawn as
+            cash.
           </p>
         </motion.div>
       </div>

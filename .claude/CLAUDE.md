@@ -24,12 +24,12 @@ VaultedLabs is a gamified commerce platform. Users open "Vaults" to reveal colle
 
 | Level | Price | Common | Uncommon | Rare | Legendary |
 |-------|-------|--------|----------|------|-----------|
-| Bronze | $24 | 60.5% | 18.0% | 19.8% | 1.7% |
-| Silver | $38 | 59.8% | 18.8% | 18.3% | 3.1% |
-| Gold | $54 | 57.9% | 29.3% | 8.6% | 4.2% |
-| Platinum | $68 | 56.5% | 28.3% | 10.9% | 4.3% |
-| Obsidian | $78 | 55.8% | 27.8% | 12.0% | 4.4% |
-| Diamond | $86 | 55.1% | 27.3% | 13.2% | 4.4% |
+| Bronze | $19.99 | 55.0% | 25.0% | 17.0% | 3.0% |
+| Silver | $29.99 | 52.0% | 26.0% | 17.5% | 4.5% |
+| Gold | $44.99 | 48.0% | 28.0% | 18.0% | 6.0% |
+| Platinum | $59.99 | 45.0% | 28.0% | 19.5% | 7.5% |
+| Obsidian | $74.99 | 42.0% | 27.0% | 21.0% | 10.0% |
+| Diamond | $89.99 | 38.0% | 26.0% | 23.0% | 13.0% |
 
 ### Rarity Value Multipliers (of vault price)
 
@@ -50,7 +50,7 @@ VaultedLabs is a gamified commerce platform. Users open "Vaults" to reveal colle
 
 ### XP Earning
 
-- Vault purchase: XP = vault price (e.g. $24 Bronze → 24 XP)
+- Vault purchase: XP = vault price (e.g. $19.99 Bronze → 19.99 XP)
 - Marketplace buy: XP = price paid in credits
 - Auction win: XP = winning bid amount
 - No XP for cashouts, ships, or listing items
@@ -112,10 +112,10 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 | `--color-vault-silver` | #c0c0c0 | Silver tier |
 | `--color-vault-gold` | #ffd700 | Gold tier |
 | `--color-vault-diamond` | #b9f2ff | Diamond tier |
-| `--color-rarity-common` | #9a9ab0 | Common rarity |
-| `--color-rarity-uncommon` | #00f0ff | Uncommon rarity |
+| `--color-rarity-common` | #6B7280 | Common rarity |
+| `--color-rarity-uncommon` | #3B82F6 | Uncommon rarity |
 | `--color-rarity-rare` | #a855f7 | Rare rarity |
-| `--color-rarity-legendary` | #ff2d95 | Legendary rarity |
+| `--color-rarity-legendary` | #FFD700 | Legendary rarity |
 | `--color-success` | #00f0ff | Success states |
 | `--color-error` | #ff3b5c | Error states |
 
