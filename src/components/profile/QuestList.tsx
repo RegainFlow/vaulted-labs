@@ -23,11 +23,13 @@ export function QuestList() {
   });
 
   const getProgress = (questId: string) => {
-    return questProgress.find((qp) => qp.questId === questId) || {
-      questId,
-      status: "locked" as const,
-      progress: 0,
-    };
+    return (
+      questProgress.find((qp) => qp.questId === questId) || {
+        questId,
+        status: "locked" as const,
+        progress: 0
+      }
+    );
   };
 
   return (
@@ -40,7 +42,11 @@ export function QuestList() {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {activeQuests.map((quest) => (
-              <QuestCard key={quest.id} quest={quest} progress={getProgress(quest.id)} />
+              <QuestCard
+                key={quest.id}
+                quest={quest}
+                progress={getProgress(quest.id)}
+              />
             ))}
           </div>
         </div>
@@ -54,7 +60,11 @@ export function QuestList() {
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {lockedQuests.map((quest) => (
-              <QuestCard key={quest.id} quest={quest} progress={getProgress(quest.id)} />
+              <QuestCard
+                key={quest.id}
+                quest={quest}
+                progress={getProgress(quest.id)}
+              />
             ))}
           </div>
         </div>
@@ -83,7 +93,11 @@ export function QuestList() {
           {showCompleted && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {completedQuests.map((quest) => (
-                <QuestCard key={quest.id} quest={quest} progress={getProgress(quest.id)} />
+                <QuestCard
+                  key={quest.id}
+                  quest={quest}
+                  progress={getProgress(quest.id)}
+                />
               ))}
             </div>
           )}
@@ -91,9 +105,13 @@ export function QuestList() {
       )}
 
       {/* Empty state */}
-      {activeQuests.length === 0 && completedQuests.length === 0 && lockedQuests.length === 0 && (
-        <p className="text-center text-text-dim text-sm py-8">No quests available yet.</p>
-      )}
+      {activeQuests.length === 0 &&
+        completedQuests.length === 0 &&
+        lockedQuests.length === 0 && (
+          <p className="text-center text-text-dim text-sm py-8">
+            No quests available yet.
+          </p>
+        )}
     </div>
   );
 }

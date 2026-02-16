@@ -3,8 +3,11 @@ import { motion, AnimatePresence } from "motion/react";
 import { isDisposableEmail } from "../lib/disposable-emails";
 import { trackEvent, AnalyticsEvents } from "../lib/analytics";
 import { TurnstileWidget } from "./TurnstileWidget";
-import { FeedbackButton } from "./FeedbackButton";
-import type { TurnstileWidgetHandle } from "./TurnstileWidget";
+import { FeedbackButton } from "./shared/FeedbackButton";
+import type {
+  TurnstileWidgetHandle,
+  WaitlistFormProps
+} from "../types/landing";
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 const MIN_SUBMIT_MS = 3000;
@@ -13,10 +16,6 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as
   | string
   | undefined;
-
-interface WaitlistFormProps {
-  count: number;
-}
 
 export function WaitlistForm({ count: _count }: WaitlistFormProps) {
   const [email, setEmail] = useState("");
@@ -222,8 +221,8 @@ export function WaitlistForm({ count: _count }: WaitlistFormProps) {
               {status === "success" && (
                 <>
                   <div className="mt-3 text-[10px] font-mono text-text-dim tracking-wider font-normal">
-                    Credits are applied to vault purchases and cannot be withdrawn
-                    as cash.
+                    Credits are applied to vault purchases and cannot be
+                    withdrawn as cash.
                   </div>
                   <div className="mt-3 text-[10px] text-text-muted font-normal tracking-normal">
                     Want to help shape VaultedLabs?{" "}

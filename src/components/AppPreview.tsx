@@ -1,5 +1,11 @@
 import { motion } from "motion/react";
 import { PhoneMockup } from "./PhoneMockup";
+import {
+  DiamonIcon,
+  SellIcon,
+  LockIcon,
+  MobileIcon
+} from "../assets/benefits-icons";
 
 const benefits = [
   {
@@ -7,78 +13,27 @@ const benefits = [
     description:
       "Every vault contains a real collectible. Definite chance of winning a physical item.",
     color: "text-neon-cyan",
-    icon: (
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        className="text-neon-cyan"
-      >
-        <path d="M6 3h12l4 6-10 13L2 9z" />
-      </svg>
-    )
+    icon: <DiamonIcon />
   },
   {
     title: "Sell It",
-    description: "Don't want it? Sell it back to us.",
+    description: "Don't want it? Sell it.",
     color: "text-accent",
-    icon: (
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        className="text-accent"
-      >
-        <circle cx="12" cy="12" r="10" />
-        <path d="M14.5 9a3.5 3.5 0 0 0-5 0M12 7v1M9.5 15a3.5 3.5 0 0 0 5 0M12 16v1M9 12h6" />
-      </svg>
-    )
+    icon: <SellIcon />
   },
   {
     title: "Guaranteed",
     description:
       "All odds are transparent and verified. What you see is what you get.",
     color: "text-vault-gold",
-    icon: (
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        className="text-vault-gold"
-      >
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-      </svg>
-    )
+    icon: <LockIcon />
   },
   {
     title: "Mobile-First",
     description:
       "Built for quick vault runs anywhere. Seamless on every device.",
     color: "text-neon-green",
-    icon: (
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.5"
-        className="text-neon-green"
-      >
-        <rect x="5" y="2" width="14" height="20" rx="2" ry="2" />
-        <line x1="12" y1="18" x2="12.01" y2="18" />
-      </svg>
-    )
+    icon: <MobileIcon />
   }
 ];
 

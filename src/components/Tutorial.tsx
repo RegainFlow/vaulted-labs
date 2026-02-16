@@ -1,20 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import type { TutorialStep } from "../hooks/useTutorial";
-
-interface TutorialProps {
-  step: TutorialStep | null;
-  onAdvance: () => void;
-  onComplete: () => void;
-  completedAction: string | null;
-}
-
-interface TargetRect {
-  top: number;
-  left: number;
-  width: number;
-  height: number;
-}
+import type { TutorialProps, TargetRect } from "../types/tutorial";
+import { OVERLAY_STEPS, TOOLTIP_STEPS } from "../data/tutorial";
 
 const PADDING = 8;
 
@@ -26,11 +13,15 @@ function getTargetRect(selector: string): TargetRect | null {
     top: rect.top - PADDING,
     left: rect.left - PADDING,
     width: rect.width + PADDING * 2,
-    height: rect.height + PADDING * 2,
+    height: rect.height + PADDING * 2
   };
 }
 
-function getTooltipPosition(rect: TargetRect, position: "top" | "bottom", step?: string): React.CSSProperties {
+function getTooltipPosition(
+  rect: TargetRect,
+  position: "top" | "bottom",
+  step?: string
+): React.CSSProperties {
   const isMobile = window.innerWidth < 640;
   const tooltipMaxWidth = isMobile ? 280 : 340;
 
@@ -39,46 +30,30 @@ function getTooltipPosition(rect: TargetRect, position: "top" | "bottom", step?:
   if (isMobile && (step === "hud" || step === "categories")) {
     return {
       top: Math.max(rect.top + rect.height + 40, window.innerHeight * 0.4),
-      left: Math.max(8, (window.innerWidth - tooltipMaxWidth) / 2),
+      left: Math.max(8, (window.innerWidth - tooltipMaxWidth) / 2)
     };
   }
 
   if (position === "bottom" || isMobile) {
     return {
       top: rect.top + rect.height + 12,
-      left: isMobile ? Math.max(8, (window.innerWidth - tooltipMaxWidth) / 2) : Math.max(12, Math.min(rect.left, window.innerWidth - tooltipMaxWidth)),
+      left: isMobile
+        ? Math.max(8, (window.innerWidth - tooltipMaxWidth) / 2)
+        : Math.max(12, Math.min(rect.left, window.innerWidth - tooltipMaxWidth))
     };
   }
   return {
     bottom: window.innerHeight - rect.top + 12,
-    left: Math.max(12, Math.min(rect.left, window.innerWidth - tooltipMaxWidth)),
+    left: Math.max(12, Math.min(rect.left, window.innerWidth - tooltipMaxWidth))
   };
 }
 
-function getHudSelector(): string {
-  const isMobile = window.innerWidth < 768;
-  return isMobile ? '[data-tutorial="hud"]' : '[data-tutorial="hud-desktop"]';
-}
-
-const TOOLTIP_STEPS: Record<string, { selector: string | (() => string); title: string; description: string; position: "top" | "bottom" }> = {
-  hud: {
-    selector: getHudSelector,
-    title: "Your Dashboard",
-    description: "This is your dashboard. Credits, loot, and level — always visible.",
-    position: "bottom",
-  },
-  categories: {
-    selector: '[data-tutorial="categories"]',
-    title: "Categories",
-    description: "Categories filter what you're hunting for. Funko Pop! is selected.",
-    position: "bottom",
-  },
-};
-
-/* Steps that Tutorial.tsx should NOT render (handled inside VaultOverlay) */
-const OVERLAY_STEPS = new Set<string>(["pick-box", "revealing", "result-store", "result-ship", "result-cashout"]);
-
-export function Tutorial({ step, onAdvance, onComplete, completedAction }: TutorialProps) {
+export function Tutorial({
+  step,
+  onAdvance,
+  onComplete,
+  completedAction
+}: TutorialProps) {
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
 
   const updateRect = useCallback(() => {
@@ -92,7 +67,10 @@ export function Tutorial({ step, onAdvance, onComplete, completedAction }: Tutor
 
     const config = TOOLTIP_STEPS[step];
     if (config) {
-      const selector = typeof config.selector === "function" ? config.selector() : config.selector;
+      const selector =
+        typeof config.selector === "function"
+          ? config.selector()
+          : config.selector;
       const rect = getTargetRect(selector);
       setTargetRect(rect);
     } else {
@@ -110,15 +88,7 @@ export function Tutorial({ step, onAdvance, onComplete, completedAction }: Tutor
     };
   }, [updateRect]);
 
-  /* Scroll to top so HUD is visible for hud/categories steps */
-  useEffect(() => {
-    if (step === "hud" || step === "categories") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      setTimeout(updateRect, 300);
-    }
-  }, [step, updateRect]);
-
-  /* Scroll Bronze card into view when reaching open-vault step */
+  // Scroll Bronze card into view when reaching open-vault step
   useEffect(() => {
     if (step === "open-vault") {
       const el = document.querySelector('[data-tutorial="vault-bronze"]');
@@ -136,7 +106,7 @@ export function Tutorial({ step, onAdvance, onComplete, completedAction }: Tutor
   const svgWidth = typeof window !== "undefined" ? window.innerWidth : 1920;
   const svgHeight = typeof window !== "undefined" ? window.innerHeight : 1080;
 
-  /* ── Welcome overlay ── */
+  // Welcome overlay
   if (step === "welcome") {
     return (
       <AnimatePresence>
@@ -154,7 +124,15 @@ export function Tutorial({ step, onAdvance, onComplete, completedAction }: Tutor
             className="bg-surface-elevated border border-accent/30 rounded-2xl p-8 sm:p-10 max-w-md w-full text-center shadow-[0_0_60px_rgba(255,45,149,0.15)]"
           >
             <div className="w-16 h-16 bg-accent/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-accent/30">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                className="text-accent"
+              >
                 <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
                 <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
                 <line x1="12" y1="22.08" x2="12" y2="12" />
@@ -164,7 +142,9 @@ export function Tutorial({ step, onAdvance, onComplete, completedAction }: Tutor
               Welcome to VaultedLabs!
             </h2>
             <p className="text-text-muted text-sm leading-relaxed mb-8">
-              Let's open your first vault — on us. You'll pick a box, reveal a collectible, and decide what to do with it. Everything you earn is yours to keep.
+              Let's open your first vault — on us. You'll pick a box, reveal a
+              collectible, and decide what to do with it. Everything you earn is
+              yours to keep.
             </p>
             <button
               onClick={onAdvance}
@@ -197,7 +177,15 @@ export function Tutorial({ step, onAdvance, onComplete, completedAction }: Tutor
             className="bg-surface-elevated border border-neon-green/30 rounded-2xl p-8 sm:p-10 max-w-md w-full text-center shadow-[0_0_60px_rgba(57,255,20,0.1)]"
           >
             <div className="w-16 h-16 bg-neon-green/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-neon-green/30">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-neon-green">
+              <svg
+                width="32"
+                height="32"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                className="text-neon-green"
+              >
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
@@ -205,10 +193,14 @@ export function Tutorial({ step, onAdvance, onComplete, completedAction }: Tutor
               You're All Set!
             </h2>
             <p className="text-text-muted text-sm leading-relaxed mb-2">
-              Your item has been <span className="text-white font-bold">{actionText}</span>.
+              Your item has been{" "}
+              <span className="text-white font-bold">{actionText}</span>.
             </p>
             <p className="text-text-muted text-sm leading-relaxed mb-8">
-              You earned <span className="text-neon-green font-bold">24 XP</span> from your first vault. Now go explore — open more vaults, build your collection, and level up.
+              You earned{" "}
+              <span className="text-neon-green font-bold">24 XP</span> from your
+              first vault. Now go explore — open more vaults, build your
+              collection, and level up.
             </p>
             <button
               onClick={onComplete}
@@ -225,7 +217,11 @@ export function Tutorial({ step, onAdvance, onComplete, completedAction }: Tutor
   /* ── Tooltip steps: hud, categories ── */
   const tooltipConfig = TOOLTIP_STEPS[step];
   if (tooltipConfig && targetRect) {
-    const tooltipStyle = getTooltipPosition(targetRect, tooltipConfig.position, step);
+    const tooltipStyle = getTooltipPosition(
+      targetRect,
+      tooltipConfig.position,
+      step
+    );
     return (
       <AnimatePresence>
         <motion.div
@@ -243,7 +239,13 @@ export function Tutorial({ step, onAdvance, onComplete, completedAction }: Tutor
           >
             <defs>
               <mask id="tutorial-mask">
-                <rect x="0" y="0" width={svgWidth} height={svgHeight} fill="white" />
+                <rect
+                  x="0"
+                  y="0"
+                  width={svgWidth}
+                  height={svgHeight}
+                  fill="white"
+                />
                 <rect
                   x={targetRect.left}
                   y={targetRect.top}
@@ -272,7 +274,8 @@ export function Tutorial({ step, onAdvance, onComplete, completedAction }: Tutor
               left: targetRect.left,
               width: targetRect.width,
               height: targetRect.height,
-              boxShadow: "0 0 30px rgba(255,45,149,0.4), inset 0 0 20px rgba(255,45,149,0.15)",
+              boxShadow:
+                "0 0 30px rgba(255,45,149,0.4), inset 0 0 20px rgba(255,45,149,0.15)"
             }}
           />
 
@@ -316,14 +319,16 @@ export function Tutorial({ step, onAdvance, onComplete, completedAction }: Tutor
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[200] pointer-events-none"
         >
-          <svg
-            width={svgWidth}
-            height={svgHeight}
-            className="absolute inset-0"
-          >
+          <svg width={svgWidth} height={svgHeight} className="absolute inset-0">
             <defs>
               <mask id="tutorial-mask-vault">
-                <rect x="0" y="0" width={svgWidth} height={svgHeight} fill="white" />
+                <rect
+                  x="0"
+                  y="0"
+                  width={svgWidth}
+                  height={svgHeight}
+                  fill="white"
+                />
                 <rect
                   x={targetRect.left}
                   y={targetRect.top}
@@ -351,7 +356,8 @@ export function Tutorial({ step, onAdvance, onComplete, completedAction }: Tutor
               left: targetRect.left,
               width: targetRect.width,
               height: targetRect.height,
-              boxShadow: "0 0 30px rgba(255,45,149,0.4), inset 0 0 20px rgba(255,45,149,0.15)",
+              boxShadow:
+                "0 0 30px rgba(255,45,149,0.4), inset 0 0 20px rgba(255,45,149,0.15)"
             }}
           />
 

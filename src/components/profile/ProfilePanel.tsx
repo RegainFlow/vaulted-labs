@@ -1,10 +1,28 @@
-import { motion } from "motion/react";
+import { useState } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { useGame } from "../../context/GameContext";
 import { BOSS_FIGHTS } from "../../data/gamification";
 import { BossFightCard } from "./BossFightCard";
+import { BossFightOverlay } from "./BossFightOverlay";
+import { PrestigeButton } from "./PrestigeButton";
+import { PrestigeOverlay } from "./PrestigeOverlay";
+import type { BossFight } from "../../types/gamification";
 
 export function ProfilePanel() {
-  const { levelInfo, inventory, creditTransactions, xp } = useGame();
+  const {
+    levelInfo,
+    inventory,
+    creditTransactions,
+    xp,
+    prestigeLevel,
+    canPrestige,
+    prestige,
+    defeatedBosses,
+    defeatBoss
+  } = useGame();
+
+  const [fightingBoss, setFightingBoss] = useState<BossFight | null>(null);
+  const [showPrestigeOverlay, setShowPrestigeOverlay] = useState(false);
 
   const totalItems = inventory.length;
   const totalVaultsOpened = creditTransactions.filter(
@@ -13,6 +31,27 @@ export function ProfilePanel() {
   const totalCreditsEarned = creditTransactions
     .filter((tx) => tx.amount > 0)
     .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const handlePrestige = () => {
+    prestige();
+    setShowPrestigeOverlay(true);
+  };
+
+  const handleBossFight = (boss: BossFight) => {
+    if (defeatedBosses.includes(boss.id)) return;
+    setFightingBoss(boss);
+  };
+
+  const handleBossWin = (boss: BossFight) => {
+    defeatBoss(boss.id, boss.creditReward, boss.xpReward, boss.specialItem);
+  };
+
+  // Prestige star indicators
+  const prestigeStars = Array.from({ length: prestigeLevel }).map((_, i) => (
+    <span key={i} className="text-vault-gold text-xs">
+      &#9733;
+    </span>
+  ));
 
   return (
     <div className="space-y-6 sm:space-y-8">
@@ -25,13 +64,29 @@ export function ProfilePanel() {
         <div className="flex items-center gap-4 sm:gap-6 mb-4 sm:mb-6">
           <div className="relative shrink-0">
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl bg-accent/10 border-2 border-accent/30 flex items-center justify-center">
-              <span className="text-2xl sm:text-3xl font-black text-accent" style={{ textShadow: "0 0 20px rgba(255,45,149,0.5)" }}>
+              <span
+                className="text-2xl sm:text-3xl font-black text-accent"
+                style={{ textShadow: "0 0 20px rgba(255,45,149,0.5)" }}
+              >
                 {levelInfo.level}
               </span>
             </div>
+            {/* Prestige stars below level badge */}
+            {prestigeLevel > 0 && (
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex gap-0.5">
+                {prestigeStars}
+              </div>
+            )}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">Current Level</p>
+            <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest mb-1">
+              Current Level
+              {prestigeLevel > 0 && (
+                <span className="ml-2 text-vault-gold">
+                  Prestige {prestigeLevel}
+                </span>
+              )}
+            </p>
             <p className="text-lg sm:text-xl font-black text-white uppercase tracking-tight mb-2">
               Level {levelInfo.level}
             </p>
@@ -42,7 +97,9 @@ export function ProfilePanel() {
                 animate={{ width: `${levelInfo.progressPercent}%` }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
                 className="h-full rounded-full"
-                style={{ background: "linear-gradient(90deg, #ff2d95, #00f0ff)" }}
+                style={{
+                  background: "linear-gradient(90deg, #ff2d95, #00f0ff)"
+                }}
               />
             </div>
             <p className="text-[10px] font-mono text-text-muted mt-1.5">
@@ -51,19 +108,39 @@ export function ProfilePanel() {
           </div>
         </div>
 
+        {/* Prestige Button */}
+        <PrestigeButton
+          nextPrestigeLevel={prestigeLevel + 1}
+          onClick={handlePrestige}
+          disabled={!canPrestige}
+          currentLevel={levelInfo.level}
+        />
+
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4">
           <div className="text-center px-2 sm:px-3 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-surface border border-white/10">
-            <p className="text-base sm:text-lg font-mono font-black text-neon-cyan">{totalItems}</p>
-            <p className="text-[8px] sm:text-[9px] font-bold text-text-dim uppercase tracking-wider">Items</p>
+            <p className="text-base sm:text-lg font-mono font-black text-neon-cyan">
+              {totalItems}
+            </p>
+            <p className="text-[8px] sm:text-[9px] font-bold text-text-dim uppercase tracking-wider">
+              Items
+            </p>
           </div>
           <div className="text-center px-2 sm:px-3 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-surface border border-white/10">
-            <p className="text-base sm:text-lg font-mono font-black text-accent">{totalVaultsOpened}</p>
-            <p className="text-[8px] sm:text-[9px] font-bold text-text-dim uppercase tracking-wider">Vaults</p>
+            <p className="text-base sm:text-lg font-mono font-black text-accent">
+              {totalVaultsOpened}
+            </p>
+            <p className="text-[8px] sm:text-[9px] font-bold text-text-dim uppercase tracking-wider">
+              Vaults
+            </p>
           </div>
           <div className="text-center px-2 sm:px-3 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-surface border border-white/10">
-            <p className="text-base sm:text-lg font-mono font-black text-vault-gold">${totalCreditsEarned}</p>
-            <p className="text-[8px] sm:text-[9px] font-bold text-text-dim uppercase tracking-wider">Earned</p>
+            <p className="text-base sm:text-lg font-mono font-black text-vault-gold">
+              ${totalCreditsEarned}
+            </p>
+            <p className="text-[8px] sm:text-[9px] font-bold text-text-dim uppercase tracking-wider">
+              Earned
+            </p>
           </div>
         </div>
       </motion.div>
@@ -75,10 +152,38 @@ export function ProfilePanel() {
         </h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
           {BOSS_FIGHTS.map((boss) => (
-            <BossFightCard key={boss.id} boss={boss} playerLevel={levelInfo.level} />
+            <BossFightCard
+              key={boss.id}
+              boss={boss}
+              playerLevel={levelInfo.level}
+              isDefeated={defeatedBosses.includes(boss.id)}
+              onFight={handleBossFight}
+            />
           ))}
         </div>
       </div>
+
+      {/* Boss Fight Overlay */}
+      <AnimatePresence>
+        {fightingBoss && (
+          <BossFightOverlay
+            boss={fightingBoss}
+            prestigeLevel={prestigeLevel}
+            onWin={handleBossWin}
+            onClose={() => setFightingBoss(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Prestige Overlay */}
+      <AnimatePresence>
+        {showPrestigeOverlay && (
+          <PrestigeOverlay
+            prestigeLevel={prestigeLevel}
+            onClose={() => setShowPrestigeOverlay(false)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

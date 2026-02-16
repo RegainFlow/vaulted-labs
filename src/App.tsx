@@ -7,7 +7,7 @@ import { ShopPage } from "./pages/ShopPage";
 import { InventoryPage } from "./pages/InventoryPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { WalletPage } from "./pages/WalletPage";
-import { QuestToastNotification } from "./components/QuestToast";
+import { QuestToastNotification } from "./components/shared/QuestToast";
 import { trackPageView } from "./lib/analytics";
 
 function App() {

@@ -1,24 +1,6 @@
 import { useState, useCallback } from "react";
-
-export type TutorialStep =
-  | "welcome"
-  | "hud"
-  | "categories"
-  | "open-vault"
-  | "pick-box"
-  | "revealing"
-  | "result-store"
-  | "result-ship"
-  | "result-cashout"
-  | "complete";
-
-const LINEAR_FLOW: Record<string, TutorialStep> = {
-  welcome: "hud",
-  hud: "categories",
-  categories: "open-vault",
-  "result-store": "result-ship",
-  "result-ship": "result-cashout",
-};
+import type { TutorialStep } from "../types/tutorial";
+import { LINEAR_FLOW } from "../data/tutorial";
 
 export function useTutorial(hasSeenTutorial: boolean) {
   const [step, setStep] = useState<TutorialStep | null>(
@@ -26,7 +8,7 @@ export function useTutorial(hasSeenTutorial: boolean) {
   );
   const [completedAction, setCompletedAction] = useState<string | null>(null);
 
-  /** Linear "Next" button transitions */
+  // Linear "Next" button transitions
   const advance = useCallback(() => {
     setStep((prev) => {
       if (!prev) return null;
@@ -34,12 +16,12 @@ export function useTutorial(hasSeenTutorial: boolean) {
     });
   }, []);
 
-  /** Event-driven transitions */
+  // Event-driven transitions
   const goTo = useCallback((next: TutorialStep) => {
     setStep(next);
   }, []);
 
-  /** Reset tutorial (called on complete) */
+  // Reset tutorial (called on complete)
   const reset = useCallback(() => {
     setStep(null);
   }, []);

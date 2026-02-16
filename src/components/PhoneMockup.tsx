@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { VaultIcon } from "./VaultIcons";
+import { VaultIcon } from "./vault/VaultIcons";
 
 export function PhoneMockup() {
   return (

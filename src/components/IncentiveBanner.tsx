@@ -1,10 +1,6 @@
 import { motion } from "motion/react";
 import { INCENTIVE_TIERS, getActiveTierInfo } from "../data/vaults";
-
-interface IncentiveBannerProps {
-  count: number;
-  loading: boolean;
-}
+import type { IncentiveBannerProps } from "../types/landing";
 
 export function IncentiveBanner({ count, loading }: IncentiveBannerProps) {
   const { activeTier, completedTiers } = getActiveTierInfo(count);
@@ -36,7 +32,15 @@ export function IncentiveBanner({ count, loading }: IncentiveBannerProps) {
                   >
                     Free
                   </span>{" "}
-                  Credits.
+                  Credits. <br /> +
+                  <br /> Lifetime{" "}
+                  <span
+                    style={{ color: activeTier?.color }}
+                    className="text-glow-magenta"
+                  >
+                    Perks
+                  </span>
+                  .
                 </div>
               </h2>
             )}

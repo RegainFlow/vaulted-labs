@@ -1,7 +1,13 @@
-import type { Quest } from "../types/game";
+import type { Quest } from "../types/quest";
+
+export const CATEGORY_COLORS: Record<string, string> = {
+  onboarding: "#00f0ff",
+  engagement: "#ff2d95",
+  milestone: "#ffd700"
+};
 
 export const QUESTS: Quest[] = [
-  /* ── Level 1 — Onboarding ───────────────────────────────────────── */
+  // Level 1 — Onboarding
   {
     id: "q-first-vault",
     title: "First Vault",
@@ -10,7 +16,7 @@ export const QUESTS: Quest[] = [
     xpReward: 10,
     creditReward: 5,
     requirement: { type: "vault_purchase", target: 1 },
-    category: "onboarding",
+    category: "onboarding"
   },
   {
     id: "q-collectors-instinct",
@@ -19,7 +25,7 @@ export const QUESTS: Quest[] = [
     requiredLevel: 1,
     xpReward: 15,
     requirement: { type: "hold_item", target: 1 },
-    category: "onboarding",
+    category: "onboarding"
   },
   {
     id: "q-cash-flow",
@@ -28,7 +34,7 @@ export const QUESTS: Quest[] = [
     requiredLevel: 1,
     xpReward: 10,
     requirement: { type: "cashout_item", target: 1 },
-    category: "onboarding",
+    category: "onboarding"
   },
   {
     id: "q-special-delivery",
@@ -37,10 +43,10 @@ export const QUESTS: Quest[] = [
     requiredLevel: 1,
     xpReward: 15,
     requirement: { type: "ship_item", target: 1 },
-    category: "onboarding",
+    category: "onboarding"
   },
 
-  /* ── Level 3 — Early Engagement ─────────────────────────────────── */
+  // Level 3 — Early Engagement
   {
     id: "q-vault-veteran",
     title: "Vault Veteran",
@@ -49,7 +55,7 @@ export const QUESTS: Quest[] = [
     xpReward: 50,
     creditReward: 10,
     requirement: { type: "vault_purchase", target: 5 },
-    category: "engagement",
+    category: "engagement"
   },
   {
     id: "q-stockpile",
@@ -58,7 +64,7 @@ export const QUESTS: Quest[] = [
     requiredLevel: 3,
     xpReward: 30,
     requirement: { type: "hold_item", target: 3 },
-    category: "engagement",
+    category: "engagement"
   },
   {
     id: "q-spend-100",
@@ -68,7 +74,7 @@ export const QUESTS: Quest[] = [
     xpReward: 40,
     creditReward: 15,
     requirement: { type: "spend_amount", target: 100 },
-    category: "engagement",
+    category: "engagement"
   },
   {
     id: "q-bargain-hunter",
@@ -77,10 +83,10 @@ export const QUESTS: Quest[] = [
     requiredLevel: 3,
     xpReward: 25,
     requirement: { type: "marketplace_buy", target: 1 },
-    category: "engagement",
+    category: "engagement"
   },
 
-  /* ── Level 5 — Marketplace ──────────────────────────────────────── */
+  // Level 5 — Marketplace
   {
     id: "q-auction-rookie",
     title: "Auction Rookie",
@@ -88,7 +94,7 @@ export const QUESTS: Quest[] = [
     requiredLevel: 5,
     xpReward: 30,
     requirement: { type: "auction_bid", target: 1 },
-    category: "engagement",
+    category: "engagement"
   },
   {
     id: "q-vault-addict",
@@ -98,7 +104,7 @@ export const QUESTS: Quest[] = [
     xpReward: 100,
     creditReward: 20,
     requirement: { type: "vault_purchase", target: 15 },
-    category: "milestone",
+    category: "milestone"
   },
   {
     id: "q-cash-machine",
@@ -108,7 +114,7 @@ export const QUESTS: Quest[] = [
     xpReward: 60,
     creditReward: 10,
     requirement: { type: "cashout_item", target: 5 },
-    category: "milestone",
+    category: "milestone"
   },
   {
     id: "q-big-spender",
@@ -118,10 +124,10 @@ export const QUESTS: Quest[] = [
     xpReward: 80,
     creditReward: 25,
     requirement: { type: "spend_amount", target: 300 },
-    category: "milestone",
+    category: "milestone"
   },
 
-  /* ── Level 10 — Advanced ────────────────────────────────────────── */
+  // Level 10 — Advanced
   {
     id: "q-vault-master",
     title: "Vault Master",
@@ -130,7 +136,7 @@ export const QUESTS: Quest[] = [
     xpReward: 200,
     creditReward: 50,
     requirement: { type: "vault_purchase", target: 30 },
-    category: "milestone",
+    category: "milestone"
   },
   {
     id: "q-shipping-magnate",
@@ -139,7 +145,7 @@ export const QUESTS: Quest[] = [
     requiredLevel: 10,
     xpReward: 100,
     requirement: { type: "ship_item", target: 5 },
-    category: "milestone",
+    category: "milestone"
   },
   {
     id: "q-high-roller",
@@ -149,7 +155,7 @@ export const QUESTS: Quest[] = [
     xpReward: 150,
     creditReward: 30,
     requirement: { type: "spend_amount", target: 500 },
-    category: "milestone",
+    category: "milestone"
   },
   {
     id: "q-first-listing",
@@ -158,10 +164,10 @@ export const QUESTS: Quest[] = [
     requiredLevel: 10,
     xpReward: 50,
     requirement: { type: "marketplace_list", target: 1 },
-    category: "engagement",
+    category: "engagement"
   },
 
-  /* ── Level 20 — Legend ──────────────────────────────────────────── */
+  // Level 20 — Legend
   {
     id: "q-vault-legend",
     title: "Vault Legend",
@@ -170,7 +176,7 @@ export const QUESTS: Quest[] = [
     xpReward: 500,
     creditReward: 100,
     requirement: { type: "vault_purchase", target: 100 },
-    category: "milestone",
+    category: "milestone"
   },
   {
     id: "q-credit-king",
@@ -180,7 +186,7 @@ export const QUESTS: Quest[] = [
     xpReward: 300,
     creditReward: 50,
     requirement: { type: "cashout_item", target: 20 },
-    category: "milestone",
+    category: "milestone"
   },
   {
     id: "q-whale-status",
@@ -190,7 +196,7 @@ export const QUESTS: Quest[] = [
     xpReward: 400,
     creditReward: 75,
     requirement: { type: "spend_amount", target: 1000 },
-    category: "milestone",
+    category: "milestone"
   },
   {
     id: "q-auction-shark",
@@ -200,6 +206,6 @@ export const QUESTS: Quest[] = [
     xpReward: 200,
     creditReward: 25,
     requirement: { type: "auction_bid", target: 10 },
-    category: "milestone",
-  },
+    category: "milestone"
+  }
 ];

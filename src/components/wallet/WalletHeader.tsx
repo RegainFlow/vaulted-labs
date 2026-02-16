@@ -19,9 +19,27 @@ export function WalletHeader() {
   );
 
   const breakdownCards = [
-    { label: "Earned", value: earnedTotal, color: "text-neon-cyan", borderColor: "border-neon-cyan/20", bgColor: "bg-neon-cyan/5" },
-    { label: "Incentive", value: incentiveTotal, color: "text-vault-gold", borderColor: "border-vault-gold/20", bgColor: "bg-vault-gold/5" },
-    { label: "Spent", value: spentTotal, color: "text-accent", borderColor: "border-accent/20", bgColor: "bg-accent/5" },
+    {
+      label: "Earned",
+      value: earnedTotal,
+      color: "text-neon-cyan",
+      borderColor: "border-neon-cyan/20",
+      bgColor: "bg-neon-cyan/5"
+    },
+    {
+      label: "Incentive",
+      value: incentiveTotal,
+      color: "text-vault-gold",
+      borderColor: "border-vault-gold/20",
+      bgColor: "bg-vault-gold/5"
+    },
+    {
+      label: "Spent",
+      value: spentTotal,
+      color: "text-accent",
+      borderColor: "border-accent/20",
+      bgColor: "bg-accent/5"
+    }
   ];
 
   return (
@@ -32,9 +50,15 @@ export function WalletHeader() {
     >
       {/* Main balance */}
       <div className="text-center mb-6">
-        <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest mb-2">Available Balance</p>
+        <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest mb-2">
+          Available Balance
+        </p>
         <p className="text-4xl sm:text-5xl md:text-6xl font-mono font-black text-vault-gold animate-hud-shimmer">
-          ${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          $
+          {balance.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          })}
         </p>
       </div>
 
@@ -45,8 +69,14 @@ export function WalletHeader() {
             key={card.label}
             className={`text-center px-2 sm:px-4 py-3 sm:py-4 rounded-xl border ${card.borderColor} ${card.bgColor}`}
           >
-            <p className={`text-base sm:text-xl font-mono font-black ${card.color}`}>
-              ${card.value.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+            <p
+              className={`text-base sm:text-xl font-mono font-black ${card.color}`}
+            >
+              $
+              {card.value.toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+              })}
             </p>
             <p className="text-[8px] sm:text-[9px] font-bold text-text-dim uppercase tracking-wider mt-1">
               {card.label}

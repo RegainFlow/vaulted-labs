@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, useMemo, useCallback, useEffect, useRef } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef
+} from "react";
 import type { ReactNode } from "react";
 import type {
   InventoryItem,
@@ -9,16 +17,16 @@ import type {
   Rarity,
   VaultTierName,
   LevelInfo,
+  QuestToast,
   QuestProgress,
-  QuestRequirementType,
+  QuestRequirementType
 } from "../types/game";
 import { getLevelInfo } from "../data/gamification";
 import { SEED_LISTINGS, SEED_AUCTIONS } from "../data/mock-data";
 import { QUESTS } from "../data/quests";
 import { trackEvent, AnalyticsEvents } from "../lib/analytics";
 
-/* ── localStorage helpers ─────────────────────────────────────────── */
-
+// localStorage helpers
 const STORAGE_KEY = "vaultedlabs-game-state";
 
 interface PersistedState {
@@ -30,6 +38,8 @@ interface PersistedState {
   hasSeenTutorial: boolean;
   questProgress: QuestProgress[];
   nextId: number;
+  prestigeLevel: number;
+  defeatedBosses: string[];
 }
 
 const DEFAULT_TX: CreditTransaction = {
@@ -37,7 +47,7 @@ const DEFAULT_TX: CreditTransaction = {
   type: "earned",
   amount: 100,
   description: "Demo starting credits",
-  timestamp: Date.now(),
+  timestamp: Date.now()
 };
 
 function loadState(): PersistedState | null {
@@ -58,16 +68,7 @@ function saveState(state: PersistedState) {
   }
 }
 
-/* ── Quest completion toast ───────────────────────────────────────── */
-
-export interface QuestToast {
-  questTitle: string;
-  xpReward: number;
-  creditReward?: number;
-}
-
-/* ── Context ──────────────────────────────────────────────────────── */
-
+// Context
 interface GameContextValue {
   creditTransactions: CreditTransaction[];
   inventory: InventoryItem[];
@@ -82,7 +83,12 @@ interface GameContextValue {
   dismissQuestToast: () => void;
   addCredits: (amount: number, type: CreditType, description: string) => void;
   spendCredits: (amount: number, description: string) => boolean;
-  addItem: (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number) => InventoryItem;
+  addItem: (
+    product: string,
+    vaultTier: VaultTierName,
+    rarity: Rarity,
+    value: number
+  ) => InventoryItem;
   cashoutItem: (itemId: string) => void;
   shipItem: (itemId: string) => void;
   purchaseVault: (vaultName: string, price: number) => boolean;
@@ -93,11 +99,21 @@ interface GameContextValue {
   tutorialOpenVault: (vaultName: string, price: number) => void;
   setHasSeenTutorial: (seen: boolean) => void;
   resetDemo: () => void;
+  prestigeLevel: number;
+  canPrestige: boolean;
+  prestige: () => void;
+  defeatedBosses: string[];
+  defeatBoss: (
+    bossId: string,
+    creditReward: number,
+    xpReward: number,
+    specialItem?: { product: string; rarity: Rarity; value: number }
+  ) => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
 
-/* Hydrate nextId from persisted state to avoid collisions */
+// Hydrate nextId from persisted state to avoid collisions
 const saved = loadState();
 let nextId = saved?.nextId ?? 2;
 
@@ -105,28 +121,44 @@ function uid(prefix: string) {
   return `${prefix}-${nextId++}-${Date.now()}`;
 }
 
-/* ── Initial quest progress for level 1 quests ────────────────────── */
+// Initial quest progress for level 1 quests
 function initQuestProgress(): QuestProgress[] {
-  return QUESTS
-    .filter((q) => q.requiredLevel <= 1)
-    .map((q) => ({ questId: q.id, status: "active" as const, progress: 0 }));
+  return QUESTS.filter((q) => q.requiredLevel <= 1).map((q) => ({
+    questId: q.id,
+    status: "active" as const,
+    progress: 0
+  }));
 }
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const initial = loadState();
 
-  const [creditTransactions, setCreditTransactions] = useState<CreditTransaction[]>(
-    initial?.creditTransactions ?? [DEFAULT_TX]
+  const [creditTransactions, setCreditTransactions] = useState<
+    CreditTransaction[]
+  >(initial?.creditTransactions ?? [DEFAULT_TX]);
+  const [inventory, setInventory] = useState<InventoryItem[]>(
+    initial?.inventory ?? []
   );
-  const [inventory, setInventory] = useState<InventoryItem[]>(initial?.inventory ?? []);
   const [xp, setXP] = useState(initial?.xp ?? 0);
-  const [listings, setListings] = useState<MarketplaceListing[]>(initial?.listings ?? SEED_LISTINGS);
-  const [auctions, setAuctions] = useState<Auction[]>(initial?.auctions ?? SEED_AUCTIONS);
-  const [hasSeenTutorial, setHasSeenTutorial] = useState(initial?.hasSeenTutorial ?? false);
+  const [listings, setListings] = useState<MarketplaceListing[]>(
+    initial?.listings ?? SEED_LISTINGS
+  );
+  const [auctions, setAuctions] = useState<Auction[]>(
+    initial?.auctions ?? SEED_AUCTIONS
+  );
+  const [hasSeenTutorial, setHasSeenTutorial] = useState(
+    initial?.hasSeenTutorial ?? false
+  );
   const [questProgress, setQuestProgress] = useState<QuestProgress[]>(
     initial?.questProgress ?? initQuestProgress()
   );
   const [questToast, setQuestToast] = useState<QuestToast | null>(null);
+  const [prestigeLevel, setPrestigeLevel] = useState(
+    initial?.prestigeLevel ?? 0
+  );
+  const [defeatedBosses, setDefeatedBosses] = useState<string[]>(
+    initial?.defeatedBosses ?? []
+  );
 
   // Ref to track toast auto-dismiss timer
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -136,7 +168,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (toastTimer.current) clearTimeout(toastTimer.current);
   }, []);
 
-  /* ── Persist on every state change ─────────────────────────────── */
+  // Set data-prestige attribute on html element
+  useEffect(() => {
+    if (prestigeLevel > 0) {
+      document.documentElement.setAttribute(
+        "data-prestige",
+        String(prestigeLevel)
+      );
+    } else {
+      document.documentElement.removeAttribute("data-prestige");
+    }
+  }, [prestigeLevel]);
+
+  // every state change
   useEffect(() => {
     saveState({
       creditTransactions,
@@ -147,8 +191,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
       hasSeenTutorial,
       questProgress,
       nextId,
+      prestigeLevel,
+      defeatedBosses
     });
-  }, [creditTransactions, inventory, xp, listings, auctions, hasSeenTutorial, questProgress]);
+  }, [
+    creditTransactions,
+    inventory,
+    xp,
+    listings,
+    auctions,
+    hasSeenTutorial,
+    questProgress,
+    prestigeLevel,
+    defeatedBosses
+  ]);
 
   const balance = useMemo(
     () => creditTransactions.reduce((sum, tx) => sum + tx.amount, 0),
@@ -157,33 +213,52 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const levelInfo = useMemo(() => getLevelInfo(xp), [xp]);
 
-  /* ── Auto-unlock quests when level increases ───────────────────── */
+  // Auto-unlock quests when level increases
   useEffect(() => {
     setQuestProgress((prev) => {
       const existingIds = new Set(prev.map((qp) => qp.questId));
-      const newQuests = QUESTS
-        .filter((q) => q.requiredLevel <= levelInfo.level && !existingIds.has(q.id))
-        .map((q) => ({ questId: q.id, status: "active" as const, progress: 0 }));
+      const newQuests = QUESTS.filter(
+        (q) => q.requiredLevel <= levelInfo.level && !existingIds.has(q.id)
+      ).map((q) => ({ questId: q.id, status: "active" as const, progress: 0 }));
 
       if (newQuests.length === 0) return prev;
       return [...prev, ...newQuests];
     });
   }, [levelInfo.level]);
 
-  /* ── Quest progress helper ─────────────────────────────────────── */
-  const advanceQuests = useCallback((type: QuestRequirementType, incrementBy: number) => {
-    setQuestProgress((prev) => {
-      let changed = false;
-      const updated = prev.map((qp) => {
-        if (qp.status !== "active") return qp;
-        const quest = QUESTS.find((q) => q.id === qp.questId);
-        if (!quest || quest.requirement.type !== type) return qp;
+  // Quest progress helper
+  const advanceQuests = useCallback(
+    (type: QuestRequirementType, incrementBy: number) => {
+      const completedQuests: typeof QUESTS = [];
 
-        const newProgress = qp.progress + incrementBy;
-        if (newProgress >= quest.requirement.target) {
+      setQuestProgress((prev) => {
+        let changed = false;
+        const updated = prev.map((qp) => {
+          if (qp.status !== "active") return qp;
+          const quest = QUESTS.find((q) => q.id === qp.questId);
+          if (!quest || quest.requirement.type !== type) return qp;
+
+          const newProgress = qp.progress + incrementBy;
+          if (newProgress >= quest.requirement.target) {
+            changed = true;
+            completedQuests.push(quest);
+            return {
+              ...qp,
+              status: "completed" as const,
+              progress: quest.requirement.target
+            };
+          }
+
           changed = true;
-          // Award rewards asynchronously to avoid setState-in-setState
-          setTimeout(() => {
+          return { ...qp, progress: newProgress };
+        });
+        return changed ? updated : prev;
+      });
+
+      // Fire rewards outside the state updater (safe from StrictMode double-invoke)
+      if (completedQuests.length > 0) {
+        setTimeout(() => {
+          for (const quest of completedQuests) {
             setXP((prev) => prev + quest.xpReward);
             if (quest.creditReward) {
               setCreditTransactions((prev) => [
@@ -193,39 +268,50 @@ export function GameProvider({ children }: { children: ReactNode }) {
                   type: "earned",
                   amount: quest.creditReward!,
                   description: `Quest reward: ${quest.title}`,
-                  timestamp: Date.now(),
-                },
+                  timestamp: Date.now()
+                }
               ]);
             }
-            trackEvent(AnalyticsEvents.QUEST_COMPLETED, { quest_id: quest.id, quest_title: quest.title });
-            // Show toast
-            setQuestToast({ questTitle: quest.title, xpReward: quest.xpReward, creditReward: quest.creditReward });
+            trackEvent(AnalyticsEvents.QUEST_COMPLETED, {
+              quest_id: quest.id,
+              quest_title: quest.title
+            });
+            setQuestToast({
+              questTitle: quest.title,
+              xpReward: quest.xpReward,
+              creditReward: quest.creditReward
+            });
             if (toastTimer.current) clearTimeout(toastTimer.current);
             toastTimer.current = setTimeout(() => setQuestToast(null), 4000);
-          }, 0);
-          return { ...qp, status: "completed" as const, progress: quest.requirement.target };
-        }
+          }
+        }, 0);
+      }
+    },
+    []
+  );
 
-        changed = true;
-        return { ...qp, progress: newProgress };
-      });
-      return changed ? updated : prev;
-    });
-  }, []);
-
-  const addCredits = useCallback((amount: number, type: CreditType, description: string) => {
-    setCreditTransactions((prev) => [
-      ...prev,
-      { id: uid("tx"), type, amount, description, timestamp: Date.now() },
-    ]);
-  }, []);
+  const addCredits = useCallback(
+    (amount: number, type: CreditType, description: string) => {
+      setCreditTransactions((prev) => [
+        ...prev,
+        { id: uid("tx"), type, amount, description, timestamp: Date.now() }
+      ]);
+    },
+    []
+  );
 
   const spendCredits = useCallback(
     (amount: number, description: string): boolean => {
       if (balance < amount) return false;
       setCreditTransactions((prev) => [
         ...prev,
-        { id: uid("tx"), type: "spent", amount: -amount, description, timestamp: Date.now() },
+        {
+          id: uid("tx"),
+          type: "spent",
+          amount: -amount,
+          description,
+          timestamp: Date.now()
+        }
       ]);
       return true;
     },
@@ -233,7 +319,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const addItem = useCallback(
-    (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number): InventoryItem => {
+    (
+      product: string,
+      vaultTier: VaultTierName,
+      rarity: Rarity,
+      value: number
+    ): InventoryItem => {
       const item: InventoryItem = {
         id: uid("item"),
         product,
@@ -241,7 +332,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         rarity,
         value,
         status: "held",
-        acquiredAt: Date.now(),
+        acquiredAt: Date.now()
       };
       setInventory((prev) => [...prev, item]);
       advanceQuests("hold_item", 1);
@@ -262,8 +353,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
               type: "earned",
               amount: item.value,
               description: `Cashout: ${item.rarity} ${item.product}`,
-              timestamp: Date.now(),
-            },
+              timestamp: Date.now()
+            }
           ]);
           advanceQuests("cashout_item", 1);
           return { ...item, status: "cashed_out" as const };
@@ -273,17 +364,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [advanceQuests]
   );
 
-  const shipItem = useCallback((itemId: string) => {
-    setInventory((prev) =>
-      prev.map((item) => {
-        if (item.id === itemId && item.status === "held") {
-          advanceQuests("ship_item", 1);
-          return { ...item, status: "shipped" as const };
-        }
-        return item;
-      })
-    );
-  }, [advanceQuests]);
+  const shipItem = useCallback(
+    (itemId: string) => {
+      setInventory((prev) =>
+        prev.map((item) => {
+          if (item.id === itemId && item.status === "held") {
+            advanceQuests("ship_item", 1);
+            return { ...item, status: "shipped" as const };
+          }
+          return item;
+        })
+      );
+    },
+    [advanceQuests]
+  );
 
   const purchaseVault = useCallback(
     (vaultName: string, price: number): boolean => {
@@ -295,8 +389,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
           type: "spent",
           amount: -price,
           description: `${vaultName} Vault purchase`,
-          timestamp: Date.now(),
-        },
+          timestamp: Date.now()
+        }
       ]);
       setXP((prev) => prev + price);
       advanceQuests("vault_purchase", 1);
@@ -314,8 +408,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         type: "earned",
         amount: value,
         description: "Vault reveal credit claim",
-        timestamp: Date.now(),
-      },
+        timestamp: Date.now()
+      }
     ]);
   }, []);
 
@@ -331,12 +425,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
           type: "spent",
           amount: -listing.askingPrice,
           description: `Marketplace: ${listing.item.rarity} ${listing.item.product}`,
-          timestamp: Date.now(),
-        },
+          timestamp: Date.now()
+        }
       ]);
       setInventory((prev) => [
         ...prev,
-        { ...listing.item, id: uid("item"), status: "held", acquiredAt: Date.now() },
+        {
+          ...listing.item,
+          id: uid("item"),
+          status: "held",
+          acquiredAt: Date.now()
+        }
       ]);
       setListings((prev) => prev.filter((l) => l.id !== listingId));
       setXP((prev) => prev + listing.askingPrice);
@@ -349,7 +448,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const placeBid = useCallback(
     (auctionId: string, amount: number): boolean => {
       const auction = auctions.find((a) => a.id === auctionId);
-      if (!auction || amount <= auction.currentBid || balance < amount) return false;
+      if (!auction || amount <= auction.currentBid || balance < amount)
+        return false;
 
       setAuctions((prev) =>
         prev.map((a) =>
@@ -369,11 +469,64 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   /** Free vault open for tutorial — awards XP + quest progress, no credit charge */
-  const tutorialOpenVault = useCallback((_vaultName: string, price: number) => {
-    setXP((prev) => prev + price);
-    advanceQuests("vault_purchase", 1);
-    advanceQuests("spend_amount", price);
-  }, [advanceQuests]);
+  const tutorialOpenVault = useCallback(
+    (_vaultName: string, price: number) => {
+      setXP((prev) => prev + price);
+      advanceQuests("vault_purchase", 1);
+      advanceQuests("spend_amount", price);
+    },
+    [advanceQuests]
+  );
+
+  const canPrestige = levelInfo.level >= 10 && prestigeLevel < 3;
+
+  const prestige = useCallback(() => {
+    if (levelInfo.level < 10 || prestigeLevel >= 3) return;
+    setPrestigeLevel((prev) => prev + 1);
+    setXP(0);
+    setDefeatedBosses([]);
+  }, [levelInfo.level, prestigeLevel]);
+
+  const defeatBoss = useCallback(
+    (
+      bossId: string,
+      creditReward: number,
+      xpReward: number,
+      specialItem?: { product: string; rarity: Rarity; value: number }
+    ) => {
+      if (!defeatedBosses.includes(bossId)) {
+        setDefeatedBosses((prev) => [...prev, bossId]);
+      }
+
+      setCreditTransactions((prev) => [
+        ...prev,
+        {
+          id: uid("tx"),
+          type: "earned",
+          amount: creditReward,
+          description: `Boss defeated: ${bossId}`,
+          timestamp: Date.now()
+        }
+      ]);
+      setXP((prev) => prev + xpReward);
+
+      if (specialItem) {
+        setInventory((prev) => [
+          ...prev,
+          {
+            id: uid("item"),
+            product: specialItem.product,
+            vaultTier: "Bronze" as VaultTierName,
+            rarity: specialItem.rarity,
+            value: specialItem.value,
+            status: "held",
+            acquiredAt: Date.now()
+          }
+        ]);
+      }
+    },
+    [defeatedBosses]
+  );
 
   const resetDemo = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
@@ -386,6 +539,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setHasSeenTutorial(false);
     setQuestProgress(initQuestProgress());
     setQuestToast(null);
+    setPrestigeLevel(0);
+    setDefeatedBosses([]);
+    document.documentElement.removeAttribute("data-prestige");
   }, []);
 
   const value = useMemo<GameContextValue>(
@@ -414,6 +570,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       tutorialOpenVault,
       setHasSeenTutorial,
       resetDemo,
+      prestigeLevel,
+      canPrestige,
+      prestige,
+      defeatedBosses,
+      defeatBoss
     }),
     [
       creditTransactions,
@@ -439,6 +600,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addXP,
       tutorialOpenVault,
       resetDemo,
+      prestigeLevel,
+      canPrestige,
+      prestige,
+      defeatedBosses,
+      defeatBoss
     ]
   );
 

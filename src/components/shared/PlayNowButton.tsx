@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { trackEvent, AnalyticsEvents } from "../lib/analytics";
+import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
 
 interface PlayNowButtonProps {
   to?: string;
@@ -16,9 +16,7 @@ export function PlayNowButton({ to = "/play", location }: PlayNowButtonProps) {
     <Link to={to} className="pushable" onClick={handleClick}>
       <span className="pushable-shadow" />
       <span className="pushable-edge" />
-      <span className="pushable-front">
-        PLAY NOW
-      </span>
+      <span className="pushable-front">PLAY NOW</span>
     </Link>
   );
 }

@@ -1,11 +1,11 @@
 import { useEffect } from "react";
-import { Navbar } from "../components/Navbar";
+import { Navbar } from "../components/shared/Navbar";
 import { ShopTabs } from "../components/shop/ShopTabs";
-import { Footer } from "../components/Footer";
+import { Footer } from "../components/shared/Footer";
 import { useGame } from "../context/GameContext";
 
 export function ShopPage() {
-  const { balance, inventory, levelInfo } = useGame();
+  const { balance, inventory, levelInfo, prestigeLevel } = useGame();
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -13,7 +13,14 @@ export function ShopPage() {
 
   return (
     <>
-      <Navbar showHUD balance={balance} inventoryCount={inventory.length} xp={levelInfo.currentXP} level={levelInfo.level} />
+      <Navbar
+        showHUD
+        balance={balance}
+        inventoryCount={inventory.length}
+        xp={levelInfo.currentXP}
+        level={levelInfo.level}
+        prestigeLevel={prestigeLevel}
+      />
       <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-28 md:pt-28 pb-8 sm:pb-12">
         <div className="max-w-6xl mx-auto">
           <div className="mb-6 sm:mb-8 text-center">

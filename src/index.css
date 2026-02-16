@@ -54,9 +54,48 @@
   body {
     min-height: 100dvh;
   }
+
+  /* Prestige 1 — Gold/Amber */
+  html[data-prestige="1"] {
+    --color-bg: #0f0a06;
+    --color-surface: #161008;
+    --color-surface-elevated: #1e1710;
+    --color-border: #3a2a1a;
+    --color-accent: #ff8c00;
+    --color-accent-hover: #e07800;
+  }
+
+  /* Prestige 2 — Violet/Purple */
+  html[data-prestige="2"] {
+    --color-bg: #0a060f;
+    --color-surface: #120e18;
+    --color-surface-elevated: #1a1424;
+    --color-border: #2e1f3a;
+    --color-accent: #9945ff;
+    --color-accent-hover: #8035e0;
+  }
+
+  /* Prestige 3 — Prismatic */
+  html[data-prestige="3"] {
+    --color-bg: #060810;
+    --color-surface: #0c0e18;
+    --color-surface-elevated: #141824;
+    --color-border: #1e2a3a;
+    --color-accent: #ff2d95;
+    --color-accent-hover: #e0267f;
+    --color-neon-cyan: #00e5ff;
+    --color-neon-green: #00ff88;
+  }
 }
 
 @layer utilities {
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
   .glow-magenta {
     box-shadow: 0 0 20px rgba(255, 45, 149, 0.3), 0 0 60px rgba(255, 45, 149, 0.1);
   }

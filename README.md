@@ -11,7 +11,7 @@ VaultedLabs is a next-generation commerce platform that turns shopping into a hi
 - **Three Liquidity Options:** Hold in your digital collection, ship to your door, or cash out for platform credits.
 - **Marketplace:** Browse and buy items from other users, or bid on auctions — all using platform credits.
 - **Gamification:** XP earned from spending, level progression, and boss fight unlocks tied to player level.
-- **Credit Ledger:** Typed credit system (incentive / earned / spent) with non-withdrawable incentive credits.
+- **Wallet:** Typed credit system (incentive / earned / spent) with non-withdrawable incentive credits.
 - **Tiered Waitlist Incentives:** 4-tier descending credit rewards for early signups (Founder $200 → Early Bird $25).
 
 ## Tech Stack
@@ -114,7 +114,7 @@ supabase/
 ## Financial Model Constants
 
 | Vault Level | Price | Common | Uncommon | Rare  | Legendary |
-|-------------|-------|--------|----------|-------|-----------|
+| ----------- | ----- | ------ | -------- | ----- | --------- |
 | Bronze      | $24   | 60.5%  | 18.0%    | 19.8% | 1.7%      |
 | Silver      | $38   | 59.8%  | 18.8%    | 18.3% | 3.1%      |
 | Gold        | $54   | 57.9%  | 29.3%    | 8.6%  | 4.2%      |
@@ -138,11 +138,11 @@ supabase/
 
 ## Waitlist Incentive Tiers
 
-| Tier | Positions | Credit | Color |
-|------|-----------|--------|-------|
-| Founder | 1–50 | $200 | Gold |
-| Early Access | 51–150 | $100 | Magenta |
-| Beta | 151–350 | $50 | Cyan |
-| Early Bird | 351–450 | $25 | Green |
+| Tier         | Positions | Credit | Color   |
+| ------------ | --------- | ------ | ------- |
+| Founder      | 1–50      | $200   | Gold    |
+| Early Access | 51–150    | $100   | Magenta |
+| Beta         | 151–350   | $50    | Cyan    |
+| Early Bird   | 351–450   | $25    | Green   |
 
 Credits are applied to vault purchases and cannot be withdrawn as cash.

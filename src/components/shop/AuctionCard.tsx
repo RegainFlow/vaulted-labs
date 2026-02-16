@@ -1,24 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
-import type { Auction } from "../../types/game";
-import { RARITY_CONFIG } from "../../data/vaults";
-import { VaultIcon } from "../VaultIcons";
+import { RARITY_CONFIG, VAULT_COLORS } from "../../data/vaults";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
-
-interface AuctionCardProps {
-  auction: Auction;
-  balance: number;
-  onBid: (auctionId: string, amount: number) => boolean;
-}
-
-const VAULT_COLORS: Record<string, string> = {
-  Bronze: "#cd7f32",
-  Silver: "#e0e0e0",
-  Gold: "#ffd700",
-  Platinum: "#79b5db",
-  Obsidian: "#6c4e85",
-  Diamond: "#b9f2ff",
-};
+import type { AuctionCardProps } from "../../types/marketplace";
+import { VaultIcon } from "../vault/VaultIcons";
 
 function formatTimeLeft(ms: number): string {
   if (ms <= 0) return "Ended";
@@ -64,7 +49,13 @@ export function AuctionCard({ auction, balance, onBid }: AuctionCardProps) {
       setBidError("Insufficient credits");
       return;
     }
-    trackEvent(AnalyticsEvents.AUCTION_BID, { auction_id: auction.id, bid_amount: amount, item_rarity: item.rarity, vault_tier: item.vaultTier, current_bid: currentBid });
+    trackEvent(AnalyticsEvents.AUCTION_BID, {
+      auction_id: auction.id,
+      bid_amount: amount,
+      item_rarity: item.rarity,
+      vault_tier: item.vaultTier,
+      current_bid: currentBid
+    });
     const success = onBid(auction.id, amount);
     if (success) {
       setBidAmount("");
@@ -77,25 +68,40 @@ export function AuctionCard({ auction, balance, onBid }: AuctionCardProps) {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={`rounded-2xl border bg-surface-elevated/50 backdrop-blur-sm overflow-hidden transition-all duration-300 ${
-        isEnded ? "opacity-50 grayscale" : "hover:-translate-y-1 hover:shadow-xl"
+        isEnded
+          ? "opacity-50 grayscale"
+          : "hover:-translate-y-1 hover:shadow-xl"
       }`}
       style={{ borderColor: isWinning ? "#39ff1440" : `${vaultColor}20` }}
     >
       {/* Header gradient */}
       <div
         className="h-2 w-full"
-        style={{ background: `linear-gradient(90deg, ${vaultColor}40, ${vaultColor}10)` }}
+        style={{
+          background: `linear-gradient(90deg, ${vaultColor}40, ${vaultColor}10)`
+        }}
       />
 
       <div className="p-3 sm:p-4">
         {/* Icon + info */}
         <div className="flex items-center gap-2.5 sm:gap-3 mb-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center border shrink-0" style={{ borderColor: `${vaultColor}30`, backgroundColor: `${vaultColor}08` }}>
+          <div
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center border shrink-0"
+            style={{
+              borderColor: `${vaultColor}30`,
+              backgroundColor: `${vaultColor}08`
+            }}
+          >
             <VaultIcon name={item.vaultTier} color={vaultColor} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs sm:text-sm font-bold text-white truncate">{item.product}</p>
-            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: vaultColor }}>
+            <p className="text-xs sm:text-sm font-bold text-white truncate">
+              {item.product}
+            </p>
+            <p
+              className="text-[10px] font-bold uppercase tracking-wider"
+              style={{ color: vaultColor }}
+            >
               {item.vaultTier} Vault
             </p>
           </div>
@@ -108,7 +114,7 @@ export function AuctionCard({ auction, balance, onBid }: AuctionCardProps) {
             style={{
               color: rarityConfig.color,
               borderColor: `${rarityConfig.color}40`,
-              backgroundColor: `${rarityConfig.color}10`,
+              backgroundColor: `${rarityConfig.color}10`
             }}
           >
             {item.rarity}
@@ -117,33 +123,64 @@ export function AuctionCard({ auction, balance, onBid }: AuctionCardProps) {
         </div>
 
         {/* Timer */}
-        <div className={`flex items-center justify-between mb-3 px-3 py-2 rounded-lg border ${
-          isUrgent ? "bg-error/10 border-error/30 animate-urgency-pulse" :
-          isEnded ? "bg-white/5 border-white/10" :
-          "bg-surface border-white/10"
-        }`}>
-          <span className="text-[10px] font-bold uppercase tracking-wider text-text-dim">Time Left</span>
-          <span className={`text-sm font-mono font-bold ${isUrgent ? "text-error" : isEnded ? "text-text-dim" : "text-white"}`}>
+        <div
+          className={`flex items-center justify-between mb-3 px-3 py-2 rounded-lg border ${
+            isUrgent
+              ? "bg-error/10 border-error/30 animate-urgency-pulse"
+              : isEnded
+                ? "bg-white/5 border-white/10"
+                : "bg-surface border-white/10"
+          }`}
+        >
+          <span className="text-[10px] font-bold uppercase tracking-wider text-text-dim">
+            Time Left
+          </span>
+          <span
+            className={`text-sm font-mono font-bold ${isUrgent ? "text-error" : isEnded ? "text-text-dim" : "text-white"}`}
+          >
             {formatTimeLeft(timeLeft)}
           </span>
         </div>
 
         {/* Current bid */}
         <div className="flex items-center justify-between mb-3">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-text-dim">Current Bid</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-text-dim">
+            Current Bid
+          </span>
           <div className="flex items-center gap-2">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-vault-gold">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5s-2 .5-2 1.5 1 1.5 2 2 2 1 2 2-1 1.5-2 1.5-2-.5-2.5-1.5M12 7v1m0 8v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="text-vault-gold"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5s-2 .5-2 1.5 1 1.5 2 2 2 1 2 2-1 1.5-2 1.5-2-.5-2.5-1.5M12 7v1m0 8v1"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
-            <span className="text-lg font-mono font-black text-vault-gold">${currentBid}</span>
+            <span className="text-lg font-mono font-black text-vault-gold">
+              ${currentBid}
+            </span>
           </div>
         </div>
 
         {/* Winning indicator */}
         {isWinning && !isEnded && (
           <div className="mb-3 px-3 py-2 rounded-lg bg-neon-green/10 border border-neon-green/30 text-center">
-            <span className="text-[10px] font-black uppercase tracking-widest text-neon-green">You're winning!</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-neon-green">
+              You're winning!
+            </span>
           </div>
         )}
 
@@ -154,7 +191,10 @@ export function AuctionCard({ auction, balance, onBid }: AuctionCardProps) {
               <input
                 type="number"
                 value={bidAmount}
-                onChange={(e) => { setBidAmount(e.target.value); setBidError(""); }}
+                onChange={(e) => {
+                  setBidAmount(e.target.value);
+                  setBidError("");
+                }}
                 placeholder={`Min $${currentBid + 1}`}
                 className="flex-1 min-w-0 px-2.5 sm:px-3 py-2 rounded-lg bg-surface border border-white/10 text-white text-xs sm:text-sm font-mono placeholder:text-text-dim focus:outline-none focus:border-neon-cyan/50 transition-colors"
               />
@@ -166,7 +206,9 @@ export function AuctionCard({ auction, balance, onBid }: AuctionCardProps) {
               </button>
             </div>
             {bidError && (
-              <p className="text-[10px] text-error mt-1.5 font-bold">{bidError}</p>
+              <p className="text-[10px] text-error mt-1.5 font-bold">
+                {bidError}
+              </p>
             )}
           </div>
         )}

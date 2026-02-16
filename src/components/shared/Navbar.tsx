@@ -1,20 +1,14 @@
 import { motion } from "motion/react";
 import { Link, useLocation } from "react-router-dom";
-import { trackEvent, AnalyticsEvents } from "../lib/analytics";
-
-interface NavbarProps {
-  showHUD?: boolean;
-  balance?: number;
-  inventoryCount?: number;
-  xp?: number;
-  level?: number;
-}
+import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
+import type { NavbarProps } from "../../types/landing";
 
 export function Navbar({
   showHUD = false,
   balance = 0,
   inventoryCount = 0,
-  level
+  level,
+  prestigeLevel = 0
 }: NavbarProps) {
   const location = useLocation();
 
@@ -206,10 +200,17 @@ export function Navbar({
                         Level
                       </span>
                       <span
-                        className="text-sm font-mono font-bold text-accent animate-hud-shimmer"
+                        className="text-sm font-mono font-bold text-accent animate-hud-shimmer flex items-center gap-1"
                         style={{ animationDelay: "1s" }}
                       >
                         {level}
+                        {prestigeLevel > 0 && (
+                          <span className="flex gap-0.5">
+                            {Array.from({ length: prestigeLevel }).map((_, i) => (
+                              <span key={i} className="text-vault-gold text-[10px]">&#9733;</span>
+                            ))}
+                          </span>
+                        )}
                       </span>
                     </div>
                   </Link>
@@ -370,8 +371,15 @@ export function Navbar({
                     strokeLinejoin="round"
                   />
                 </svg>
-                <span className="text-[10px] font-mono font-bold text-accent">
+                <span className="text-[10px] font-mono font-bold text-accent flex items-center gap-0.5">
                   Lv.{level}
+                  {prestigeLevel > 0 && (
+                    <span className="flex gap-0.5">
+                      {Array.from({ length: prestigeLevel }).map((_, i) => (
+                        <span key={i} className="text-vault-gold text-[8px]">&#9733;</span>
+                      ))}
+                    </span>
+                  )}
                 </span>
               </Link>
             )}

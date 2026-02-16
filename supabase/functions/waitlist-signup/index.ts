@@ -2,8 +2,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS"
 };
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -13,10 +14,13 @@ const INCENTIVE_TIERS = [
   { label: "founder", creditAmount: 200, endAt: 50 },
   { label: "early_access", creditAmount: 100, endAt: 150 },
   { label: "beta", creditAmount: 50, endAt: 350 },
-  { label: "early_bird", creditAmount: 25, endAt: 450 },
+  { label: "early_bird", creditAmount: 25, endAt: 450 }
 ];
 
-function getTierForCount(count: number): { tier: string | null; creditAmount: number } {
+function getTierForCount(count: number): {
+  tier: string | null;
+  creditAmount: number;
+} {
   for (const t of INCENTIVE_TIERS) {
     if (count < t.endAt) {
       return { tier: t.label, creditAmount: t.creditAmount };
@@ -37,7 +41,10 @@ async function loadDisposableDomains(): Promise<Set<string>> {
     if (!res.ok) throw new Error(`Failed to fetch blocklist: ${res.status}`);
     const text = await res.text();
     disposableDomainsCache = new Set(
-      text.split("\n").map((d) => d.trim().toLowerCase()).filter(Boolean)
+      text
+        .split("\n")
+        .map((d) => d.trim().toLowerCase())
+        .filter(Boolean)
     );
   } catch {
     // If fetch fails, use an empty set — don't block signups
@@ -55,7 +62,7 @@ function getClientIP(req: Request): string {
 function jsonResponse(body: Record<string, unknown>, status: number) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json" }
   });
 }
 
@@ -76,20 +83,29 @@ Deno.serve(async (req) => {
     const turnstileSecret = Deno.env.get("TURNSTILE_SECRET_KEY");
     if (turnstileSecret) {
       if (!turnstileToken) {
-        return jsonResponse({ error: "Bot verification failed. Please try again." }, 403);
+        return jsonResponse(
+          { error: "Bot verification failed. Please try again." },
+          403
+        );
       }
-      const verifyRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          secret: turnstileSecret,
-          response: turnstileToken,
-          remoteip: getClientIP(req),
-        }),
-      });
+      const verifyRes = await fetch(
+        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({
+            secret: turnstileSecret,
+            response: turnstileToken,
+            remoteip: getClientIP(req)
+          })
+        }
+      );
       const verifyData = await verifyRes.json();
       if (!verifyData.success) {
-        return jsonResponse({ error: "Bot verification failed. Please try again." }, 403);
+        return jsonResponse(
+          { error: "Bot verification failed. Please try again." },
+          403
+        );
       }
     }
 
@@ -106,7 +122,10 @@ Deno.serve(async (req) => {
     const blocklist = await loadDisposableDomains();
     const domain = cleanEmail.split("@")[1];
     if (blocklist.has(domain)) {
-      return jsonResponse({ error: "Disposable emails are not accepted." }, 400);
+      return jsonResponse(
+        { error: "Disposable emails are not accepted." },
+        400
+      );
     }
 
     // --- Supabase client (service role) ---
@@ -125,7 +144,10 @@ Deno.serve(async (req) => {
       .gte("attempted_at", oneMinuteAgo);
 
     if ((minuteCount ?? 0) >= 1) {
-      return jsonResponse({ error: "Please wait a minute before trying again." }, 429);
+      return jsonResponse(
+        { error: "Please wait a minute before trying again." },
+        429
+      );
     }
 
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -136,7 +158,10 @@ Deno.serve(async (req) => {
       .gte("attempted_at", oneHourAgo);
 
     if ((hourCount ?? 0) >= 3) {
-      return jsonResponse({ error: "Too many attempts. Try again later." }, 429);
+      return jsonResponse(
+        { error: "Too many attempts. Try again later." },
+        429
+      );
     }
 
     // --- Get verified waitlist count for tier calculation ---
@@ -149,11 +174,16 @@ Deno.serve(async (req) => {
     // --- Insert into waitlist ---
     const { error: insertError } = await supabase
       .from("waitlist")
-      .insert([{ email: cleanEmail, credit_amount: creditAmount, tier, ip_address: ip }]);
+      .insert([
+        { email: cleanEmail, credit_amount: creditAmount, tier, ip_address: ip }
+      ]);
 
     if (insertError) {
       if (insertError.code === "23505") {
-        return jsonResponse({ error: "This email is already registered." }, 409);
+        return jsonResponse(
+          { error: "This email is already registered." },
+          409
+        );
       }
       throw insertError;
     }
@@ -164,6 +194,9 @@ Deno.serve(async (req) => {
     return jsonResponse({ success: true, tier, creditAmount }, 200);
   } catch (err) {
     console.error("waitlist-signup error:", err);
-    return jsonResponse({ error: "An unexpected error occurred. Please try again." }, 500);
+    return jsonResponse(
+      { error: "An unexpected error occurred. Please try again." },
+      500
+    );
   }
 });

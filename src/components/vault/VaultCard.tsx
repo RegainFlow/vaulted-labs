@@ -1,22 +1,21 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import type { Vault } from "../data/vaults";
-import { RARITY_CONFIG } from "../data/vaults";
+import type { VaultCardProps } from "../../types/vault";
 import { VaultIcon } from "./VaultIcons";
+import { RARITY_CONFIG, getPrestigeOdds } from "../../data/vaults";
 
-interface VaultCardProps {
-  vault: Vault;
-  index: number;
-  balance: number;
-  onSelect: (vault: Vault) => void;
-  disabled?: boolean;
-}
-
-export function VaultCard({ vault, index, balance, onSelect, disabled = false }: VaultCardProps) {
+export function VaultCard({
+  vault,
+  index,
+  balance,
+  onSelect,
+  disabled = false,
+  prestigeLevel = 0
+}: VaultCardProps & { prestigeLevel?: number }) {
   const [showOdds, setShowOdds] = useState(false);
   const canAfford = !disabled && balance >= vault.price;
-  const minPull = Math.round(vault.price * 0.40);
-  const maxPull = Math.round(vault.price * 3.50);
+  const minPull = Math.round(vault.price * 0.4);
+  const maxPull = Math.round(vault.price * 3.5);
 
   const handleSelect = () => {
     if (!canAfford) return;
@@ -61,19 +60,19 @@ export function VaultCard({ vault, index, balance, onSelect, disabled = false }:
 
           {/* Ore Icon Container */}
           <div
-            className={`relative z-10 transform transition-transform duration-500 ${canAfford ? "group-hover:scale-110" : ""}`}
+            className={`relative z-10 -mt-3 sm:mt-0 transform transition-transform duration-500 ${canAfford ? "group-hover:scale-110" : ""}`}
           >
-            <div className="drop-shadow-2xl filter">
+            <div className="drop-shadow-2xl filter scale-75 sm:scale-100">
               <VaultIcon name={vault.name} color={vault.color} />
             </div>
           </div>
 
           {/* Pull Range Badge */}
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-black/50 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 z-10 flex flex-col items-center gap-0.5">
-            <span className="text-[7px] font-bold uppercase tracking-[0.2em] text-white/40">
+          <div className="absolute bottom-1.5 sm:bottom-3 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-2 sm:px-3 py-0.5 sm:py-1.5 rounded-md sm:rounded-lg border border-white/10 z-10 flex flex-col items-center gap-0">
+            <span className="text-[5px] sm:text-[7px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] text-white/40 leading-tight">
               Value Range
             </span>
-            <span className="text-[11px] font-black uppercase tracking-wider text-white/90">
+            <span className="text-[8px] sm:text-[11px] font-black uppercase tracking-wider text-white/90 whitespace-nowrap leading-tight">
               ${minPull} — ${maxPull}
             </span>
           </div>
@@ -123,7 +122,7 @@ export function VaultCard({ vault, index, balance, onSelect, disabled = false }:
           {/* Stats Section — visible only when showOdds is true */}
           {showOdds && (
             <div className="pt-6 space-y-4 border-t border-white/5">
-              {(Object.entries(vault.rarities) as [string, number][]).map(
+              {(Object.entries(getPrestigeOdds(vault.rarities, prestigeLevel)) as [string, number][]).map(
                 ([rarity, chance]) => {
                   const rarityColor = getRarityColor(rarity);
                   const cfg =

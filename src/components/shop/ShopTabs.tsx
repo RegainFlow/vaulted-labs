@@ -6,7 +6,7 @@ import { AuctionGrid } from "./AuctionGrid";
 
 const TABS = [
   { id: "marketplace", label: "Marketplace", mobileLabel: "Shop" },
-  { id: "auctions", label: "Auctions", mobileLabel: "Bids" },
+  { id: "auctions", label: "Auctions", mobileLabel: "Bids" }
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -23,7 +23,10 @@ export function ShopTabs() {
           return (
             <button
               key={tab.id}
-              onClick={() => { trackEvent(AnalyticsEvents.TAB_SWITCH, { tab: tab.id }); setActiveTab(tab.id); }}
+              onClick={() => {
+                trackEvent(AnalyticsEvents.TAB_SWITCH, { tab: tab.id });
+                setActiveTab(tab.id);
+              }}
               className={`relative flex-1 px-2 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-bold uppercase tracking-wider sm:tracking-widest whitespace-nowrap transition-all duration-200 cursor-pointer ${
                 isActive
                   ? "text-white bg-surface-elevated border border-white/10 shadow-lg"

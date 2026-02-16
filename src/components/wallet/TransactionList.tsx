@@ -2,22 +2,17 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { useGame } from "../../context/GameContext";
 import { TransactionRow } from "./TransactionRow";
-import type { CreditType } from "../../types/game";
-
-const FILTERS: { label: string; value: CreditType | "all" }[] = [
-  { label: "All", value: "all" },
-  { label: "Earned", value: "earned" },
-  { label: "Spent", value: "spent" },
-  { label: "Incentive", value: "incentive" },
-];
+import type { CreditType } from "../../types/wallet";
+import { FILTERS } from "../../data/wallet";
 
 export function TransactionList() {
   const { creditTransactions } = useGame();
   const [filter, setFilter] = useState<CreditType | "all">("all");
 
-  const filtered = filter === "all"
-    ? creditTransactions
-    : creditTransactions.filter((tx) => tx.type === filter);
+  const filtered =
+    filter === "all"
+      ? creditTransactions
+      : creditTransactions.filter((tx) => tx.type === filter);
 
   // Show most recent first
   const sorted = [...filtered].reverse();
@@ -48,18 +43,34 @@ export function TransactionList() {
           className="text-center py-16"
         >
           <div className="w-16 h-16 rounded-full bg-surface-elevated border border-white/10 flex items-center justify-center mx-auto mb-4">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-text-dim">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              className="text-text-dim"
+            >
               <circle cx="12" cy="12" r="10" />
               <path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5s-2 .5-2 1.5 1 1.5 2 2 2 1 2 2-1 1.5-2 1.5-2-.5-2.5-1.5M12 7v1m0 8v1" />
             </svg>
           </div>
-          <p className="text-text-muted text-sm font-bold mb-1">No transactions</p>
-          <p className="text-text-dim text-xs">Your credit history will appear here.</p>
+          <p className="text-text-muted text-sm font-bold mb-1">
+            No transactions
+          </p>
+          <p className="text-text-dim text-xs">
+            Your credit history will appear here.
+          </p>
         </motion.div>
       ) : (
         <div className="rounded-xl border border-white/10 overflow-hidden">
           {sorted.map((tx, i) => (
-            <TransactionRow key={tx.id} transaction={tx} isLast={i === sorted.length - 1} />
+            <TransactionRow
+              key={tx.id}
+              transaction={tx}
+              isLast={i === sorted.length - 1}
+            />
           ))}
         </div>
       )}

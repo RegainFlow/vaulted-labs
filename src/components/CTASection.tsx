@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { PlayNowButton } from "./PlayNowButton";
+import { PlayNowButton } from "./shared/PlayNowButton";
 
 export function CTASection() {
   return (

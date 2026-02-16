@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "motion/react";
-import { useGame } from "../context/GameContext";
+import { useGame } from "../../context/GameContext";
 
 export function QuestToastNotification() {
   const { questToast, dismissQuestToast } = useGame();
@@ -16,7 +16,9 @@ export function QuestToastNotification() {
           onClick={dismissQuestToast}
         >
           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-neon-green/10 rounded-full flex items-center justify-center shrink-0 border border-neon-green/20">
-            <span className="text-neon-green text-base sm:text-lg font-black">&#10003;</span>
+            <span className="text-neon-green text-base sm:text-lg font-black">
+              &#10003;
+            </span>
           </div>
           <div className="min-w-0">
             <p className="text-[11px] sm:text-xs font-black text-white uppercase tracking-wider truncate">

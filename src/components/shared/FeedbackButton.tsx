@@ -1,4 +1,4 @@
-import { trackEvent } from "../lib/analytics";
+import { trackEvent } from "../../lib/analytics";
 
 const FEEDBACK_PREFILL_URL = import.meta.env.VITE_FEEDBACK_FORM_PREFILL_URL as
   | string

@@ -1,25 +1,14 @@
 import { motion } from "motion/react";
 import { useState } from "react";
-import type { InventoryItem } from "../../types/game";
-import { RARITY_CONFIG } from "../../data/vaults";
-import { VaultIcon } from "../VaultIcons";
+import { RARITY_CONFIG, VAULT_COLORS } from "../../data/vaults";
+import type { InventoryItemCardProps } from "../../types/inventory";
+import { VaultIcon } from "../vault/VaultIcons";
 
-interface InventoryItemCardProps {
-  item: InventoryItem;
-  onCashout: (itemId: string) => void;
-  onShip: (itemId: string) => void;
-}
-
-const VAULT_COLORS: Record<string, string> = {
-  Bronze: "#cd7f32",
-  Silver: "#e0e0e0",
-  Gold: "#ffd700",
-  Platinum: "#79b5db",
-  Obsidian: "#6c4e85",
-  Diamond: "#b9f2ff",
-};
-
-export function InventoryItemCard({ item, onCashout, onShip }: InventoryItemCardProps) {
+export function InventoryItemCard({
+  item,
+  onCashout,
+  onShip
+}: InventoryItemCardProps) {
   const [showComingSoon, setShowComingSoon] = useState(false);
   const rarityConfig = RARITY_CONFIG[item.rarity];
   const vaultColor = VAULT_COLORS[item.vaultTier] || "#ffffff";
@@ -30,19 +19,31 @@ export function InventoryItemCard({ item, onCashout, onShip }: InventoryItemCard
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className={`relative rounded-2xl border bg-surface-elevated/50 backdrop-blur-sm overflow-hidden transition-all duration-300 ${
-        isInactive ? "opacity-50 grayscale" : "hover:-translate-y-1 hover:shadow-xl"
+        isInactive
+          ? "opacity-50 grayscale"
+          : "hover:-translate-y-1 hover:shadow-xl"
       }`}
-      style={{ borderColor: isInactive ? "rgba(255,255,255,0.05)" : `${vaultColor}30` }}
+      style={{
+        borderColor: isInactive ? "rgba(255,255,255,0.05)" : `${vaultColor}30`
+      }}
     >
       {/* Status badge */}
       {item.status !== "held" && (
         <div className="absolute top-3 right-3 z-10">
-          <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
-            item.status === "shipped" ? "bg-neon-cyan/10 border-neon-cyan/30 text-neon-cyan" :
-            item.status === "cashed_out" ? "bg-vault-gold/10 border-vault-gold/30 text-vault-gold" :
-            "bg-accent/10 border-accent/30 text-accent"
-          }`}>
-            {item.status === "cashed_out" ? "Cashed Out" : item.status === "shipped" ? "Shipped" : "Listed"}
+          <span
+            className={`px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+              item.status === "shipped"
+                ? "bg-neon-cyan/10 border-neon-cyan/30 text-neon-cyan"
+                : item.status === "cashed_out"
+                  ? "bg-vault-gold/10 border-vault-gold/30 text-vault-gold"
+                  : "bg-accent/10 border-accent/30 text-accent"
+            }`}
+          >
+            {item.status === "cashed_out"
+              ? "Cashed Out"
+              : item.status === "shipped"
+                ? "Shipped"
+                : "Listed"}
           </span>
         </div>
       )}
@@ -50,18 +51,31 @@ export function InventoryItemCard({ item, onCashout, onShip }: InventoryItemCard
       {/* Header gradient */}
       <div
         className="h-2 w-full"
-        style={{ background: `linear-gradient(90deg, ${vaultColor}40, ${vaultColor}10)` }}
+        style={{
+          background: `linear-gradient(90deg, ${vaultColor}40, ${vaultColor}10)`
+        }}
       />
 
       <div className="p-3 sm:p-4">
         {/* Icon + info */}
         <div className="flex items-center gap-2.5 sm:gap-3 mb-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center border shrink-0" style={{ borderColor: `${vaultColor}30`, backgroundColor: `${vaultColor}08` }}>
+          <div
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center border shrink-0"
+            style={{
+              borderColor: `${vaultColor}30`,
+              backgroundColor: `${vaultColor}08`
+            }}
+          >
             <VaultIcon name={item.vaultTier} color={vaultColor} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs sm:text-sm font-bold text-white truncate">{item.product}</p>
-            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: vaultColor }}>
+            <p className="text-xs sm:text-sm font-bold text-white truncate">
+              {item.product}
+            </p>
+            <p
+              className="text-[10px] font-bold uppercase tracking-wider"
+              style={{ color: vaultColor }}
+            >
               {item.vaultTier} Vault
             </p>
           </div>
@@ -74,12 +88,14 @@ export function InventoryItemCard({ item, onCashout, onShip }: InventoryItemCard
             style={{
               color: rarityConfig.color,
               borderColor: `${rarityConfig.color}40`,
-              backgroundColor: `${rarityConfig.color}10`,
+              backgroundColor: `${rarityConfig.color}10`
             }}
           >
             {item.rarity}
           </span>
-          <span className="text-sm font-mono font-bold text-white">${item.value}</span>
+          <span className="text-sm font-mono font-bold text-white">
+            ${item.value}
+          </span>
         </div>
 
         {/* Actions */}

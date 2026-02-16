@@ -1,7 +1,7 @@
 import { useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import Typed from "typed.js";
-import { PlayNowButton } from "./PlayNowButton";
+import { PlayNowButton } from "./shared/PlayNowButton";
 
 export function Hero() {
   const typedEl = useRef<HTMLSpanElement>(null);
@@ -19,7 +19,7 @@ export function Hero() {
   }, []);
 
   return (
-    <section className="relative h-screen flex flex-col items-center justify-center overflow-hidden bg-bg">
+    <section className="relative min-h-[85vh] sm:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-bg">
       {/* Dynamic Background */}
       <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,_#1a1a1a_0%,_#000_100%)]">
         {/* Animated Grid overlay */}
@@ -246,43 +246,58 @@ export function Hero() {
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: [0.5, 1, 0.5] }}
-        transition={{ delay: 2, duration: 2, repeat: Infinity, ease: "easeInOut" }}
+        transition={{
+          delay: 2,
+          duration: 2,
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
       >
-        <motion.div
-          animate={{ y: [0, 6, 0] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-          className="flex flex-col items-center"
+        <button
+          onClick={() => {
+            document
+              .getElementById("how-it-works")
+              ?.scrollIntoView({ behavior: "smooth" });
+          }}
+          className="cursor-pointer bg-transparent border-none p-2"
+          aria-label="Scroll to How It Works"
         >
-          <svg
-            width="30"
-            height="30"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-accent"
-            style={{ filter: "drop-shadow(0 0 8px rgba(255,45,149,0.6))" }}
+          <motion.div
+            animate={{ y: [0, 6, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            className="flex flex-col items-center"
           >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-          <svg
-            width="30"
-            height="30"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="text-accent -mt-4.5"
-            style={{ filter: "drop-shadow(0 0 8px rgba(255,45,149,0.6))" }}
-          >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </motion.div>
+            <svg
+              width="30"
+              height="30"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-accent"
+              style={{ filter: "drop-shadow(0 0 8px rgba(255,45,149,0.6))" }}
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+            <svg
+              width="30"
+              height="30"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="text-accent -mt-4.5"
+              style={{ filter: "drop-shadow(0 0 8px rgba(255,45,149,0.6))" }}
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </motion.div>
+        </button>
       </motion.div>
     </section>
   );

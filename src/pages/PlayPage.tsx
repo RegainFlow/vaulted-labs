@@ -1,15 +1,17 @@
 import { useEffect } from "react";
-import { Navbar } from "../components/Navbar";
-import { VaultGrid } from "../components/VaultGrid";
+import { Navbar } from "../components/shared/Navbar";
+import { VaultGrid } from "../components/vault/VaultGrid";
 import { Tutorial } from "../components/Tutorial";
-import { Footer } from "../components/Footer";
+import { Footer } from "../components/shared/Footer";
 import { useGame } from "../context/GameContext";
 import { useTutorial } from "../hooks/useTutorial";
 import { trackEvent, AnalyticsEvents } from "../lib/analytics";
 
 export function PlayPage() {
-  const { balance, inventory, levelInfo, hasSeenTutorial, setHasSeenTutorial } = useGame();
-  const { step, advance, goTo, completedAction, setCompletedAction, reset } = useTutorial(hasSeenTutorial);
+  const { balance, inventory, levelInfo, hasSeenTutorial, setHasSeenTutorial, prestigeLevel } =
+    useGame();
+  const { step, advance, goTo, completedAction, setCompletedAction, reset } =
+    useTutorial(hasSeenTutorial);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -30,7 +32,7 @@ export function PlayPage() {
 
   const handleTutorialComplete = () => {
     trackEvent(AnalyticsEvents.TUTORIAL_COMPLETED, {
-      action: completedAction,
+      action: completedAction
     });
     setHasSeenTutorial(true);
     reset();
@@ -38,7 +40,14 @@ export function PlayPage() {
 
   return (
     <>
-      <Navbar showHUD balance={balance} inventoryCount={inventory.length} xp={levelInfo.currentXP} level={levelInfo.level} />
+      <Navbar
+        showHUD
+        balance={balance}
+        inventoryCount={inventory.length}
+        xp={levelInfo.currentXP}
+        level={levelInfo.level}
+        prestigeLevel={prestigeLevel}
+      />
       <main>
         <VaultGrid
           tutorialStep={step}

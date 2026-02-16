@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -7,21 +7,20 @@ import {
   PRODUCT_TYPES,
   pickRarity,
   pickValue,
-  pickProduct
-} from "../data/vaults";
-import type { Vault } from "../data/vaults";
+  pickProduct,
+  getPrestigeOdds
+} from "../../data/vaults";
 import { VaultCard } from "./VaultCard";
+import { useGame } from "../../context/GameContext";
+import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
+import type {
+  Rarity,
+  Vault,
+  VaultGridProps,
+  VaultTierName
+} from "../../types/vault";
+import type { TutorialStep } from "../../types/tutorial";
 import { VaultIcon } from "./VaultIcons";
-import { useGame } from "../context/GameContext";
-import { trackEvent, AnalyticsEvents } from "../lib/analytics";
-import type { VaultTierName, Rarity } from "../types/game";
-import type { TutorialStep } from "../hooks/useTutorial";
-
-interface VaultGridProps {
-  tutorialStep?: TutorialStep | null;
-  onTutorialAdvance?: (step: TutorialStep) => void;
-  onTutorialSetAction?: (action: string) => void;
-}
 
 export function VaultGrid({
   tutorialStep,
@@ -34,10 +33,12 @@ export function VaultGrid({
     tutorialOpenVault,
     claimCreditsFromReveal,
     addItem,
-    shipItem
+    shipItem,
+    prestigeLevel
   } = useGame();
   const navigate = useNavigate();
   const [selectedVault, setSelectedVault] = useState<Vault | null>(null);
+  const overlayKeyRef = useRef(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     "Funko Pop!"
   );
@@ -54,6 +55,7 @@ export function VaultGrid({
         vault_tier: vault.name,
         vault_price: vault.price
       });
+      overlayKeyRef.current += 1;
       setSelectedVault(vault);
       onTutorialAdvance?.("pick-box");
       return;
@@ -64,6 +66,7 @@ export function VaultGrid({
       vault_tier: vault.name,
       vault_price: vault.price
     });
+    overlayKeyRef.current += 1;
     setSelectedVault(vault);
   };
 
@@ -150,7 +153,7 @@ export function VaultGrid({
         </motion.div>
 
         <div
-          className="flex flex-wrap justify-center gap-3 mb-6"
+          className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6"
           data-tutorial="categories"
         >
           {PRODUCT_TYPES.map((cat, idx) => {
@@ -171,7 +174,7 @@ export function VaultGrid({
                     );
                   }
                 }}
-                className={`px-5 py-2.5 rounded-xl text-sm font-bold uppercase tracking-wider border transition-all duration-300 ${
+                className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider border transition-all duration-300 ${
                   !isEnabled
                     ? comingSoonCategory === `${cat}-${idx}`
                       ? "bg-neon-cyan/10 border-neon-cyan/40 text-neon-cyan cursor-pointer shadow-[0_0_15px_rgba(0,240,255,0.15)]"
@@ -276,6 +279,7 @@ export function VaultGrid({
                     balance={balance}
                     onSelect={handleSelect}
                     disabled={isTutorialActive && vault.name !== "Bronze"}
+                    prestigeLevel={prestigeLevel}
                   />
                 ))}
               </div>
@@ -344,6 +348,7 @@ export function VaultGrid({
       <AnimatePresence>
         {selectedVault && (
           <VaultOverlay
+            key={`overlay-${overlayKeyRef.current}`}
             tier={selectedVault}
             balance={balance}
             category={selectedCategory}
@@ -357,6 +362,7 @@ export function VaultGrid({
             onTutorialAdvance={onTutorialAdvance}
             onTutorialPurchase={tutorialOpenVault}
             onTutorialSetAction={onTutorialSetAction}
+            prestigeLevel={prestigeLevel}
           />
         )}
       </AnimatePresence>
@@ -366,7 +372,22 @@ export function VaultGrid({
 
 /* ─── Full-screen overlay with 4-stage flow ─── */
 
-type Stage = "picking" | "revealing" | "spinning" | "result";
+type Stage = "picking" | "revealing" | "spinning" | "bonus-spinning" | "result";
+
+type BonusSpinPhase = "announce" | "split" | "appear" | "spinning" | "comparing" | "done";
+
+const PREMIUM_BONUS_CHANCE: Record<string, number> = {
+  Platinum: 0.2,
+  Obsidian: 0.3,
+  Diamond: 0.4
+};
+
+const RARITY_RANK: Record<Rarity, number> = {
+  common: 0,
+  uncommon: 1,
+  rare: 2,
+  legendary: 3
+};
 
 interface ReelItem {
   rarity: Rarity;
@@ -433,6 +454,34 @@ function generateReelItems(wonRarity: Rarity): ReelItem[] {
   return items;
 }
 
+function generateBonusReelItems(bonusRarity: Rarity): ReelItem[] {
+  const rarities: Rarity[] = ["common", "uncommon", "rare", "legendary"];
+  const weights = [70, 18, 9, 3];
+
+  function weightedRandom(): Rarity {
+    const total = weights.reduce((a, b) => a + b, 0);
+    let r = Math.random() * total;
+    for (let i = 0; i < rarities.length; i++) {
+      r -= weights[i];
+      if (r <= 0) return rarities[i];
+    }
+    return "common";
+  }
+
+  const items: ReelItem[] = [];
+  for (let i = 0; i < 8; i++) {
+    const r = weightedRandom();
+    items.push({ rarity: r, color: RARITY_CONFIG[r].color, label: r.charAt(0).toUpperCase() + r.slice(1) });
+  }
+  items.push({ rarity: "legendary", color: RARITY_CONFIG.legendary.color, label: "Legendary" });
+  const bufferRarity = weightedRandom();
+  items.push({ rarity: bufferRarity, color: RARITY_CONFIG[bufferRarity].color, label: bufferRarity.charAt(0).toUpperCase() + bufferRarity.slice(1) });
+  items.push({ rarity: bonusRarity, color: RARITY_CONFIG[bonusRarity].color, label: bonusRarity.charAt(0).toUpperCase() + bonusRarity.slice(1) });
+  const tailRarity = weightedRandom();
+  items.push({ rarity: tailRarity, color: RARITY_CONFIG[tailRarity].color, label: tailRarity.charAt(0).toUpperCase() + tailRarity.slice(1) });
+  return items;
+}
+
 /* Tutorial result sub-step configs */
 const RESULT_TOOLTIP: Record<
   string,
@@ -479,6 +528,7 @@ interface VaultOverlayProps {
   onTutorialAdvance?: (step: TutorialStep) => void;
   onTutorialPurchase?: (vaultName: string, price: number) => void;
   onTutorialSetAction?: (action: string) => void;
+  prestigeLevel?: number;
 }
 
 function VaultOverlay({
@@ -494,15 +544,21 @@ function VaultOverlay({
   tutorialStep,
   onTutorialAdvance,
   onTutorialPurchase,
-  onTutorialSetAction
+  onTutorialSetAction,
+  prestigeLevel: overlayPrestigeLevel = 0
 }: VaultOverlayProps) {
   const [stage, setStage] = useState<Stage>("picking");
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [boxState, setBoxState] = useState<"closed" | "opening" | "open">(
     "closed"
   );
+  const [spinLanded, setSpinLanded] = useState(false);
 
-  const wonRarity = useMemo(() => pickRarity(tier.rarities), [tier]);
+  const effectiveOdds = useMemo(
+    () => getPrestigeOdds(tier.rarities, isTutorial ? 0 : overlayPrestigeLevel),
+    [tier, isTutorial, overlayPrestigeLevel]
+  );
+  const wonRarity = useMemo(() => pickRarity(effectiveOdds), [effectiveOdds]);
   const product = useMemo(() => category || pickProduct(), [tier, category]);
   const rarityConfig = RARITY_CONFIG[wonRarity];
   const resultValue = useMemo(
@@ -513,11 +569,44 @@ function VaultOverlay({
     () => generateReelItems(wonRarity as Rarity),
     [wonRarity]
   );
-  const isLoss = resultValue < tier.price;
-  const net = resultValue - tier.price;
+
+  // Bonus spin state
+  const bonusTriggered = useMemo(() => {
+    if (isTutorial) return false;
+    const chance = PREMIUM_BONUS_CHANCE[tier.name] ?? 0;
+    return Math.random() < chance;
+  }, [tier, isTutorial]);
+  const bonusRarity = useMemo<Rarity | null>(
+    () => (bonusTriggered ? pickRarity(tier.rarities) : null),
+    [bonusTriggered, tier]
+  );
+  const bonusReelItems = useMemo(
+    () => (bonusRarity ? generateBonusReelItems(bonusRarity) : []),
+    [bonusRarity]
+  );
+  const finalRarity = useMemo<Rarity>(() => {
+    if (!bonusRarity) return wonRarity as Rarity;
+    return RARITY_RANK[bonusRarity] > RARITY_RANK[wonRarity as Rarity] ? bonusRarity : (wonRarity as Rarity);
+  }, [wonRarity, bonusRarity]);
+  const finalRarityConfig = RARITY_CONFIG[finalRarity];
+  const finalResultValue = useMemo(
+    () => (finalRarity === wonRarity ? resultValue : pickValue(tier.price, finalRarityConfig)),
+    [finalRarity, wonRarity, resultValue, tier, finalRarityConfig]
+  );
+  const bonusResultValue = useMemo(
+    () => (bonusRarity ? pickValue(tier.price, RARITY_CONFIG[bonusRarity]) : 0),
+    [bonusRarity, tier]
+  );
+  const totalRevealValue = bonusTriggered ? resultValue + bonusResultValue : resultValue;
+  const [bonusSpinPhase, setBonusSpinPhase] = useState<BonusSpinPhase>("announce");
+  const [bonusSpinLanded, setBonusSpinLanded] = useState(false);
+  const bonusUpgraded = bonusRarity !== null && RARITY_RANK[bonusRarity] > RARITY_RANK[wonRarity as Rarity];
+
+  const isLoss = totalRevealValue < tier.price;
+  const net = totalRevealValue - tier.price;
   const [purchasedBalance, setPurchasedBalance] = useState<number | null>(null);
   const preBalance = purchasedBalance ?? balance;
-  const postBalance = preBalance - tier.price + resultValue;
+  const postBalance = preBalance - tier.price + totalRevealValue;
 
   // Highlighted box index for tutorial (center box)
   const tutorialBoxIndex = 4;
@@ -529,9 +618,14 @@ function VaultOverlay({
     if (stage === "result") {
       trackEvent(AnalyticsEvents.VAULT_RESULT, {
         vault_tier: tier.name,
-        rarity: wonRarity,
-        value: resultValue,
-        vault_price: tier.price
+        rarity: finalRarity,
+        value: finalResultValue,
+        vault_price: tier.price,
+        bonus_triggered: bonusTriggered,
+        bonus_upgraded: bonusUpgraded,
+        bonus_item_rarity: bonusRarity,
+        bonus_item_value: bonusResultValue,
+        total_value: totalRevealValue
       });
     }
   }, [stage]);
@@ -548,13 +642,14 @@ function VaultOverlay({
       });
       setStage("revealing");
       onTutorialAdvance?.("revealing");
-      setTimeout(() => setBoxState("opening"), 1200);
-      setTimeout(() => setBoxState("open"), 1500);
-      setTimeout(() => setStage("spinning"), 2000);
+      setTimeout(() => setBoxState("opening"), 2200);
+      setTimeout(() => setBoxState("open"), 2700);
+      setTimeout(() => setStage("spinning"), 3500);
+      setTimeout(() => setSpinLanded(true), 8000);
       setTimeout(() => {
         setStage("result");
         onTutorialAdvance?.("result-store");
-      }, 5000);
+      }, 8500);
       return;
     }
 
@@ -571,20 +666,30 @@ function VaultOverlay({
       vault_price: tier.price
     });
     setStage("revealing");
-    setTimeout(() => setBoxState("opening"), 1200);
-    setTimeout(() => setBoxState("open"), 1500);
-    setTimeout(() => setStage("spinning"), 2000);
-    setTimeout(() => setStage("result"), 5000);
+    setTimeout(() => setBoxState("opening"), 2200);
+    setTimeout(() => setBoxState("open"), 2700);
+    setTimeout(() => setStage("spinning"), 3500);
+    setTimeout(() => setSpinLanded(true), 8000);
+    if (bonusTriggered) {
+      trackEvent(AnalyticsEvents.BONUS_SPIN_TRIGGERED, {
+        vault_tier: tier.name,
+        vault_price: tier.price,
+        first_rarity: wonRarity
+      });
+      setTimeout(() => setStage("bonus-spinning"), 8800);
+    } else {
+      setTimeout(() => setStage("result"), 8500);
+    }
   };
 
   const handleClaim = () => {
     if (isTutorial) {
-      onClaim(resultValue);
+      onClaim(finalResultValue);
       onTutorialSetAction?.("cashed out");
       onTutorialAdvance?.("complete");
       return;
     }
-    onClaim(resultValue);
+    onClaim(totalRevealValue);
   };
 
   const handleStore = () => {
@@ -592,8 +697,8 @@ function VaultOverlay({
       onStore(
         product,
         tier.name as VaultTierName,
-        wonRarity as Rarity,
-        resultValue
+        finalRarity,
+        finalResultValue
       );
       onTutorialSetAction?.("stored");
       onTutorialAdvance?.("complete");
@@ -605,6 +710,14 @@ function VaultOverlay({
       wonRarity as Rarity,
       resultValue
     );
+    if (bonusTriggered && bonusRarity) {
+      onStore(
+        product,
+        tier.name as VaultTierName,
+        bonusRarity,
+        bonusResultValue
+      );
+    }
   };
 
   const handleShip = () => {
@@ -612,8 +725,8 @@ function VaultOverlay({
       onShip(
         product,
         tier.name as VaultTierName,
-        wonRarity as Rarity,
-        resultValue
+        finalRarity,
+        finalResultValue
       );
       onTutorialSetAction?.("shipped");
       onTutorialAdvance?.("complete");
@@ -625,6 +738,14 @@ function VaultOverlay({
       wonRarity as Rarity,
       resultValue
     );
+    if (bonusTriggered && bonusRarity) {
+      onShip(
+        product,
+        tier.name as VaultTierName,
+        bonusRarity,
+        bonusResultValue
+      );
+    }
   };
 
   const handleNextResultStep = () => {
@@ -722,7 +843,7 @@ function VaultOverlay({
               {!isTutorial && (
                 <button
                   onClick={onClose}
-                  className="absolute -top-1 right-0 md:-right-14 flex items-center gap-2 px-3 py-2 rounded-xl bg-surface-elevated/80 border border-white/15 text-text-muted hover:text-white hover:border-white/40 hover:bg-surface-elevated transition-all cursor-pointer z-20"
+                  className="absolute -top-2 md:-top-3 right-0 md:-right-2 p-2.5 rounded-xl bg-error/10 border border-error/30 text-error hover:bg-error/20 hover:border-error/50 transition-all cursor-pointer z-20"
                   aria-label="Close vault"
                 >
                   <svg
@@ -735,9 +856,6 @@ function VaultOverlay({
                   >
                     <path d="M18 6L6 18M6 6l12 12" />
                   </svg>
-                  <span className="text-[10px] font-bold uppercase tracking-wider hidden md:inline">
-                    Close
-                  </span>
                 </button>
               )}
 
@@ -855,13 +973,13 @@ function VaultOverlay({
                     <motion.div
                       key="closed"
                       animate={{
-                        rotate: [0, -5, 5, -5, 5, 0],
-                        scale: [1, 1.05, 1]
+                        rotate: [0, -2, 2, -3, 3, -6, 6, -10, 10, -12, 12, 0],
+                        scale: [1, 1.02, 1.03, 1.05, 1.08, 1.1, 1.08, 1.12, 1.15, 1.12, 1.18, 1]
                       }}
                       transition={{
-                        duration: 0.5,
+                        duration: 2.0,
                         repeat: Infinity,
-                        repeatDelay: 0.1
+                        times: [0, 0.08, 0.16, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.82, 0.9, 1]
                       }}
                       className="filter"
                       style={{
@@ -916,7 +1034,10 @@ function VaultOverlay({
 
               <div
                 className="text-xl md:text-3xl font-black tracking-[0.3em] uppercase animate-pulse text-center break-words max-w-xs"
-                style={{ color: tier.color }}
+                style={{
+                  color: tier.color,
+                  textShadow: boxState === "closed" ? `0 0 20px ${tier.color}80, 0 0 40px ${tier.color}40` : "none"
+                }}
               >
                 {boxState === "closed" ? "Cracking..." : "Item Reveal"}
               </div>
@@ -943,10 +1064,14 @@ function VaultOverlay({
 
                 {/* Center payline */}
                 <div
-                  className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-12 z-10 pointer-events-none border-y"
+                  className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-12 z-10 pointer-events-none border-y transition-all duration-500"
                   style={{
-                    borderColor: `${rarityConfig.color}60`,
-                    boxShadow: `0 0 30px ${rarityConfig.color}30, inset 0 0 20px ${rarityConfig.color}10`
+                    borderColor: spinLanded
+                      ? `${rarityConfig.color}60`
+                      : "rgba(255,255,255,0.15)",
+                    boxShadow: spinLanded
+                      ? `0 0 30px ${rarityConfig.color}30, inset 0 0 20px ${rarityConfig.color}10`
+                      : "0 0 15px rgba(255,255,255,0.05)"
                   }}
                 />
 
@@ -955,8 +1080,8 @@ function VaultOverlay({
                   initial={{ y: 0 }}
                   animate={{ y: -(10 * 48 + 24) + 96 }}
                   transition={{
-                    duration: 2.8,
-                    ease: [0.15, 0.85, 0.35, 1]
+                    duration: 4.5,
+                    ease: [0.12, 0.8, 0.2, 1]
                   }}
                   className="flex flex-col"
                 >
@@ -991,12 +1116,29 @@ function VaultOverlay({
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ delay: 2 }}
+                transition={{ delay: 3.5 }}
                 className="mt-6 text-xs font-mono text-text-dim uppercase tracking-widest"
               >
                 Locking in...
               </motion.div>
             </motion.div>
+          )}
+
+          {/* STAGE 2.75: BONUS SPIN */}
+          {stage === "bonus-spinning" && (
+            <BonusSpinStage
+              tier={tier}
+              wonRarity={wonRarity as Rarity}
+              bonusRarity={bonusRarity!}
+              reelItems={reelItems}
+              bonusReelItems={bonusReelItems}
+              bonusUpgraded={bonusUpgraded}
+              bonusSpinPhase={bonusSpinPhase}
+              setBonusSpinPhase={setBonusSpinPhase}
+              bonusSpinLanded={bonusSpinLanded}
+              setBonusSpinLanded={setBonusSpinLanded}
+              onComplete={() => setStage("result")}
+            />
           )}
 
           {/* STAGE 3: RESULT & OPTIONS */}
@@ -1009,7 +1151,7 @@ function VaultOverlay({
               className="space-y-2 sm:space-y-3 md:space-y-4 relative w-full max-w-4xl flex flex-col items-center"
             >
               <ConfettiParticles
-                color={rarityConfig.color}
+                color={finalRarityConfig.color}
                 count={isLoss ? 12 : 40}
               />
 
@@ -1022,89 +1164,202 @@ function VaultOverlay({
                 <span
                   className="inline-block px-5 py-2 rounded-lg border-2 text-sm md:text-base font-black uppercase tracking-widest"
                   style={{
-                    borderColor: `${rarityConfig.color}60`,
-                    backgroundColor: `${rarityConfig.color}15`,
-                    color: rarityConfig.color,
-                    textShadow: `0 0 12px ${rarityConfig.color}40`
+                    borderColor: `${finalRarityConfig.color}60`,
+                    backgroundColor: `${finalRarityConfig.color}15`,
+                    color: finalRarityConfig.color,
+                    textShadow: `0 0 12px ${finalRarityConfig.color}40`
                   }}
                 >
                   {product}
                 </span>
               </motion.div>
 
-              <div className="relative inline-block group z-10">
-                <div
-                  className="absolute inset-0 blur-[100px] animate-pulse transition-colors opacity-40"
-                  style={{ backgroundColor: rarityConfig.color }}
-                />
-                <div className="flex flex-col items-center gap-2">
-                  <div
-                    className={`relative flex items-center justify-center bg-surface-elevated rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.5)] w-28 h-28 sm:w-36 sm:h-36 md:w-48 md:h-48 mx-auto ${wonRarity === "legendary" ? "animate-pulse" : ""}`}
-                    style={{
-                      borderWidth:
-                        wonRarity === "legendary"
-                          ? 4
-                          : wonRarity === "rare"
-                            ? 3
-                            : 2,
-                      borderStyle: "solid",
-                      borderColor: rarityConfig.color,
-                      boxShadow:
-                        wonRarity === "legendary"
-                          ? `0 0 80px rgba(255,215,0,0.6), 0 0 120px rgba(255,215,0,0.3)`
-                          : wonRarity === "rare"
-                            ? `0 0 50px rgba(168,85,247,0.5)`
-                            : wonRarity === "uncommon"
-                              ? `0 0 40px rgba(59,130,246,0.4)`
-                              : `0 0 30px rgba(107,114,128,0.3)`
-                    }}
-                  >
-                    <div className="transform scale-110 filter drop-shadow-2xl">
-                      <VaultIcon name={tier.name} color={rarityConfig.color} />
-                    </div>
-                    {/* Mint Condition — inside on desktop, hidden on mobile */}
-                    <div className="absolute bottom-3 left-0 w-full text-center hidden sm:block">
-                      <span
-                        className="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border"
+              {/* Dual item display for bonus spins */}
+              {bonusTriggered && bonusRarity ? (
+                <>
+                  <div className="flex flex-row items-stretch justify-center gap-3 sm:gap-6 z-10 w-full px-2">
+                    {/* First spin item */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 }}
+                      className="flex flex-col items-center gap-1.5 sm:gap-2 flex-1 min-w-0 max-w-[180px] sm:max-w-[200px]"
+                    >
+                      <div className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-text-dim">
+                        First Spin
+                      </div>
+                      <div
+                        className={`relative flex items-center justify-center bg-surface-elevated rounded-xl sm:rounded-2xl w-20 h-20 sm:w-32 sm:h-32 ${wonRarity === "legendary" ? "animate-pulse" : ""}`}
                         style={{
-                          backgroundColor: `${rarityConfig.color}10`,
-                          borderColor: `${rarityConfig.color}40`,
-                          color: rarityConfig.color
+                          borderWidth: wonRarity === "legendary" ? 3 : 2,
+                          borderStyle: "solid",
+                          borderColor: rarityConfig.color,
+                          boxShadow: `0 0 30px ${rarityConfig.color}30`
+                        }}
+                      >
+                        <div className="transform scale-75 sm:scale-90 filter drop-shadow-xl">
+                          <VaultIcon name={tier.name} color={rarityConfig.color} />
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <p
+                          className="text-xs sm:text-base font-black uppercase tracking-tight"
+                          style={{ color: rarityConfig.color }}
+                        >
+                          {rarityConfig.label}
+                        </p>
+                        <p className="text-[10px] sm:text-xs text-text-muted">
+                          <span className="font-bold" style={{ color: rarityConfig.color }}>
+                            ${resultValue}.00
+                          </span>
+                        </p>
+                      </div>
+                    </motion.div>
+
+                    {/* Bonus spin item */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                      className="flex flex-col items-center gap-1.5 sm:gap-2 flex-1 min-w-0 max-w-[180px] sm:max-w-[200px] relative"
+                    >
+                      <div
+                        className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest flex items-center gap-1"
+                        style={{ color: tier.color }}
+                      >
+                        <span className="hidden sm:inline">Bonus Spin</span>
+                        <span
+                          className="px-1.5 py-0.5 rounded text-[7px] sm:text-[8px] font-black uppercase tracking-widest border"
+                          style={{
+                            borderColor: `${tier.color}60`,
+                            backgroundColor: `${tier.color}15`,
+                            color: tier.color
+                          }}
+                        >
+                          Bonus
+                        </span>
+                      </div>
+                      <div
+                        className={`relative flex items-center justify-center bg-surface-elevated rounded-xl sm:rounded-2xl w-20 h-20 sm:w-32 sm:h-32 ${bonusRarity === "legendary" ? "animate-pulse" : ""}`}
+                        style={{
+                          borderWidth: bonusRarity === "legendary" ? 3 : 2,
+                          borderStyle: "solid",
+                          borderColor: RARITY_CONFIG[bonusRarity].color,
+                          boxShadow: `0 0 30px ${RARITY_CONFIG[bonusRarity].color}30`
+                        }}
+                      >
+                        <div className="transform scale-75 sm:scale-90 filter drop-shadow-xl">
+                          <VaultIcon name={tier.name} color={RARITY_CONFIG[bonusRarity].color} />
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <p
+                          className="text-xs sm:text-base font-black uppercase tracking-tight"
+                          style={{ color: RARITY_CONFIG[bonusRarity].color }}
+                        >
+                          {RARITY_CONFIG[bonusRarity].label}
+                        </p>
+                        <p className="text-[10px] sm:text-xs text-text-muted">
+                          <span className="font-bold" style={{ color: RARITY_CONFIG[bonusRarity].color }}>
+                            ${bonusResultValue}.00
+                          </span>
+                        </p>
+                      </div>
+                    </motion.div>
+                  </div>
+
+                  {/* Combined value */}
+                  <motion.div
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.45 }}
+                    className="z-10 text-center"
+                  >
+                    <p className="text-xs sm:text-sm md:text-base text-text-muted">
+                      Combined Value:{" "}
+                      <span className="font-black text-accent text-sm sm:text-base md:text-lg">
+                        ${totalRevealValue}.00
+                      </span>
+                    </p>
+                  </motion.div>
+                </>
+              ) : (
+                <>
+                  <div className="relative inline-block group z-10">
+                    <div
+                      className="absolute inset-0 blur-[100px] animate-pulse transition-colors opacity-40"
+                      style={{ backgroundColor: finalRarityConfig.color }}
+                    />
+                    <div className="flex flex-col items-center gap-2">
+                      <div
+                        className={`relative flex items-center justify-center bg-surface-elevated rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.5)] w-28 h-28 sm:w-36 sm:h-36 md:w-48 md:h-48 mx-auto ${finalRarity === "legendary" ? "animate-pulse" : ""}`}
+                        style={{
+                          borderWidth:
+                            finalRarity === "legendary"
+                              ? 4
+                              : finalRarity === "rare"
+                                ? 3
+                                : 2,
+                          borderStyle: "solid",
+                          borderColor: finalRarityConfig.color,
+                          boxShadow:
+                            finalRarity === "legendary"
+                              ? `0 0 80px rgba(255,215,0,0.6), 0 0 120px rgba(255,215,0,0.3)`
+                              : finalRarity === "rare"
+                                ? `0 0 50px rgba(168,85,247,0.5)`
+                                : finalRarity === "uncommon"
+                                  ? `0 0 40px rgba(59,130,246,0.4)`
+                                  : `0 0 30px rgba(107,114,128,0.3)`
+                        }}
+                      >
+                        <div className="transform scale-110 filter drop-shadow-2xl">
+                          <VaultIcon name={tier.name} color={finalRarityConfig.color} />
+                        </div>
+                        {/* Mint Condition — inside on desktop, hidden on mobile */}
+                        <div className="absolute bottom-3 left-0 w-full text-center hidden sm:block">
+                          <span
+                            className="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border"
+                            style={{
+                              backgroundColor: `${finalRarityConfig.color}10`,
+                              borderColor: `${finalRarityConfig.color}40`,
+                              color: finalRarityConfig.color
+                            }}
+                          >
+                            Mint Condition
+                          </span>
+                        </div>
+                      </div>
+                      {/* Mint Condition — below on mobile */}
+                      <span
+                        className="inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border sm:hidden"
+                        style={{
+                          backgroundColor: `${finalRarityConfig.color}10`,
+                          borderColor: `${finalRarityConfig.color}40`,
+                          color: finalRarityConfig.color
                         }}
                       >
                         Mint Condition
                       </span>
                     </div>
                   </div>
-                  {/* Mint Condition — below on mobile */}
-                  <span
-                    className="inline-block px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border sm:hidden"
-                    style={{
-                      backgroundColor: `${rarityConfig.color}10`,
-                      borderColor: `${rarityConfig.color}40`,
-                      color: rarityConfig.color
-                    }}
-                  >
-                    Mint Condition
-                  </span>
-                </div>
-              </div>
 
-              <div className="space-y-1 z-10 relative text-center">
-                <h3 className="text-xl sm:text-2xl md:text-4xl font-black text-white uppercase tracking-tighter">
-                  {rarityConfig.label}
-                  {rarityConfig.exclaim}
-                </h3>
-                <p className="text-sm md:text-base text-text-muted">
-                  Estimated Market Value:{" "}
-                  <span
-                    className="font-black"
-                    style={{ color: rarityConfig.color }}
-                  >
-                    ${resultValue}.00
-                  </span>
-                </p>
-              </div>
+                  <div className="space-y-1 z-10 relative text-center">
+                    <h3 className="text-xl sm:text-2xl md:text-4xl font-black text-white uppercase tracking-tighter">
+                      {finalRarityConfig.label}
+                      {finalRarityConfig.exclaim}
+                    </h3>
+                    <p className="text-sm md:text-base text-text-muted">
+                      Estimated Market Value:{" "}
+                      <span
+                        className="font-black"
+                        style={{ color: finalRarityConfig.color }}
+                      >
+                        ${finalResultValue}.00
+                      </span>
+                    </p>
+                  </div>
+                </>
+              )}
 
               {/* Balance Breakdown */}
               <motion.div
@@ -1134,17 +1389,53 @@ function VaultOverlay({
                       </span>
                     )}
                   </div>
-                  <div className="flex items-center justify-between py-1">
-                    <span className="text-text-dim text-[10px] uppercase tracking-wider">
-                      Item Value
-                    </span>
-                    <span
-                      className="font-bold"
-                      style={{ color: rarityConfig.color }}
-                    >
-                      +${resultValue.toFixed(2)}
-                    </span>
-                  </div>
+                  {bonusTriggered && bonusRarity ? (
+                    <>
+                      <div className="flex items-center justify-between py-1 gap-2">
+                        <span className="text-text-dim text-[9px] sm:text-[10px] uppercase tracking-wider truncate">
+                          Item 1 ({rarityConfig.label})
+                        </span>
+                        <span
+                          className="font-bold shrink-0"
+                          style={{ color: rarityConfig.color }}
+                        >
+                          +${resultValue.toFixed(2)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between py-1 gap-2">
+                        <span className="text-text-dim text-[9px] sm:text-[10px] uppercase tracking-wider flex items-center gap-1 min-w-0">
+                          <span className="truncate">Item 2 ({RARITY_CONFIG[bonusRarity].label})</span>
+                          <span
+                            className="px-1 py-0.5 rounded text-[6px] sm:text-[7px] font-black uppercase shrink-0"
+                            style={{
+                              backgroundColor: `${tier.color}15`,
+                              color: tier.color
+                            }}
+                          >
+                            Bonus
+                          </span>
+                        </span>
+                        <span
+                          className="font-bold shrink-0"
+                          style={{ color: RARITY_CONFIG[bonusRarity].color }}
+                        >
+                          +${bonusResultValue.toFixed(2)}
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="flex items-center justify-between py-1">
+                      <span className="text-text-dim text-[10px] uppercase tracking-wider">
+                        Item Value
+                      </span>
+                      <span
+                        className="font-bold"
+                        style={{ color: finalRarityConfig.color }}
+                      >
+                        +${finalResultValue.toFixed(2)}
+                      </span>
+                    </div>
+                  )}
                   <div className="border-t border-white/10 mt-1 pt-2 flex items-center justify-between">
                     <span className="text-text-muted text-[10px] uppercase tracking-wider font-bold">
                       New Balance
@@ -1152,7 +1443,7 @@ function VaultOverlay({
                     <div className="flex items-center gap-2">
                       {isTutorial ? (
                         <span className="text-[10px] font-black px-1.5 py-0.5 rounded bg-neon-green/10 text-neon-green">
-                          +{resultValue.toFixed(2)}
+                          +{finalResultValue.toFixed(2)}
                         </span>
                       ) : (
                         <span
@@ -1165,7 +1456,7 @@ function VaultOverlay({
                       <span className="text-white font-black text-sm">
                         $
                         {isTutorial
-                          ? (preBalance + resultValue).toFixed(2)
+                          ? (preBalance + finalResultValue).toFixed(2)
                           : postBalance.toFixed(2)}
                       </span>
                     </div>
@@ -1200,7 +1491,7 @@ function VaultOverlay({
                   title="Claim Credits"
                   desc="Instant sellback for platform credits."
                   icon={cashoutIcon}
-                  action={`Get $${resultValue} Credits`}
+                  action={`Get $${totalRevealValue} Credits`}
                   onClick={handleClaim}
                   tierColor="#ffd700"
                   tutorialActive={resultTooltip?.highlight === 2}
@@ -1249,6 +1540,329 @@ function VaultOverlay({
 }
 
 /* ─── Supporting components ─── */
+
+/* ─── Bonus Spin Stage ─── */
+
+interface BonusSpinStageProps {
+  tier: Vault;
+  wonRarity: Rarity;
+  bonusRarity: Rarity;
+  reelItems: ReelItem[];
+  bonusReelItems: ReelItem[];
+  bonusUpgraded: boolean;
+  bonusSpinPhase: BonusSpinPhase;
+  setBonusSpinPhase: (phase: BonusSpinPhase) => void;
+  bonusSpinLanded: boolean;
+  setBonusSpinLanded: (landed: boolean) => void;
+  onComplete: () => void;
+}
+
+function LightningBolt({ color, className, delay = 0 }: { color: string; className?: string; delay?: number }) {
+  return (
+    <motion.svg
+      viewBox="0 0 40 80"
+      fill="none"
+      className={className}
+      initial={{ opacity: 0, scale: 0.5 }}
+      animate={{ opacity: [0, 1, 0.8], scale: 1 }}
+      transition={{ delay, duration: 0.6, ease: "easeOut" }}
+    >
+      <motion.path
+        d="M22 2L8 38h12L14 78l20-44H22L30 2H22z"
+        stroke={color}
+        strokeWidth="2"
+        fill={`${color}30`}
+        initial={{ pathLength: 0 }}
+        animate={{ pathLength: 1 }}
+        transition={{ delay, duration: 0.8, ease: "easeOut" }}
+        style={{ filter: `drop-shadow(0 0 8px ${color})` }}
+      />
+    </motion.svg>
+  );
+}
+
+function BonusSpinStage({
+  tier,
+  wonRarity,
+  bonusRarity,
+  reelItems,
+  bonusReelItems,
+  bonusUpgraded,
+  bonusSpinPhase,
+  setBonusSpinPhase,
+  bonusSpinLanded,
+  setBonusSpinLanded,
+  onComplete
+}: BonusSpinStageProps) {
+  const wonConfig = RARITY_CONFIG[wonRarity];
+  const bonusConfig = RARITY_CONFIG[bonusRarity];
+
+  useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    // announce: 0–1800ms (extended for lightning + text drama)
+    timers.push(setTimeout(() => setBonusSpinPhase("split"), 1800));
+    // split: 1800–2600ms
+    timers.push(setTimeout(() => setBonusSpinPhase("appear"), 2600));
+    // appear: 2600–3100ms
+    timers.push(setTimeout(() => setBonusSpinPhase("spinning"), 3100));
+    // spinning: 3100–7100ms (4s spin)
+    timers.push(setTimeout(() => setBonusSpinLanded(true), 7100));
+    timers.push(setTimeout(() => setBonusSpinPhase("comparing"), 7100));
+    // comparing: 7100–8100ms
+    timers.push(setTimeout(() => setBonusSpinPhase("done"), 8100));
+    // done → result: 8100–8600ms
+    timers.push(setTimeout(() => onComplete(), 8600));
+    return () => timers.forEach(clearTimeout);
+  }, []);
+
+  const showFirstReel = bonusSpinPhase !== "announce";
+  const showBonusReel = bonusSpinPhase === "appear" || bonusSpinPhase === "spinning" || bonusSpinPhase === "comparing" || bonusSpinPhase === "done";
+  const isSpinning = bonusSpinPhase === "spinning";
+  const isComparing = bonusSpinPhase === "comparing" || bonusSpinPhase === "done";
+
+  return (
+    <motion.div
+      key="bonus-spinning"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="flex flex-col items-center justify-center w-full"
+    >
+      {/* Announce phase */}
+      {bonusSpinPhase === "announce" && (
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", damping: 10 }}
+          className="text-center relative"
+        >
+          {/* Bright screen flash */}
+          <motion.div
+            className="fixed inset-0 pointer-events-none z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0, 0.8, 0] }}
+            transition={{ duration: 0.6 }}
+            style={{ backgroundColor: tier.color }}
+          />
+
+          {/* Radial gradient burst behind text */}
+          <motion.div
+            className="absolute inset-0 -inset-x-32 -inset-y-20 pointer-events-none"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: [0, 0.5, 0.3], scale: 1.2 }}
+            transition={{ duration: 1.2, ease: "easeOut" }}
+            style={{
+              background: `radial-gradient(ellipse at center, ${tier.color}40 0%, ${tier.color}10 40%, transparent 70%)`
+            }}
+          />
+
+          {/* Lightning bolts */}
+          <LightningBolt
+            color={tier.color}
+            className="absolute -top-8 -left-10 w-10 h-16 sm:w-12 sm:h-20 -rotate-12"
+            delay={0.1}
+          />
+          <LightningBolt
+            color={tier.color}
+            className="absolute -top-6 -right-10 w-10 h-16 sm:w-12 sm:h-20 rotate-12 scale-x-[-1]"
+            delay={0.25}
+          />
+          <LightningBolt
+            color={tier.color}
+            className="absolute -bottom-6 -left-8 w-8 h-14 sm:w-10 sm:h-16 rotate-[20deg]"
+            delay={0.4}
+          />
+          <LightningBolt
+            color={tier.color}
+            className="absolute -bottom-4 -right-8 w-8 h-14 sm:w-10 sm:h-16 -rotate-[20deg] scale-x-[-1]"
+            delay={0.5}
+          />
+
+          {/* Pulsing scale text */}
+          <motion.h2
+            className="text-5xl sm:text-6xl md:text-8xl font-black uppercase tracking-tight relative z-10"
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+            style={{
+              color: tier.color,
+              textShadow: `0 0 40px ${tier.color}90, 0 0 80px ${tier.color}60, 0 0 120px ${tier.color}30, 0 0 160px ${tier.color}15`
+            }}
+          >
+            Bonus Spin!
+          </motion.h2>
+          <motion.p
+            className="text-text-muted text-sm mt-3 uppercase tracking-widest relative z-10"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+          >
+            Premium vault activated
+          </motion.p>
+        </motion.div>
+      )}
+
+      {/* Dual reel layout */}
+      {showFirstReel && (
+        <div className={`flex items-center justify-center gap-4 sm:gap-8 ${showBonusReel ? "flex-col sm:flex-row" : ""}`}>
+          {/* First reel */}
+          <motion.div
+            initial={{ x: 0, scale: 1 }}
+            animate={{
+              x: showBonusReel ? (typeof window !== "undefined" && window.innerWidth < 640 ? 0 : -60) : 0,
+              y: showBonusReel ? (typeof window !== "undefined" && window.innerWidth < 640 ? -20 : 0) : 0,
+              scale: showBonusReel ? 0.85 : 1,
+              opacity: isComparing ? (bonusUpgraded ? 0.3 : 1) : (showBonusReel ? 0.7 : 1)
+            }}
+            transition={{ type: "spring", damping: 20 }}
+            className="flex flex-col items-center"
+          >
+            <div className="text-[10px] font-black uppercase tracking-widest text-text-dim mb-2">
+              First Spin
+            </div>
+            <div className="relative w-48 sm:w-56 md:w-64 h-48 overflow-hidden rounded-2xl border border-white/10 bg-surface/80 backdrop-blur-xl">
+              <div className="absolute inset-0 z-20 pointer-events-none bg-gradient-to-b from-bg via-transparent to-bg" />
+              <div
+                className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-12 z-10 pointer-events-none border-y"
+                style={{
+                  borderColor: `${wonConfig.color}60`,
+                  boxShadow: `0 0 30px ${wonConfig.color}30, inset 0 0 20px ${wonConfig.color}10`
+                }}
+              />
+              {/* Static — already landed on position 10 */}
+              <div className="flex flex-col" style={{ transform: `translateY(${-(10 * 48 + 24) + 96}px)` }}>
+                {reelItems.map((item, i) => (
+                  <div key={i} className="h-12 flex items-center gap-3 px-4 shrink-0">
+                    <div className="w-1 h-6 rounded-full shrink-0" style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}60` }} />
+                    <span className="text-sm font-black uppercase tracking-wider" style={{ color: item.color }}>{item.label}</span>
+                    {item.rarity === "legendary" && <span className="text-xs" style={{ color: item.color }}>&#9733;</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Bonus reel */}
+          {showBonusReel && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{
+                opacity: isComparing ? (bonusUpgraded ? 1 : 0.3) : 1,
+                scale: isComparing && bonusUpgraded ? 1.05 : 1,
+                x: isComparing && bonusUpgraded ? (typeof window !== "undefined" && window.innerWidth < 640 ? 0 : 60) : 0
+              }}
+              transition={{ type: "spring", damping: 15 }}
+              className="flex flex-col items-center"
+            >
+              <div
+                className="text-[10px] font-black uppercase tracking-widest mb-2 animate-hud-shimmer"
+                style={{ color: tier.color }}
+              >
+                Bonus Spin
+              </div>
+              <motion.div
+                className="relative w-48 sm:w-56 md:w-64 h-48 overflow-hidden rounded-2xl border-2 bg-surface-elevated/60 backdrop-blur-xl"
+                animate={{
+                  boxShadow: [
+                    `0 0 40px ${tier.color}30, inset 0 0 20px ${tier.color}08`,
+                    `0 0 60px ${tier.color}50, inset 0 0 30px ${tier.color}12`,
+                    `0 0 40px ${tier.color}30, inset 0 0 20px ${tier.color}08`
+                  ]
+                }}
+                transition={{
+                  duration: isSpinning ? 0.5 : 1.5,
+                  repeat: Infinity,
+                  ease: "easeInOut"
+                }}
+                style={{
+                  borderColor: `${tier.color}80`
+                }}
+              >
+                {/* Tier-color shimmer overlay */}
+                <motion.div
+                  className="absolute inset-0 z-30 pointer-events-none"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: isSpinning ? [0, 0.08, 0] : 0 }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                  style={{
+                    background: `linear-gradient(135deg, transparent 30%, ${tier.color}20 50%, transparent 70%)`,
+                    backgroundSize: "200% 200%"
+                  }}
+                />
+                <div className="absolute inset-0 z-20 pointer-events-none bg-gradient-to-b from-bg via-transparent to-bg" />
+                <div
+                  className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-12 z-10 pointer-events-none border-y transition-all duration-500"
+                  style={{
+                    borderColor: bonusSpinLanded ? `${bonusConfig.color}60` : "rgba(255,255,255,0.15)",
+                    boxShadow: bonusSpinLanded ? `0 0 30px ${bonusConfig.color}30, inset 0 0 20px ${bonusConfig.color}10` : "0 0 15px rgba(255,255,255,0.05)"
+                  }}
+                />
+                {/* Spinning reel */}
+                <motion.div
+                  initial={{ y: 0 }}
+                  animate={isSpinning || isComparing ? {
+                    y: -(10 * 48 + 24) + 96
+                  } : { y: 0 }}
+                  transition={{
+                    duration: 4.0,
+                    ease: [0.12, 0.8, 0.2, 1]
+                  }}
+                  className="flex flex-col"
+                >
+                  {bonusReelItems.map((item, i) => (
+                    <div key={i} className="h-12 flex items-center gap-3 px-4 shrink-0">
+                      <div className="w-1 h-6 rounded-full shrink-0" style={{ backgroundColor: item.color, boxShadow: `0 0 8px ${item.color}60` }} />
+                      <span className="text-sm font-black uppercase tracking-wider" style={{ color: item.color }}>{item.label}</span>
+                      {item.rarity === "legendary" && <span className="text-xs" style={{ color: item.color }}>&#9733;</span>}
+                    </div>
+                  ))}
+                </motion.div>
+              </motion.div>
+            </motion.div>
+          )}
+        </div>
+      )}
+
+      {/* Comparison result text */}
+      {isComparing && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-6 text-center relative"
+        >
+          {bonusUpgraded ? (
+            <div>
+              {/* Confetti burst on upgrade */}
+              <ConfettiParticles color={bonusConfig.color} count={60} />
+              <motion.h3
+                className="text-2xl sm:text-3xl md:text-5xl font-black uppercase tracking-tight"
+                animate={{ scale: [1, 1.08, 1] }}
+                transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
+                style={{
+                  color: bonusConfig.color,
+                  textShadow: `0 0 30px ${bonusConfig.color}80, 0 0 60px ${bonusConfig.color}40`
+                }}
+              >
+                Upgraded!
+              </motion.h3>
+              <p className="text-xs text-text-muted mt-1">
+                {wonConfig.label} &rarr; <span style={{ color: bonusConfig.color }} className="font-black">{bonusConfig.label}</span>
+              </p>
+            </div>
+          ) : (
+            <div>
+              <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-text-muted">
+                Original Holds!
+              </h3>
+              <p className="text-xs text-text-dim mt-1">
+                Your <span style={{ color: wonConfig.color }} className="font-black">{wonConfig.label}</span> stands
+              </p>
+            </div>
+          )}
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}
 
 interface OptionCardProps {
   title: string;

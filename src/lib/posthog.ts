@@ -13,9 +13,9 @@ if (isPostHogEnabled) {
     autocapture: true,
     session_recording: {
       maskAllInputs: false,
-      maskInputOptions: { password: true },
+      maskInputOptions: { password: true }
     },
-    enable_heatmaps: true,
+    enable_heatmaps: true
   });
 }
 

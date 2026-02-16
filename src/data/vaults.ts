@@ -1,18 +1,14 @@
-export interface RarityBreakdown {
-  common: number;
-  uncommon: number;
-  rare: number;
-  legendary: number;
-}
+import type { IncentiveTier } from "../types/landing";
+import type { Vault, RarityBreakdown } from "../types/vault";
 
-export interface Vault {
-  name: string;
-  price: number;
-  color: string;
-  gradient: string;
-  tagline: string;
-  rarities: RarityBreakdown;
-}
+export const VAULT_COLORS: Record<string, string> = {
+  Bronze: "#cd7f32",
+  Silver: "#e0e0e0",
+  Gold: "#ffd700",
+  Platinum: "#79b5db",
+  Obsidian: "#6c4e85",
+  Diamond: "#b9f2ff"
+};
 
 export const VAULTS: Vault[] = [
   {
@@ -96,7 +92,29 @@ export const RARITY_CONFIG = {
   }
 } as const;
 
-export const PRODUCT_TYPES = ["Funko Pop!", "Community Pick", "Community Pick"] as const;
+export const PRODUCT_TYPES = [
+  "Funko Pop!",
+  "Community Pick",
+  "Community Pick"
+] as const;
+
+/**
+ * Shift vault odds based on prestige level.
+ * Each prestige level moves 4% from common → uncommon/rare/legendary (30%/30%/40% split).
+ */
+export function getPrestigeOdds(
+  base: RarityBreakdown,
+  prestigeLevel: number
+): RarityBreakdown {
+  if (prestigeLevel <= 0) return base;
+  const shift = prestigeLevel * 4;
+  return {
+    common: base.common - shift,
+    uncommon: +(base.uncommon + shift * 0.3).toFixed(1),
+    rare: +(base.rare + shift * 0.4).toFixed(1),
+    legendary: +(base.legendary + shift * 0.3).toFixed(1)
+  };
+}
 
 export function pickRarity(rarities: RarityBreakdown): keyof RarityBreakdown {
   const rand = Math.random() * 100;
@@ -121,30 +139,57 @@ export function pickProduct(): (typeof PRODUCT_TYPES)[number] {
   return PRODUCT_TYPES[Math.floor(Math.random() * PRODUCT_TYPES.length)];
 }
 
-export const WAITLIST_TOTAL_SPOTS = 450;
-
-export interface IncentiveTier {
-  label: string;
-  creditAmount: number;
-  spots: number;
-  startAt: number;
-  endAt: number;
-  color: string;
-}
+export const WAITLIST_TOTAL_SPOTS = 400;
 
 export const INCENTIVE_TIERS: IncentiveTier[] = [
-  { label: "Founder",      creditAmount: 200, spots: 50,  startAt: 1,   endAt: 50,  color: "#ffd700" },
-  { label: "Early Access",  creditAmount: 100, spots: 100, startAt: 51,  endAt: 150, color: "#ff2d95" },
-  { label: "Beta",          creditAmount: 50,  spots: 200, startAt: 151, endAt: 350, color: "#00f0ff" },
-  { label: "Early Bird",    creditAmount: 25,  spots: 100, startAt: 351, endAt: 450, color: "#39ff14" },
+  {
+    label: "Founder",
+    creditAmount: 100,
+    spots: 25,
+    startAt: 0,
+    endAt: 25,
+    color: "#ffd700"
+  },
+  {
+    label: "Early Access",
+    creditAmount: 75,
+    spots: 25,
+    startAt: 25,
+    endAt: 50,
+    color: "#ff2d95"
+  },
+  {
+    label: "Beta",
+    creditAmount: 50,
+    spots: 25,
+    startAt: 50,
+    endAt: 75,
+    color: "#00f0ff"
+  },
+  {
+    label: "Early Bird",
+    creditAmount: 25,
+    spots: 25,
+    startAt: 75,
+    endAt: 100,
+    color: "#39ff14"
+  }
 ];
 
 export function getActiveTierInfo(count: number) {
   for (let i = 0; i < INCENTIVE_TIERS.length; i++) {
     const tier = INCENTIVE_TIERS[i];
     if (count < tier.endAt) {
-      return { activeTier: tier, activeTierRemaining: tier.endAt - count, completedTiers: i };
+      return {
+        activeTier: tier,
+        activeTierRemaining: tier.endAt - count,
+        completedTiers: i
+      };
     }
   }
-  return { activeTier: null, activeTierRemaining: 0, completedTiers: INCENTIVE_TIERS.length };
+  return {
+    activeTier: null,
+    activeTierRemaining: 0,
+    completedTiers: INCENTIVE_TIERS.length
+  };
 }

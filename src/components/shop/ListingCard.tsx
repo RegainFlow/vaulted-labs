@@ -1,8 +1,8 @@
 import { motion } from "motion/react";
-import type { MarketplaceListing } from "../../types/game";
 import { RARITY_CONFIG } from "../../data/vaults";
-import { VaultIcon } from "../VaultIcons";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
+import type { MarketplaceListing } from "../../types/marketplace";
+import { VaultIcon } from "../vault/VaultIcons";
 
 interface ListingCardProps {
   listing: MarketplaceListing;
@@ -16,7 +16,7 @@ const VAULT_COLORS: Record<string, string> = {
   Gold: "#ffd700",
   Platinum: "#79b5db",
   Obsidian: "#6c4e85",
-  Diamond: "#b9f2ff",
+  Diamond: "#b9f2ff"
 };
 
 export function ListingCard({ listing, balance, onBuy }: ListingCardProps) {
@@ -35,18 +35,31 @@ export function ListingCard({ listing, balance, onBuy }: ListingCardProps) {
       {/* Header gradient */}
       <div
         className="h-2 w-full"
-        style={{ background: `linear-gradient(90deg, ${vaultColor}40, ${vaultColor}10)` }}
+        style={{
+          background: `linear-gradient(90deg, ${vaultColor}40, ${vaultColor}10)`
+        }}
       />
 
       <div className="p-3 sm:p-4">
         {/* Icon + info */}
         <div className="flex items-center gap-2.5 sm:gap-3 mb-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center border shrink-0" style={{ borderColor: `${vaultColor}30`, backgroundColor: `${vaultColor}08` }}>
+          <div
+            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center border shrink-0"
+            style={{
+              borderColor: `${vaultColor}30`,
+              backgroundColor: `${vaultColor}08`
+            }}
+          >
             <VaultIcon name={item.vaultTier} color={vaultColor} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs sm:text-sm font-bold text-white truncate">{item.product}</p>
-            <p className="text-[10px] font-bold uppercase tracking-wider" style={{ color: vaultColor }}>
+            <p className="text-xs sm:text-sm font-bold text-white truncate">
+              {item.product}
+            </p>
+            <p
+              className="text-[10px] font-bold uppercase tracking-wider"
+              style={{ color: vaultColor }}
+            >
               {item.vaultTier} Vault
             </p>
           </div>
@@ -59,7 +72,7 @@ export function ListingCard({ listing, balance, onBuy }: ListingCardProps) {
             style={{
               color: rarityConfig.color,
               borderColor: `${rarityConfig.color}40`,
-              backgroundColor: `${rarityConfig.color}10`,
+              backgroundColor: `${rarityConfig.color}10`
             }}
           >
             {item.rarity}
@@ -70,14 +83,42 @@ export function ListingCard({ listing, balance, onBuy }: ListingCardProps) {
         {/* Price + buy */}
         <div className="flex items-center justify-between pt-3 border-t border-white/5">
           <div className="flex items-center gap-2">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-vault-gold">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5" />
-              <path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5s-2 .5-2 1.5 1 1.5 2 2 2 1 2 2-1 1.5-2 1.5-2-.5-2.5-1.5M12 7v1m0 8v1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            <svg
+              width="14"
+              height="14"
+              viewBox="0 0 24 24"
+              fill="none"
+              className="text-vault-gold"
+            >
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="1.5"
+              />
+              <path
+                d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5s-2 .5-2 1.5 1 1.5 2 2 2 1 2 2-1 1.5-2 1.5-2-.5-2.5-1.5M12 7v1m0 8v1"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+              />
             </svg>
-            <span className="text-base sm:text-lg font-mono font-black text-vault-gold">${askingPrice}</span>
+            <span className="text-base sm:text-lg font-mono font-black text-vault-gold">
+              ${askingPrice}
+            </span>
           </div>
           <button
-            onClick={() => { if (!canAfford) return; trackEvent(AnalyticsEvents.MARKETPLACE_BUY, { listing_id: listing.id, item_rarity: item.rarity, vault_tier: item.vaultTier, price: askingPrice }); onBuy(listing.id); }}
+            onClick={() => {
+              if (!canAfford) return;
+              trackEvent(AnalyticsEvents.MARKETPLACE_BUY, {
+                listing_id: listing.id,
+                item_rarity: item.rarity,
+                vault_tier: item.vaultTier,
+                price: askingPrice
+              });
+              onBuy(listing.id);
+            }}
             disabled={!canAfford}
             className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest border transition-all shrink-0 ${
               canAfford
