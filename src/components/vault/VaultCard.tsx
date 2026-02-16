@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import type { VaultCardProps } from "../../types/vault";
 import { VaultIcon } from "./VaultIcons";
-import { RARITY_CONFIG, getPrestigeOdds } from "../../data/vaults";
+import { RARITY_CONFIG, PREMIUM_BONUS_CHANCE, getPrestigeOdds } from "../../data/vaults";
 
 export function VaultCard({
   vault,
@@ -16,6 +16,7 @@ export function VaultCard({
   const canAfford = !disabled && balance >= vault.price;
   const minPull = Math.round(vault.price * 0.4);
   const maxPull = Math.round(vault.price * 3.5);
+  const bonusChance = PREMIUM_BONUS_CHANCE[vault.name];
 
   const handleSelect = () => {
     if (!canAfford) return;
@@ -31,7 +32,7 @@ export function VaultCard({
       whileHover={canAfford ? { y: -10 } : {}}
       onClick={handleSelect}
       className={`group relative h-full ${!canAfford ? "cursor-not-allowed" : "cursor-pointer"}`}
-      {...(vault.name === "Bronze" ? { "data-tutorial": "vault-bronze" } : {})}
+      {...(vault.name === "Diamond" ? { "data-tutorial": "vault-diamond" } : {})}
     >
       {/* Main Vault Structure */}
       <div
@@ -57,6 +58,14 @@ export function VaultCard({
           <div className="absolute top-4 left-8 text-[10px] font-black uppercase tracking-[0.2em] text-black/50 z-10">
             SEQ // 0{index + 1}
           </div>
+
+          {/* Bonus Spin Badge */}
+          {bonusChance && (
+            <div className="absolute bottom-12 sm:bottom-14 right-2 sm:right-3 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg bg-accent/15 border border-accent/40 text-accent z-10 flex items-center gap-0.5 sm:gap-1">
+              <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-wider">x2 Spin</span>
+              <span className="text-[6px] sm:text-[8px] font-mono opacity-70">{Math.round(bonusChance * 100)}%</span>
+            </div>
+          )}
 
           {/* Ore Icon Container */}
           <div

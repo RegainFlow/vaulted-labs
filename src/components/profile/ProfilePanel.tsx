@@ -61,7 +61,7 @@ export function ProfilePanel() {
         animate={{ opacity: 1, y: 0 }}
         className="rounded-2xl border border-white/10 bg-surface-elevated/50 backdrop-blur-sm p-4 sm:p-6"
       >
-        <div className="flex items-center gap-4 sm:gap-6 mb-4 sm:mb-6">
+        <div className="flex items-center gap-4 sm:gap-6 mb-4 sm:mb-6" data-tutorial="profile-level">
           <div className="relative shrink-0">
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-xl sm:rounded-2xl bg-accent/10 border-2 border-accent/30 flex items-center justify-center">
               <span
@@ -109,15 +109,17 @@ export function ProfilePanel() {
         </div>
 
         {/* Prestige Button */}
+        <div data-tutorial="profile-prestige">
         <PrestigeButton
           nextPrestigeLevel={prestigeLevel + 1}
           onClick={handlePrestige}
           disabled={!canPrestige}
           currentLevel={levelInfo.level}
         />
+        </div>
 
         {/* Stats row */}
-        <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 mt-4" data-tutorial="profile-stats">
           <div className="text-center px-2 sm:px-3 py-2.5 sm:py-3 rounded-lg sm:rounded-xl bg-surface border border-white/10">
             <p className="text-base sm:text-lg font-mono font-black text-neon-cyan">
               {totalItems}
@@ -146,7 +148,7 @@ export function ProfilePanel() {
       </motion.div>
 
       {/* Boss Fights */}
-      <div>
+      <div data-tutorial="profile-bosses">
         <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight mb-3 sm:mb-4">
           Boss <span className="text-accent">Fights</span>
         </h3>

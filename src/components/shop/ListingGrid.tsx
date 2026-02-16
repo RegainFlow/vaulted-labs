@@ -36,12 +36,13 @@ export function ListingGrid() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {listings.map((listing) => (
+      {listings.map((listing, idx) => (
         <ListingCard
           key={listing.id}
           listing={listing}
           balance={balance}
           onBuy={buyListing}
+          isFirst={idx === 0}
         />
       ))}
     </div>

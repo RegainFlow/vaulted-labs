@@ -49,7 +49,7 @@ export function WalletHeader() {
       className="mb-6 sm:mb-8"
     >
       {/* Main balance */}
-      <div className="text-center mb-6">
+      <div className="text-center mb-6" data-tutorial="wallet-balance">
         <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest mb-2">
           Available Balance
         </p>
@@ -63,7 +63,7 @@ export function WalletHeader() {
       </div>
 
       {/* Breakdown cards */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4" data-tutorial="wallet-breakdown">
         {breakdownCards.map((card) => (
           <div
             key={card.label}

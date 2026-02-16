@@ -8,6 +8,7 @@ interface ListingCardProps {
   listing: MarketplaceListing;
   balance: number;
   onBuy: (listingId: string) => void;
+  isFirst?: boolean;
 }
 
 const VAULT_COLORS: Record<string, string> = {
@@ -19,7 +20,7 @@ const VAULT_COLORS: Record<string, string> = {
   Diamond: "#b9f2ff"
 };
 
-export function ListingCard({ listing, balance, onBuy }: ListingCardProps) {
+export function ListingCard({ listing, balance, onBuy, isFirst = false }: ListingCardProps) {
   const { item, sellerName, askingPrice } = listing;
   const rarityConfig = RARITY_CONFIG[item.rarity];
   const vaultColor = VAULT_COLORS[item.vaultTier] || "#ffffff";
@@ -31,6 +32,7 @@ export function ListingCard({ listing, balance, onBuy }: ListingCardProps) {
       animate={{ opacity: 1, y: 0 }}
       className="rounded-2xl border bg-surface-elevated/50 backdrop-blur-sm overflow-hidden hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
       style={{ borderColor: `${vaultColor}20` }}
+      {...(isFirst ? { "data-tutorial": "shop-listing" } : {})}
     >
       {/* Header gradient */}
       <div
@@ -109,6 +111,7 @@ export function ListingCard({ listing, balance, onBuy }: ListingCardProps) {
             </span>
           </div>
           <button
+            {...(isFirst ? { "data-tutorial": "shop-buy" } : {})}
             onClick={() => {
               if (!canAfford) return;
               trackEvent(AnalyticsEvents.MARKETPLACE_BUY, {

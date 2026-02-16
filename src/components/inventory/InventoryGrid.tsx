@@ -17,7 +17,7 @@ export function InventoryGrid() {
   return (
     <div>
       {/* Filter tabs */}
-      <div className="flex gap-1.5 sm:gap-2 mb-4 sm:mb-6 flex-wrap">
+      <div className="flex gap-1.5 sm:gap-2 mb-4 sm:mb-6 flex-wrap" data-tutorial="inventory-filters">
         {FILTERS.map((f) => (
           <button
             key={f.value}
@@ -61,12 +61,13 @@ export function InventoryGrid() {
         </motion.div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((item) => (
+          {filtered.map((item, idx) => (
             <InventoryItemCard
               key={item.id}
               item={item}
               onCashout={cashoutItem}
               onShip={shipItem}
+              isFirst={idx === 0}
             />
           ))}
         </div>

@@ -15,7 +15,7 @@ function formatTimeLeft(ms: number): string {
   return `${seconds}s`;
 }
 
-export function AuctionCard({ auction, balance, onBid }: AuctionCardProps) {
+export function AuctionCard({ auction, balance, onBid, isFirst = false }: AuctionCardProps & { isFirst?: boolean }) {
   const { item, sellerName, currentBid, currentBidder, endsAt } = auction;
   const rarityConfig = RARITY_CONFIG[item.rarity];
   const vaultColor = VAULT_COLORS[item.vaultTier] || "#ffffff";
@@ -73,6 +73,7 @@ export function AuctionCard({ auction, balance, onBid }: AuctionCardProps) {
           : "hover:-translate-y-1 hover:shadow-xl"
       }`}
       style={{ borderColor: isWinning ? "#39ff1440" : `${vaultColor}20` }}
+      {...(isFirst ? { "data-tutorial": "shop-auction" } : {})}
     >
       {/* Header gradient */}
       <div
@@ -124,6 +125,7 @@ export function AuctionCard({ auction, balance, onBid }: AuctionCardProps) {
 
         {/* Timer */}
         <div
+          {...(isFirst ? { "data-tutorial": "shop-timer" } : {})}
           className={`flex items-center justify-between mb-3 px-3 py-2 rounded-lg border ${
             isUrgent
               ? "bg-error/10 border-error/30 animate-urgency-pulse"
@@ -186,7 +188,7 @@ export function AuctionCard({ auction, balance, onBid }: AuctionCardProps) {
 
         {/* Bid input */}
         {!isEnded && (
-          <div className="pt-3 border-t border-white/5">
+          <div className="pt-3 border-t border-white/5" {...(isFirst ? { "data-tutorial": "shop-bid" } : {})}>
             <div className="flex gap-2">
               <input
                 type="number"

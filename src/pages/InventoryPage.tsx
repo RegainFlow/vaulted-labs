@@ -1,15 +1,27 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Navbar } from "../components/shared/Navbar";
 import { InventoryGrid } from "../components/inventory/InventoryGrid";
+import { PageTutorial } from "../components/shared/PageTutorial";
+import { TutorialHelpButton } from "../components/shared/TutorialHelpButton";
 import { Footer } from "../components/shared/Footer";
 import { useGame } from "../context/GameContext";
+import { INVENTORY_TUTORIAL_STEPS } from "../data/tutorial";
 
 export function InventoryPage() {
-  const { balance, inventory, levelInfo, prestigeLevel } = useGame();
+  const { balance, inventory, levelInfo, prestigeLevel, hasSeenInventoryTutorial, setHasSeenInventoryTutorial, seedDemoItem } = useGame();
+  const [tutorialActive, setTutorialActive] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    if (!hasSeenInventoryTutorial) {
+      seedDemoItem();
+      const timer = setTimeout(() => setTutorialActive(true), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [hasSeenInventoryTutorial, seedDemoItem]);
 
   return (
     <>
@@ -35,6 +47,18 @@ export function InventoryPage() {
         </div>
       </main>
       <Footer />
+      <PageTutorial
+        pageKey="inventory"
+        steps={INVENTORY_TUTORIAL_STEPS}
+        isActive={tutorialActive}
+        onComplete={() => {
+          setTutorialActive(false);
+          setHasSeenInventoryTutorial(true);
+        }}
+      />
+      {hasSeenInventoryTutorial && !tutorialActive && (
+        <TutorialHelpButton onClick={() => setTutorialActive(true)} />
+      )}
     </>
   );
 }

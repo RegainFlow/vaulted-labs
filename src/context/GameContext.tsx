@@ -36,6 +36,10 @@ interface PersistedState {
   listings: MarketplaceListing[];
   auctions: Auction[];
   hasSeenTutorial: boolean;
+  hasSeenWalletTutorial: boolean;
+  hasSeenProfileTutorial: boolean;
+  hasSeenInventoryTutorial: boolean;
+  hasSeenShopTutorial: boolean;
   questProgress: QuestProgress[];
   nextId: number;
   prestigeLevel: number;
@@ -78,6 +82,10 @@ interface GameContextValue {
   balance: number;
   levelInfo: LevelInfo;
   hasSeenTutorial: boolean;
+  hasSeenWalletTutorial: boolean;
+  hasSeenProfileTutorial: boolean;
+  hasSeenInventoryTutorial: boolean;
+  hasSeenShopTutorial: boolean;
   questProgress: QuestProgress[];
   questToast: QuestToast | null;
   dismissQuestToast: () => void;
@@ -98,6 +106,11 @@ interface GameContextValue {
   addXP: (amount: number) => void;
   tutorialOpenVault: (vaultName: string, price: number) => void;
   setHasSeenTutorial: (seen: boolean) => void;
+  setHasSeenWalletTutorial: (seen: boolean) => void;
+  setHasSeenProfileTutorial: (seen: boolean) => void;
+  setHasSeenInventoryTutorial: (seen: boolean) => void;
+  setHasSeenShopTutorial: (seen: boolean) => void;
+  seedDemoItem: () => void;
   resetDemo: () => void;
   prestigeLevel: number;
   canPrestige: boolean;
@@ -149,6 +162,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [hasSeenTutorial, setHasSeenTutorial] = useState(
     initial?.hasSeenTutorial ?? false
   );
+  const [hasSeenWalletTutorial, setHasSeenWalletTutorial] = useState(
+    initial?.hasSeenWalletTutorial ?? false
+  );
+  const [hasSeenProfileTutorial, setHasSeenProfileTutorial] = useState(
+    initial?.hasSeenProfileTutorial ?? false
+  );
+  const [hasSeenInventoryTutorial, setHasSeenInventoryTutorial] = useState(
+    initial?.hasSeenInventoryTutorial ?? false
+  );
+  const [hasSeenShopTutorial, setHasSeenShopTutorial] = useState(
+    initial?.hasSeenShopTutorial ?? false
+  );
   const [questProgress, setQuestProgress] = useState<QuestProgress[]>(
     initial?.questProgress ?? initQuestProgress()
   );
@@ -189,6 +214,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       listings,
       auctions,
       hasSeenTutorial,
+      hasSeenWalletTutorial,
+      hasSeenProfileTutorial,
+      hasSeenInventoryTutorial,
+      hasSeenShopTutorial,
       questProgress,
       nextId,
       prestigeLevel,
@@ -201,6 +230,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     listings,
     auctions,
     hasSeenTutorial,
+    hasSeenWalletTutorial,
+    hasSeenProfileTutorial,
+    hasSeenInventoryTutorial,
+    hasSeenShopTutorial,
     questProgress,
     prestigeLevel,
     defeatedBosses
@@ -528,6 +561,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [defeatedBosses]
   );
 
+  const seedDemoItem = useCallback(() => {
+    if (inventory.length > 0) return;
+    setInventory((prev) => [
+      ...prev,
+      {
+        id: uid("item"),
+        product: "Funko Pop!",
+        vaultTier: "Bronze" as VaultTierName,
+        rarity: "uncommon" as Rarity,
+        value: 24,
+        status: "held",
+        acquiredAt: Date.now()
+      }
+    ]);
+  }, [inventory.length]);
+
   const resetDemo = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
     nextId = 2;
@@ -537,6 +586,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setListings(SEED_LISTINGS);
     setAuctions(SEED_AUCTIONS);
     setHasSeenTutorial(false);
+    setHasSeenWalletTutorial(false);
+    setHasSeenProfileTutorial(false);
+    setHasSeenInventoryTutorial(false);
+    setHasSeenShopTutorial(false);
     setQuestProgress(initQuestProgress());
     setQuestToast(null);
     setPrestigeLevel(0);
@@ -554,6 +607,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       balance,
       levelInfo,
       hasSeenTutorial,
+      hasSeenWalletTutorial,
+      hasSeenProfileTutorial,
+      hasSeenInventoryTutorial,
+      hasSeenShopTutorial,
       questProgress,
       questToast,
       dismissQuestToast,
@@ -569,6 +626,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addXP,
       tutorialOpenVault,
       setHasSeenTutorial,
+      setHasSeenWalletTutorial,
+      setHasSeenProfileTutorial,
+      setHasSeenInventoryTutorial,
+      setHasSeenShopTutorial,
+      seedDemoItem,
       resetDemo,
       prestigeLevel,
       canPrestige,
@@ -585,6 +647,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       balance,
       levelInfo,
       hasSeenTutorial,
+      hasSeenWalletTutorial,
+      hasSeenProfileTutorial,
+      hasSeenInventoryTutorial,
+      hasSeenShopTutorial,
       questProgress,
       questToast,
       dismissQuestToast,
@@ -599,6 +665,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       placeBid,
       addXP,
       tutorialOpenVault,
+      seedDemoItem,
       resetDemo,
       prestigeLevel,
       canPrestige,

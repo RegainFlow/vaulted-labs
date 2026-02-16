@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Navbar } from "../components/shared/Navbar";
 import { VaultGrid } from "../components/vault/VaultGrid";
 import { Tutorial } from "../components/Tutorial";
+import { TutorialHelpButton } from "../components/shared/TutorialHelpButton";
 import { Footer } from "../components/shared/Footer";
 import { useGame } from "../context/GameContext";
 import { useTutorial } from "../hooks/useTutorial";
@@ -60,8 +61,12 @@ export function PlayPage() {
         step={step}
         onAdvance={handleTutorialAdvance}
         onComplete={handleTutorialComplete}
+        onSkip={handleTutorialComplete}
         completedAction={completedAction}
       />
+      {hasSeenTutorial && !step && (
+        <TutorialHelpButton onClick={() => goTo("welcome")} />
+      )}
     </>
   );
 }

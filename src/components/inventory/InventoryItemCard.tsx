@@ -7,8 +7,9 @@ import { VaultIcon } from "../vault/VaultIcons";
 export function InventoryItemCard({
   item,
   onCashout,
-  onShip
-}: InventoryItemCardProps) {
+  onShip,
+  isFirst = false
+}: InventoryItemCardProps & { isFirst?: boolean }) {
   const [showComingSoon, setShowComingSoon] = useState(false);
   const rarityConfig = RARITY_CONFIG[item.rarity];
   const vaultColor = VAULT_COLORS[item.vaultTier] || "#ffffff";
@@ -26,6 +27,7 @@ export function InventoryItemCard({
       style={{
         borderColor: isInactive ? "rgba(255,255,255,0.05)" : `${vaultColor}30`
       }}
+      {...(isFirst ? { "data-tutorial": "inventory-item" } : {})}
     >
       {/* Status badge */}
       {item.status !== "held" && (
@@ -104,12 +106,14 @@ export function InventoryItemCard({
             <button
               onClick={() => onShip(item.id)}
               className="px-2 py-2 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-neon-cyan/10 border border-neon-cyan/30 text-neon-cyan hover:bg-neon-cyan/20 transition-colors cursor-pointer"
+              {...(isFirst ? { "data-tutorial": "inventory-ship" } : {})}
             >
               Ship
             </button>
             <button
               onClick={() => onCashout(item.id)}
               className="px-2 py-2 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-vault-gold/10 border border-vault-gold/30 text-vault-gold hover:bg-vault-gold/20 transition-colors cursor-pointer"
+              {...(isFirst ? { "data-tutorial": "inventory-cashout" } : {})}
             >
               Cashout
             </button>
@@ -118,6 +122,7 @@ export function InventoryItemCard({
                 onClick={() => setShowComingSoon(true)}
                 onMouseLeave={() => setShowComingSoon(false)}
                 className="w-full px-2 py-2 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-white/5 border border-white/10 text-text-dim hover:bg-white/10 transition-colors cursor-pointer"
+                {...(isFirst ? { "data-tutorial": "inventory-list" } : {})}
               >
                 List
               </button>

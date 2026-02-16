@@ -38,12 +38,13 @@ export function AuctionGrid() {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {auctions.map((auction) => (
+      {auctions.map((auction, idx) => (
         <AuctionCard
           key={auction.id}
           auction={auction}
           balance={balance}
           onBid={placeBid}
+          isFirst={idx === 0}
         />
       ))}
     </div>

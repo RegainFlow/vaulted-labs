@@ -1,16 +1,27 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Navbar } from "../components/shared/Navbar";
 import { ProfilePanel } from "../components/profile/ProfilePanel";
 import { QuestList } from "../components/profile/QuestList";
+import { PageTutorial } from "../components/shared/PageTutorial";
+import { TutorialHelpButton } from "../components/shared/TutorialHelpButton";
 import { Footer } from "../components/shared/Footer";
 import { useGame } from "../context/GameContext";
+import { PROFILE_TUTORIAL_STEPS } from "../data/tutorial";
 
 export function ProfilePage() {
-  const { balance, inventory, levelInfo, resetDemo, prestigeLevel, addXP } = useGame();
+  const { balance, inventory, levelInfo, resetDemo, prestigeLevel, addXP, hasSeenProfileTutorial, setHasSeenProfileTutorial } = useGame();
+  const [tutorialActive, setTutorialActive] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    if (!hasSeenProfileTutorial) {
+      const timer = setTimeout(() => setTutorialActive(true), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [hasSeenProfileTutorial]);
 
   return (
     <>
@@ -40,7 +51,7 @@ export function ProfilePage() {
           </div>
 
           {/* Debug Tools */}
-          <div className="mt-12 pt-6 border-t border-white/5 text-center">
+          <div className="mt-12 pt-6 border-t border-white/5 text-center" data-tutorial="profile-reset">
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <button
                 onClick={() => addXP(6000)}
@@ -88,6 +99,18 @@ export function ProfilePage() {
         </div>
       </main>
       <Footer />
+      <PageTutorial
+        pageKey="profile"
+        steps={PROFILE_TUTORIAL_STEPS}
+        isActive={tutorialActive}
+        onComplete={() => {
+          setTutorialActive(false);
+          setHasSeenProfileTutorial(true);
+        }}
+      />
+      {hasSeenProfileTutorial && !tutorialActive && (
+        <TutorialHelpButton onClick={() => setTutorialActive(true)} />
+      )}
     </>
   );
 }

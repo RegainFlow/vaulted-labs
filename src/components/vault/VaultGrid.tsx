@@ -5,6 +5,7 @@ import {
   VAULTS,
   RARITY_CONFIG,
   PRODUCT_TYPES,
+  PREMIUM_BONUS_CHANCE,
   pickRarity,
   pickValue,
   pickProduct,
@@ -50,7 +51,7 @@ export function VaultGrid({
 
   const handleSelect = (vault: Vault) => {
     if (tutorialStep === "open-vault") {
-      if (vault.name !== "Bronze") return;
+      if (vault.name !== "Diamond") return;
       trackEvent(AnalyticsEvents.VAULT_OVERLAY_OPENED, {
         vault_tier: vault.name,
         vault_price: vault.price
@@ -278,7 +279,7 @@ export function VaultGrid({
                     index={index}
                     balance={balance}
                     onSelect={handleSelect}
-                    disabled={isTutorialActive && vault.name !== "Bronze"}
+                    disabled={isTutorialActive && vault.name !== "Diamond"}
                     prestigeLevel={prestigeLevel}
                   />
                 ))}
@@ -375,12 +376,6 @@ export function VaultGrid({
 type Stage = "picking" | "revealing" | "spinning" | "bonus-spinning" | "result";
 
 type BonusSpinPhase = "announce" | "split" | "appear" | "spinning" | "comparing" | "done";
-
-const PREMIUM_BONUS_CHANCE: Record<string, number> = {
-  Platinum: 0.2,
-  Obsidian: 0.3,
-  Diamond: 0.4
-};
 
 const RARITY_RANK: Record<Rarity, number> = {
   common: 0,
@@ -572,7 +567,7 @@ function VaultOverlay({
 
   // Bonus spin state
   const bonusTriggered = useMemo(() => {
-    if (isTutorial) return false;
+    if (isTutorial) return true;
     const chance = PREMIUM_BONUS_CHANCE[tier.name] ?? 0;
     return Math.random() < chance;
   }, [tier, isTutorial]);
@@ -646,10 +641,8 @@ function VaultOverlay({
       setTimeout(() => setBoxState("open"), 2700);
       setTimeout(() => setStage("spinning"), 3500);
       setTimeout(() => setSpinLanded(true), 8000);
-      setTimeout(() => {
-        setStage("result");
-        onTutorialAdvance?.("result-store");
-      }, 8500);
+      // Go to bonus-spinning (forced true during tutorial)
+      setTimeout(() => setStage("bonus-spinning"), 8800);
       return;
     }
 
@@ -1137,7 +1130,10 @@ function VaultOverlay({
               setBonusSpinPhase={setBonusSpinPhase}
               bonusSpinLanded={bonusSpinLanded}
               setBonusSpinLanded={setBonusSpinLanded}
-              onComplete={() => setStage("result")}
+              onComplete={() => {
+                setStage("result");
+                if (isTutorial) onTutorialAdvance?.("result-store");
+              }}
             />
           )}
 

@@ -20,7 +20,7 @@ export function TransactionList() {
   return (
     <div>
       {/* Filter tabs */}
-      <div className="flex gap-1.5 sm:gap-2 mb-4 sm:mb-6 flex-wrap">
+      <div className="flex gap-1.5 sm:gap-2 mb-4 sm:mb-6 flex-wrap" data-tutorial="wallet-filters">
         {FILTERS.map((f) => (
           <button
             key={f.value}
@@ -64,7 +64,7 @@ export function TransactionList() {
           </p>
         </motion.div>
       ) : (
-        <div className="rounded-xl border border-white/10 overflow-hidden">
+        <div className="rounded-xl border border-white/10 overflow-hidden" data-tutorial="wallet-transactions">
           {sorted.map((tx, i) => (
             <TransactionRow
               key={tx.id}

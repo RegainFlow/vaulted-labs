@@ -33,7 +33,7 @@ export function QuestList() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-tutorial="profile-quests">
       {/* Active Quests */}
       {activeQuests.length > 0 && (
         <div>

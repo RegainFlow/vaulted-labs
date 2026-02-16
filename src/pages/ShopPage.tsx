@@ -1,15 +1,37 @@
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Navbar } from "../components/shared/Navbar";
 import { ShopTabs } from "../components/shop/ShopTabs";
+import { PageTutorial } from "../components/shared/PageTutorial";
+import { TutorialHelpButton } from "../components/shared/TutorialHelpButton";
 import { Footer } from "../components/shared/Footer";
 import { useGame } from "../context/GameContext";
+import { SHOP_TUTORIAL_STEPS } from "../data/tutorial";
 
 export function ShopPage() {
-  const { balance, inventory, levelInfo, prestigeLevel } = useGame();
+  const { balance, inventory, levelInfo, prestigeLevel, hasSeenShopTutorial, setHasSeenShopTutorial } = useGame();
+  const [tutorialActive, setTutorialActive] = useState(false);
+  const [tutorialStepIndex, setTutorialStepIndex] = useState(0);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    if (!hasSeenShopTutorial) {
+      const timer = setTimeout(() => setTutorialActive(true), 600);
+      return () => clearTimeout(timer);
+    }
+  }, [hasSeenShopTutorial]);
+
+  // Force auctions tab when tutorial reaches auction-related steps
+  const forceTab = useMemo(() => {
+    if (!tutorialActive) return null;
+    const step = SHOP_TUTORIAL_STEPS[tutorialStepIndex];
+    if (!step) return null;
+    const auctionSteps = ["shop-auction-tab", "shop-auction", "shop-timer", "shop-bid"];
+    if (auctionSteps.includes(step.id)) return "auctions" as const;
+    return null;
+  }, [tutorialActive, tutorialStepIndex]);
 
   return (
     <>
@@ -31,10 +53,24 @@ export function ShopPage() {
               Buy collectibles and bid on auctions.
             </p>
           </div>
-          <ShopTabs />
+          <ShopTabs forceTab={forceTab} />
         </div>
       </main>
       <Footer />
+      <PageTutorial
+        pageKey="shop"
+        steps={SHOP_TUTORIAL_STEPS}
+        isActive={tutorialActive}
+        onComplete={() => {
+          setTutorialActive(false);
+          setHasSeenShopTutorial(true);
+          setTutorialStepIndex(0);
+        }}
+        onStepChange={setTutorialStepIndex}
+      />
+      {hasSeenShopTutorial && !tutorialActive && (
+        <TutorialHelpButton onClick={() => setTutorialActive(true)} />
+      )}
     </>
   );
 }

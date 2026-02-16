@@ -52,7 +52,8 @@ export function Tutorial({
   step,
   onAdvance,
   onComplete,
-  completedAction
+  completedAction,
+  onSkip
 }: TutorialProps) {
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
 
@@ -60,7 +61,7 @@ export function Tutorial({
     if (!step) return;
 
     if (step === "open-vault") {
-      const rect = getTargetRect('[data-tutorial="vault-bronze"]');
+      const rect = getTargetRect('[data-tutorial="vault-diamond"]');
       setTargetRect(rect);
       return;
     }
@@ -91,7 +92,7 @@ export function Tutorial({
   // Scroll Bronze card into view when reaching open-vault step
   useEffect(() => {
     if (step === "open-vault") {
-      const el = document.querySelector('[data-tutorial="vault-bronze"]');
+      const el = document.querySelector('[data-tutorial="vault-diamond"]');
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
         // Re-measure rect after scroll
@@ -152,6 +153,14 @@ export function Tutorial({
             >
               Let's Go
             </button>
+            {onSkip && (
+              <button
+                onClick={onSkip}
+                className="mt-4 block mx-auto text-[10px] text-text-dim hover:text-text-muted uppercase tracking-widest transition-colors cursor-pointer"
+              >
+                Skip Tutorial
+              </button>
+            )}
           </motion.div>
         </motion.div>
       </AnimatePresence>
@@ -293,7 +302,15 @@ export function Tutorial({
             <p className="text-xs sm:text-sm text-text-muted leading-relaxed mb-3 sm:mb-4">
               {tooltipConfig.description}
             </p>
-            <div className="flex items-center justify-end">
+            <div className="flex items-center justify-between">
+              {onSkip && (
+                <button
+                  onClick={onSkip}
+                  className="text-[10px] text-text-dim hover:text-text-muted uppercase tracking-widest transition-colors cursor-pointer"
+                >
+                  Skip
+                </button>
+              )}
               <button
                 onClick={onAdvance}
                 className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer shadow-[0_0_15px_rgba(255,45,149,0.3)]"
@@ -371,9 +388,17 @@ export function Tutorial({
             <p className="text-sm sm:text-base font-black text-white uppercase tracking-tight mb-1">
               Open a Vault
             </p>
-            <p className="text-xs sm:text-sm text-text-muted leading-relaxed">
-              Tap the Bronze vault to open it — this one's free!
+            <p className="text-xs sm:text-sm text-text-muted leading-relaxed mb-3">
+              Tap the Diamond vault to open it — this one's free!
             </p>
+            {onSkip && (
+              <button
+                onClick={onSkip}
+                className="text-[10px] text-text-dim hover:text-text-muted uppercase tracking-widest transition-colors cursor-pointer"
+              >
+                Skip Tutorial
+              </button>
+            )}
           </motion.div>
         </motion.div>
       </AnimatePresence>

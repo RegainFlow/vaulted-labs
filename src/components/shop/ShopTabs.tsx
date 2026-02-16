@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
 import { ListingGrid } from "./ListingGrid";
@@ -11,13 +11,17 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
-export function ShopTabs() {
+export function ShopTabs({ forceTab }: { forceTab?: TabId | null }) {
   const [activeTab, setActiveTab] = useState<TabId>("marketplace");
+
+  useEffect(() => {
+    if (forceTab) setActiveTab(forceTab);
+  }, [forceTab]);
 
   return (
     <div>
       {/* Tab navigation */}
-      <div className="flex gap-0.5 sm:gap-1 mb-6 sm:mb-8 bg-surface/50 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 border border-white/5">
+      <div className="flex gap-0.5 sm:gap-1 mb-6 sm:mb-8 bg-surface/50 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 border border-white/5" data-tutorial="shop-tabs">
         {TABS.map((tab) => {
           const isActive = activeTab === tab.id;
           return (
@@ -27,6 +31,7 @@ export function ShopTabs() {
                 trackEvent(AnalyticsEvents.TAB_SWITCH, { tab: tab.id });
                 setActiveTab(tab.id);
               }}
+              {...(tab.id === "auctions" ? { "data-tutorial": "shop-auction-tab" } : {})}
               className={`relative flex-1 px-2 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-bold uppercase tracking-wider sm:tracking-widest whitespace-nowrap transition-all duration-200 cursor-pointer ${
                 isActive
                   ? "text-white bg-surface-elevated border border-white/10 shadow-lg"

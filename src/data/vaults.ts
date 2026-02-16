@@ -176,6 +176,12 @@ export const INCENTIVE_TIERS: IncentiveTier[] = [
   }
 ];
 
+export const PREMIUM_BONUS_CHANCE: Record<string, number> = {
+  Platinum: 0.2,
+  Obsidian: 0.3,
+  Diamond: 0.4
+};
+
 export function getActiveTierInfo(count: number) {
   for (let i = 0; i < INCENTIVE_TIERS.length; i++) {
     const tier = INCENTIVE_TIERS[i];
