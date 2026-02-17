@@ -12,7 +12,7 @@ import {
   CheckMarkIcon,
   BoxIcon,
   StarIcon,
-  MoneyIcon
+  MoneyIcon,
 } from "../assets/step-icons";
 
 // step data
@@ -21,32 +21,32 @@ const vaultSteps: Step[] = [
     number: "01",
     title: "Pick Your Vault",
     description:
-      "Choose from 6 tiers — Bronze ($24) to Diamond ($86). Every vault shows exact drop rates before you open. No hidden odds.",
+      "Choose from 6 tiers — Bronze ($19.99) to Diamond ($89.99). Every vault shows exact drop rates before you open. No hidden odds.",
     illustration: <VaultIllustration />,
     image: "1_pick_vault.png",
     iconColor: "text-accent",
-    icon: <HexagonalIcon />
+    icon: <HexagonalIcon />,
   },
   {
     number: "02",
     title: "Reveal Your Collectible",
     description:
-      "Select a mystery box and watch the reveal. Every vault contains a real, licensed collectible — from common pulls to legendary finds.",
+      "Select a mystery box and watch the reel spin. Premium vaults can trigger a bonus spin — land a higher rarity and your item upgrades instantly.",
     illustration: <MysteryBoxIllustration />,
     image: "2_reveal_collectible.png",
     iconColor: "text-neon-cyan",
-    icon: <DiamondIcon />
+    icon: <DiamondIcon />,
   },
   {
     number: "03",
     title: "Hold, Ship, or Cashout",
     description:
-      "Your item, your call. Store it in your vault, ship it to your door with real tracking, or cash out instantly for credits.",
+      "Your item, your call. Store it in your digital vault, ship the physical collectible to your door, or cash out instantly for credits you can withdraw as real cash.",
     illustration: <DecisionIllustration />,
     image: "3_hold_ship_cash.png",
     iconColor: "text-neon-green",
-    icon: <CheckMarkIcon />
-  }
+    icon: <CheckMarkIcon />,
+  },
 ];
 
 const platformSteps: Step[] = [
@@ -54,32 +54,32 @@ const platformSteps: Step[] = [
     number: "04",
     title: "Trade on the Shop",
     description:
-      "Browse the marketplace to buy collectibles from other players. Bid on auctions. Build the collection you actually want.",
+      "List your items for sale, buy collectibles from other players, or bid on auctions. Build the collection you actually want.",
     illustration: <ShopIllustration />,
     image: "4_trade_shop.jpg",
     iconColor: "text-accent",
-    icon: <BoxIcon />
+    icon: <BoxIcon />,
   },
   {
     number: "05",
     title: "Level Up & Earn Rewards",
     description:
-      "Earn XP with every vault and purchase. Complete quests, unlock boss fights, and climb the ranks. The more you play, the more you earn.",
+      "Earn XP with every vault and purchase. Complete quests, defeat bosses for exclusive rewards, and climb the ranks.",
     illustration: <LevelUpIllustration />,
     image: "5_level_up.jpg",
     iconColor: "text-neon-cyan",
-    icon: <StarIcon />
+    icon: <StarIcon />,
   },
   {
     number: "06",
     title: "Credits Fuel Everything",
     description:
-      "Earn credits from cashouts, quests, and rewards. Spend them on vaults, marketplace items, and bids. The loop never stops.",
+      "Earn credits from cashouts, boss fights, quests, and rewards. Spend them on vaults and marketplace items — or withdraw as real cash. The loop never stops.",
     illustration: <CoinsIllustration />,
     image: "6_credits.jpg",
     iconColor: "text-vault-gold",
-    icon: <MoneyIcon />
-  }
+    icon: <MoneyIcon />,
+  },
 ];
 
 // Step Card Component
@@ -121,14 +121,17 @@ function StepCard({ step, index }: { step: Step; index: number }) {
 // Section Component
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="py-16 md:py-24 px-4 sm:px-6 bg-bg relative overflow-hidden">
+    <section
+      id="how-it-works"
+      className="py-16 md:py-24 px-4 sm:px-6 bg-bg relative overflow-hidden"
+    >
       {/* Background pattern */}
       <div
         className="absolute inset-0 opacity-5 pointer-events-none"
         style={{
           backgroundImage:
             "radial-gradient(circle at 2px 2px, white 1px, transparent 0)",
-          backgroundSize: "40px 40px"
+          backgroundSize: "40px 40px",
         }}
       />
 

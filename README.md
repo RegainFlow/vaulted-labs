@@ -82,6 +82,11 @@ src/
     VaultCard.tsx               # Individual vault card with rarity bars
     VaultIcons.tsx              # SVG mineral icons per tier
     Footer.tsx                  # Brand and copyright
+    Tutorial.tsx                # Guided vault tutorial with skip support
+    shared/
+      PageTutorial.tsx          # Reusable page tutorial overlay (welcome/spotlight/complete + skip)
+      TutorialHelpButton.tsx    # Floating "?" button to replay tutorials
+      QuestToast.tsx            # Quest completion toast notification
     marketplace/
       MarketplaceTabs.tsx       # 4-tab navigation (Inventory, Marketplace, Auctions, Profile)
       InventoryGrid.tsx         # Grid of owned items with status filter

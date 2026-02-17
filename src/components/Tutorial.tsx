@@ -5,6 +5,9 @@ import { OVERLAY_STEPS, TOOLTIP_STEPS } from "../data/tutorial";
 
 const PADDING = 8;
 
+const STEP_INDEX: Record<string, number> = { welcome: 1, hud: 2, categories: 3, "open-vault": 4, complete: 5 };
+const TOTAL_STEPS = 5;
+
 function getTargetRect(selector: string): TargetRect | null {
   const el = document.querySelector(selector);
   if (!el) return null;
@@ -35,15 +38,16 @@ function getTooltipPosition(
   }
 
   if (position === "bottom" || isMobile) {
+    const top = Math.max(8, Math.min(rect.top + rect.height + 12, window.innerHeight - 200));
     return {
-      top: rect.top + rect.height + 12,
+      top,
       left: isMobile
         ? Math.max(8, (window.innerWidth - tooltipMaxWidth) / 2)
         : Math.max(12, Math.min(rect.left, window.innerWidth - tooltipMaxWidth))
     };
   }
   return {
-    bottom: window.innerHeight - rect.top + 12,
+    bottom: Math.max(8, window.innerHeight - rect.top + 12),
     left: Math.max(12, Math.min(rect.left, window.innerWidth - tooltipMaxWidth))
   };
 }
@@ -95,8 +99,9 @@ export function Tutorial({
       const el = document.querySelector('[data-tutorial="vault-diamond"]');
       if (el) {
         el.scrollIntoView({ behavior: "smooth", block: "center" });
-        // Re-measure rect after scroll
+        // Re-measure rect after scroll settles
         setTimeout(updateRect, 400);
+        setTimeout(updateRect, 800);
       }
     }
   }, [step, updateRect]);
@@ -139,7 +144,8 @@ export function Tutorial({
                 <line x1="12" y1="22.08" x2="12" y2="12" />
               </svg>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight mb-3">
+            <span className="text-[9px] font-mono text-text-dim">{STEP_INDEX[step]} / {TOTAL_STEPS}</span>
+            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight mb-3 mt-1">
               Welcome to VaultedLabs!
             </h2>
             <p className="text-text-muted text-sm leading-relaxed mb-8">
@@ -198,7 +204,8 @@ export function Tutorial({
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight mb-3">
+            <span className="text-[9px] font-mono text-text-dim">{STEP_INDEX[step]} / {TOTAL_STEPS}</span>
+            <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight mb-3 mt-1">
               You're All Set!
             </h2>
             <p className="text-text-muted text-sm leading-relaxed mb-2">
@@ -207,7 +214,7 @@ export function Tutorial({
             </p>
             <p className="text-text-muted text-sm leading-relaxed mb-8">
               You earned{" "}
-              <span className="text-neon-green font-bold">24 XP</span> from your
+              <span className="text-neon-green font-bold">90 XP</span> from your
               first vault. Now go explore — open more vaults, build your
               collection, and level up.
             </p>
@@ -296,9 +303,12 @@ export function Tutorial({
             className="absolute bg-surface-elevated border border-accent/40 rounded-xl p-4 sm:p-5 w-[calc(100%-16px)] sm:w-auto max-w-[280px] sm:max-w-sm shadow-[0_0_30px_rgba(255,45,149,0.25)] z-[201]"
             style={tooltipStyle}
           >
-            <p className="text-sm sm:text-base font-black text-white uppercase tracking-tight mb-1">
-              {tooltipConfig.title}
-            </p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-sm sm:text-base font-black text-white uppercase tracking-tight">
+                {tooltipConfig.title}
+              </p>
+              <span className="text-[9px] font-mono text-text-dim">{STEP_INDEX[step]} / {TOTAL_STEPS}</span>
+            </div>
             <p className="text-xs sm:text-sm text-text-muted leading-relaxed mb-3 sm:mb-4">
               {tooltipConfig.description}
             </p>
@@ -385,9 +395,12 @@ export function Tutorial({
             className="absolute bg-surface-elevated border border-accent/40 rounded-xl p-4 sm:p-5 w-[calc(100%-16px)] sm:w-auto max-w-[280px] sm:max-w-sm shadow-[0_0_30px_rgba(255,45,149,0.25)] z-[201]"
             style={tooltipStyle}
           >
-            <p className="text-sm sm:text-base font-black text-white uppercase tracking-tight mb-1">
-              Open a Vault
-            </p>
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-sm sm:text-base font-black text-white uppercase tracking-tight">
+                Open a Vault
+              </p>
+              <span className="text-[9px] font-mono text-text-dim">{STEP_INDEX[step]} / {TOTAL_STEPS}</span>
+            </div>
             <p className="text-xs sm:text-sm text-text-muted leading-relaxed mb-3">
               Tap the Diamond vault to open it — this one's free!
             </p>

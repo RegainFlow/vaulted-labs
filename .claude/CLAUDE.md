@@ -152,8 +152,9 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 ### Demo Game Page (`/play`)
 1. **Navbar** — Fixed nav with HUD (credits/loot/level)
 2. **VaultGrid** — Category selector, 6 vault cards, full-screen 4-stage reveal overlay
-3. **Tutorial** — Guided first-time onboarding overlay (welcome → HUD → categories → open vault → pick box → result actions)
-4. **Footer** — Brand + feedback link + copyright
+3. **Tutorial** — Guided first-time onboarding overlay (welcome → HUD → categories → open vault → pick box → result actions) with skip support
+4. **TutorialHelpButton** — Floating "?" to replay tutorial (visible after completion)
+5. **Footer** — Brand + feedback link + copyright
 
 ### Shop Page (`/shop`)
 1. **Navbar** — Fixed nav with HUD
@@ -201,6 +202,8 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 | `shared/PlayNowButton.tsx`  | 3D pushable CTA button with analytics tracking                          |
 | `shared/FeedbackButton.tsx` | Google Form feedback button (graceful no-op when env var missing)       |
 | `shared/QuestToast.tsx`     | Quest completion toast notification                                     |
+| `shared/PageTutorial.tsx`   | Reusable page tutorial overlay with welcome/spotlight/complete steps + skip + viewport-clamped tooltips |
+| `shared/TutorialHelpButton.tsx` | Floating "?" button to replay a page tutorial                       |
 
 ### Components — Landing
 
@@ -262,7 +265,7 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 
 | File                      | Description                                                    |
 | ------------------------- | -------------------------------------------------------------- |
-| `components/Tutorial.tsx` | Guided first-time onboarding overlay with spotlight + tooltips |
+| `components/Tutorial.tsx` | Guided first-time vault tutorial with spotlight + tooltips + skip support |
 
 ### Types (`types/`)
 
@@ -276,7 +279,7 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 | `types/gamification.ts` | `LevelInfo`, `BossFight`, `BossFightCardProps`                                                              |
 | `types/quest.ts`        | `Quest`, `QuestProgress`, `QuestToast`, `QuestCardProps`, `QuestRequirement` + related union types          |
 | `types/landing.ts`      | `Step`, `IncentiveTier`, `IncentiveBannerProps`, `WaitlistFormProps`, `TurnstileWidget*`, `NavbarProps`     |
-| `types/tutorial.ts`     | `TutorialStep`, `TutorialProps`, `TargetRect`                                                               |
+| `types/tutorial.ts`     | `TutorialStep`, `TutorialProps` (with `onSkip`), `TargetRect`, `PageTutorialStepConfig`, `PageTutorialProps` |
 
 ### Data (`data/`)
 
@@ -286,7 +289,7 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 | `data/gamification.ts` | XP formulas, level curve functions, boss fight config                    |
 | `data/mock-data.ts`    | Seed marketplace listings + auctions with mock sellers                   |
 | `data/quests.ts`       | Quest definitions (onboarding, engagement, milestone categories)         |
-| `data/tutorial.ts`     | Tutorial step flow, overlay/tooltip step configs                         |
+| `data/tutorial.ts`     | Tutorial step flow, overlay/tooltip step configs, page tutorial step definitions |
 | `data/inventory.ts`    | Inventory status filter config                                           |
 | `data/wallet.ts`       | Wallet/credit type display config                                        |
 

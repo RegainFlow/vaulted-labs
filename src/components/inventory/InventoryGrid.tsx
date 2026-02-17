@@ -6,7 +6,7 @@ import { FILTERS } from "../../data/inventory";
 import type { ItemStatus } from "../../types/inventory";
 
 export function InventoryGrid() {
-  const { inventory, cashoutItem, shipItem } = useGame();
+  const { inventory, cashoutItem, shipItem, listItem } = useGame();
   const [filter, setFilter] = useState<ItemStatus | "all">("all");
 
   const filtered =
@@ -67,6 +67,7 @@ export function InventoryGrid() {
               item={item}
               onCashout={cashoutItem}
               onShip={shipItem}
+              onList={listItem}
               isFirst={idx === 0}
             />
           ))}

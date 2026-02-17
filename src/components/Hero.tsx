@@ -8,11 +8,14 @@ export function Hero() {
 
   useEffect(() => {
     const typed = new Typed(typedEl.current!, {
-      strings: ["Real collectibles. Real value. Pick a vault and win."],
+      strings: [
+        "Real collectibles. Real value. <span class='text-neon-green text-glow-green font-black'>Real Cash</span>. Pick a vault and win.",
+      ],
       typeSpeed: 40,
       showCursor: true,
       cursorChar: "|",
-      startDelay: 800
+      startDelay: 800,
+      contentType: "html",
     });
 
     return () => typed.destroy();
@@ -30,7 +33,7 @@ export function Hero() {
               "linear-gradient(rgba(0, 243, 255, 0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 243, 255, 0.1) 1px, transparent 1px)",
             backgroundSize: "60px 60px",
             transform:
-              "perspective(500px) rotateX(60deg) translateY(0) translateZ(-100px)"
+              "perspective(500px) rotateX(60deg) translateY(0) translateZ(-100px)",
           }}
         />
 
@@ -74,7 +77,7 @@ export function Hero() {
             className="absolute inset-8 rounded-full border border-white/5"
             style={{
               background:
-                "radial-gradient(circle, transparent 55%, rgba(255,45,149,0.04) 80%, rgba(0,240,255,0.03) 100%)"
+                "radial-gradient(circle, transparent 55%, rgba(255,45,149,0.04) 80%, rgba(0,240,255,0.03) 100%)",
             }}
           />
 
@@ -95,7 +98,7 @@ export function Hero() {
                       ? "rgba(255,255,255,0.15)"
                       : "rgba(255,255,255,0.06)",
                   transform: `translateX(-50%) rotate(${i * 15}deg)`,
-                  transformOrigin: `center ${250 / 2}px`
+                  transformOrigin: `center ${250 / 2}px`,
                 }}
               />
             ))}
@@ -121,7 +124,7 @@ export function Hero() {
             className="absolute inset-0 rounded-full animate-vault-glow-pulse pointer-events-none"
             style={{
               boxShadow:
-                "inset 0 0 80px rgba(255,45,149,0.08), inset 0 0 120px rgba(0,240,255,0.05)"
+                "inset 0 0 80px rgba(255,45,149,0.08), inset 0 0 120px rgba(0,240,255,0.05)",
             }}
           />
         </div>
@@ -145,7 +148,7 @@ export function Hero() {
           duration: 5,
           repeat: Infinity,
           ease: "easeInOut",
-          delay: 1
+          delay: 1,
         }}
       >
         <div className="w-9 h-9 md:w-10 md:h-10 border border-neon-cyan/20 rounded bg-surface/30 backdrop-blur-sm flex items-center justify-center shadow-[0_0_12px_rgba(0,240,255,0.15)]">
@@ -170,7 +173,7 @@ export function Hero() {
           duration: 7,
           repeat: Infinity,
           ease: "easeInOut",
-          delay: 2
+          delay: 2,
         }}
       >
         <div className="w-8 h-8 border border-vault-gold/20 rounded bg-surface/30 backdrop-blur-sm flex items-center justify-center shadow-[0_0_10px_rgba(255,215,0,0.1)]">
@@ -204,7 +207,7 @@ export function Hero() {
               style={{
                 WebkitTextStroke: "1.5px #ff2d95",
                 textShadow:
-                  "0 0 10px rgba(255,45,149,0.6), 0 0 30px rgba(255,45,149,0.3), 0 0 60px rgba(255,45,149,0.15)"
+                  "0 0 10px rgba(255,45,149,0.6), 0 0 30px rgba(255,45,149,0.3), 0 0 60px rgba(255,45,149,0.15)",
               }}
             >
               EXPLORE VAULTS
@@ -250,7 +253,7 @@ export function Hero() {
           delay: 2,
           duration: 2,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: "easeInOut",
         }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10"
       >

@@ -8,7 +8,7 @@ import { useGame } from "../context/GameContext";
 import { INVENTORY_TUTORIAL_STEPS } from "../data/tutorial";
 
 export function InventoryPage() {
-  const { balance, inventory, levelInfo, prestigeLevel, hasSeenInventoryTutorial, setHasSeenInventoryTutorial, seedDemoItem } = useGame();
+  const { balance, inventory, levelInfo, prestigeLevel, hasSeenInventoryTutorial, setHasSeenInventoryTutorial, seedDemoItem, removeDemoItem } = useGame();
   const [tutorialActive, setTutorialActive] = useState(false);
 
   useEffect(() => {
@@ -54,6 +54,7 @@ export function InventoryPage() {
         onComplete={() => {
           setTutorialActive(false);
           setHasSeenInventoryTutorial(true);
+          removeDemoItem();
         }}
       />
       {hasSeenInventoryTutorial && !tutorialActive && (

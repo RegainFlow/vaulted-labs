@@ -99,6 +99,7 @@ interface GameContextValue {
   ) => InventoryItem;
   cashoutItem: (itemId: string) => void;
   shipItem: (itemId: string) => void;
+  listItem: (itemId: string) => void;
   purchaseVault: (vaultName: string, price: number) => boolean;
   claimCreditsFromReveal: (value: number) => void;
   buyListing: (listingId: string) => boolean;
@@ -111,6 +112,7 @@ interface GameContextValue {
   setHasSeenInventoryTutorial: (seen: boolean) => void;
   setHasSeenShopTutorial: (seen: boolean) => void;
   seedDemoItem: () => void;
+  removeDemoItem: () => void;
   resetDemo: () => void;
   prestigeLevel: number;
   canPrestige: boolean;
@@ -412,6 +414,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [advanceQuests]
   );
 
+  const listItem = useCallback(
+    (itemId: string) => {
+      const item = inventory.find(i => i.id === itemId && i.status === "held");
+      if (!item) return;
+
+      setInventory(prev => prev.map(i =>
+        i.id === itemId ? { ...i, status: "listed" as const } : i
+      ));
+
+      setListings(prev => [...prev, {
+        id: uid("listing"),
+        item: { ...item, status: "listed" as const },
+        sellerName: "You",
+        askingPrice: item.value,
+        listedAt: Date.now()
+      }]);
+
+      advanceQuests("marketplace_list", 1);
+    },
+    [inventory, advanceQuests]
+  );
+
   const purchaseVault = useCallback(
     (vaultName: string, price: number): boolean => {
       if (balance < price) return false;
@@ -561,21 +585,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [defeatedBosses]
   );
 
+  const DEMO_ITEM_ID = "tutorial-demo-item";
+
   const seedDemoItem = useCallback(() => {
-    if (inventory.length > 0) return;
-    setInventory((prev) => [
-      ...prev,
-      {
-        id: uid("item"),
-        product: "Funko Pop!",
-        vaultTier: "Bronze" as VaultTierName,
-        rarity: "uncommon" as Rarity,
-        value: 24,
-        status: "held",
-        acquiredAt: Date.now()
-      }
-    ]);
-  }, [inventory.length]);
+    setInventory((prev) => {
+      if (prev.length > 0) return prev;
+      return [
+        ...prev,
+        {
+          id: DEMO_ITEM_ID,
+          product: "Funko Pop!",
+          vaultTier: "Bronze" as VaultTierName,
+          rarity: "uncommon" as Rarity,
+          value: 24,
+          status: "held" as const,
+          acquiredAt: Date.now()
+        }
+      ];
+    });
+  }, []);
+
+  const removeDemoItem = useCallback(() => {
+    setInventory((prev) => prev.filter(i => i.id !== DEMO_ITEM_ID));
+  }, []);
 
   const resetDemo = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
@@ -619,6 +651,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addItem,
       cashoutItem,
       shipItem,
+      listItem,
       purchaseVault,
       claimCreditsFromReveal,
       buyListing,
@@ -631,6 +664,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setHasSeenInventoryTutorial,
       setHasSeenShopTutorial,
       seedDemoItem,
+      removeDemoItem,
       resetDemo,
       prestigeLevel,
       canPrestige,
@@ -659,6 +693,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addItem,
       cashoutItem,
       shipItem,
+      listItem,
       purchaseVault,
       claimCreditsFromReveal,
       buyListing,
@@ -666,6 +701,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addXP,
       tutorialOpenVault,
       seedDemoItem,
+      removeDemoItem,
       resetDemo,
       prestigeLevel,
       canPrestige,

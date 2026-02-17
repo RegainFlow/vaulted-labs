@@ -1,5 +1,4 @@
 import { motion } from "motion/react";
-import { useState } from "react";
 import { RARITY_CONFIG, VAULT_COLORS } from "../../data/vaults";
 import type { InventoryItemCardProps } from "../../types/inventory";
 import { VaultIcon } from "../vault/VaultIcons";
@@ -8,9 +7,9 @@ export function InventoryItemCard({
   item,
   onCashout,
   onShip,
+  onList,
   isFirst = false
 }: InventoryItemCardProps & { isFirst?: boolean }) {
-  const [showComingSoon, setShowComingSoon] = useState(false);
   const rarityConfig = RARITY_CONFIG[item.rarity];
   const vaultColor = VAULT_COLORS[item.vaultTier] || "#ffffff";
   const isInactive = item.status !== "held";
@@ -117,21 +116,13 @@ export function InventoryItemCard({
             >
               Cashout
             </button>
-            <div className="relative">
-              <button
-                onClick={() => setShowComingSoon(true)}
-                onMouseLeave={() => setShowComingSoon(false)}
-                className="w-full px-2 py-2 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-white/5 border border-white/10 text-text-dim hover:bg-white/10 transition-colors cursor-pointer"
-                {...(isFirst ? { "data-tutorial": "inventory-list" } : {})}
-              >
-                List
-              </button>
-              {showComingSoon && (
-                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 rounded-lg bg-surface border border-white/10 text-[10px] text-text-muted whitespace-nowrap shadow-xl z-10">
-                  Coming Soon
-                </div>
-              )}
-            </div>
+            <button
+              onClick={() => onList(item.id)}
+              className="px-2 py-2 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-accent/10 border border-accent/30 text-accent hover:bg-accent/20 transition-colors cursor-pointer"
+              {...(isFirst ? { "data-tutorial": "inventory-list" } : {})}
+            >
+              List
+            </button>
           </div>
         )}
       </div>

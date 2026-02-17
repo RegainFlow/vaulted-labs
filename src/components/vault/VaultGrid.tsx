@@ -677,9 +677,10 @@ function VaultOverlay({
 
   const handleClaim = () => {
     if (isTutorial) {
-      onClaim(finalResultValue);
+      // Demo only — no credits awarded, just advance tutorial and close overlay
       onTutorialSetAction?.("cashed out");
       onTutorialAdvance?.("complete");
+      onClose();
       return;
     }
     onClaim(totalRevealValue);
@@ -687,14 +688,10 @@ function VaultOverlay({
 
   const handleStore = () => {
     if (isTutorial) {
-      onStore(
-        product,
-        tier.name as VaultTierName,
-        finalRarity,
-        finalResultValue
-      );
+      // Demo only — no item added to inventory, close overlay
       onTutorialSetAction?.("stored");
       onTutorialAdvance?.("complete");
+      onClose();
       return;
     }
     onStore(
@@ -715,14 +712,10 @@ function VaultOverlay({
 
   const handleShip = () => {
     if (isTutorial) {
-      onShip(
-        product,
-        tier.name as VaultTierName,
-        finalRarity,
-        finalResultValue
-      );
+      // Demo only — no item added/shipped, close overlay
       onTutorialSetAction?.("shipped");
       onTutorialAdvance?.("complete");
+      onClose();
       return;
     }
     onShip(

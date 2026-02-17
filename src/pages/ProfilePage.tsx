@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navbar } from "../components/shared/Navbar";
 import { ProfilePanel } from "../components/profile/ProfilePanel";
 import { QuestList } from "../components/profile/QuestList";
@@ -10,6 +11,7 @@ import { PROFILE_TUTORIAL_STEPS } from "../data/tutorial";
 
 export function ProfilePage() {
   const { balance, inventory, levelInfo, resetDemo, prestigeLevel, addXP, hasSeenProfileTutorial, setHasSeenProfileTutorial } = useGame();
+  const navigate = useNavigate();
   const [tutorialActive, setTutorialActive] = useState(false);
 
   useEffect(() => {
@@ -72,7 +74,7 @@ export function ProfilePage() {
                 Grant 6000 XP
               </button>
               <button
-                onClick={resetDemo}
+                onClick={() => { resetDemo(); navigate("/"); }}
                 className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest bg-error/10 border border-error/30 text-error hover:bg-error/20 hover:border-error/50 transition-all cursor-pointer inline-flex items-center gap-2"
               >
                 <svg

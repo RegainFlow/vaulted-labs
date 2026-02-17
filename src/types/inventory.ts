@@ -16,4 +16,5 @@ export interface InventoryItemCardProps {
   item: InventoryItem;
   onCashout: (itemId: string) => void;
   onShip: (itemId: string) => void;
+  onList: (itemId: string) => void;
 }

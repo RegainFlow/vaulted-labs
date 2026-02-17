@@ -134,6 +134,15 @@ Defined in `src/index.css` `@layer utilities`:
 - **Inactive tab:** Muted text, transparent underline, hover brightens
 - **Mobile:** Horizontally scrollable if needed
 
+### Tutorial Overlays
+- **Z-index:** `z-[200]` for all tutorial overlays (above navbar z-50 and modals)
+- **Backdrop:** `bg-black/85 backdrop-blur-sm` for welcome/complete overlays
+- **Spotlight:** SVG mask cutout with accent border glow (`animate-pulse`, `box-shadow: 0 0 30px rgba(255,45,149,0.4)`)
+- **Tooltip:** `bg-surface-elevated border-accent/40` rounded card, viewport-clamped positioning (min 8px from edges)
+- **Skip button:** Subtle `text-[10px] text-text-dim hover:text-text-muted uppercase tracking-widest` — not a primary action
+- **Help button:** Fixed `bottom-6 right-6` floating circle with accent border glow, bold `?` text character
+- **CTA buttons:** Same pushable style as other CTAs — accent background with `border-b-[4px] border-[#a01d5e]`
+
 ### Profile Panel
 - **XP bar:** Full-width progress bar with gradient fill (accent to neon-cyan), rounded-full
 - **Level display:** Large number with glow, "Level N" label
