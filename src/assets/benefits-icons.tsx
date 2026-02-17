@@ -1,4 +1,4 @@
-export const DiamonIcon = () => (
+export const DiamondIcon = () => (
   <svg
     width="24"
     height="24"

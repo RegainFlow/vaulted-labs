@@ -40,10 +40,12 @@ interface PersistedState {
   hasSeenProfileTutorial: boolean;
   hasSeenInventoryTutorial: boolean;
   hasSeenShopTutorial: boolean;
+  hasSeenBossFightTutorial: boolean;
   questProgress: QuestProgress[];
   nextId: number;
   prestigeLevel: number;
   defeatedBosses: string[];
+  freeSpins: number;
 }
 
 const DEFAULT_TX: CreditTransaction = {
@@ -86,6 +88,7 @@ interface GameContextValue {
   hasSeenProfileTutorial: boolean;
   hasSeenInventoryTutorial: boolean;
   hasSeenShopTutorial: boolean;
+  hasSeenBossFightTutorial: boolean;
   questProgress: QuestProgress[];
   questToast: QuestToast | null;
   dismissQuestToast: () => void;
@@ -111,6 +114,7 @@ interface GameContextValue {
   setHasSeenProfileTutorial: (seen: boolean) => void;
   setHasSeenInventoryTutorial: (seen: boolean) => void;
   setHasSeenShopTutorial: (seen: boolean) => void;
+  setHasSeenBossFightTutorial: (seen: boolean) => void;
   seedDemoItem: () => void;
   removeDemoItem: () => void;
   resetDemo: () => void;
@@ -124,6 +128,9 @@ interface GameContextValue {
     xpReward: number,
     specialItem?: { product: string; rarity: Rarity; value: number }
   ) => void;
+  freeSpins: number;
+  grantFreeSpins: (count: number) => void;
+  useFreeSpinForVault: (vaultName: string, price: number) => boolean;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -176,6 +183,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [hasSeenShopTutorial, setHasSeenShopTutorial] = useState(
     initial?.hasSeenShopTutorial ?? false
   );
+  const [hasSeenBossFightTutorial, setHasSeenBossFightTutorial] = useState(
+    initial?.hasSeenBossFightTutorial ?? false
+  );
   const [questProgress, setQuestProgress] = useState<QuestProgress[]>(
     initial?.questProgress ?? initQuestProgress()
   );
@@ -186,6 +196,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [defeatedBosses, setDefeatedBosses] = useState<string[]>(
     initial?.defeatedBosses ?? []
   );
+  const [freeSpins, setFreeSpins] = useState(initial?.freeSpins ?? 0);
 
   // Ref to track toast auto-dismiss timer
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -220,10 +231,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       hasSeenProfileTutorial,
       hasSeenInventoryTutorial,
       hasSeenShopTutorial,
+      hasSeenBossFightTutorial,
       questProgress,
       nextId,
       prestigeLevel,
-      defeatedBosses
+      defeatedBosses,
+      freeSpins
     });
   }, [
     creditTransactions,
@@ -236,9 +249,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     hasSeenProfileTutorial,
     hasSeenInventoryTutorial,
     hasSeenShopTutorial,
+    hasSeenBossFightTutorial,
     questProgress,
     prestigeLevel,
-    defeatedBosses
+    defeatedBosses,
+    freeSpins
   ]);
 
   const balance = useMemo(
@@ -535,6 +550,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [advanceQuests]
   );
 
+  const grantFreeSpins = useCallback((count: number) => {
+    setFreeSpins((prev) => prev + count);
+  }, []);
+
+  const useFreeSpinForVault = useCallback(
+    (vaultName: string, price: number): boolean => {
+      if (freeSpins <= 0) return false;
+      setFreeSpins((prev) => prev - 1);
+      setXP((prev) => prev + price);
+      setCreditTransactions((prev) => [
+        ...prev,
+        {
+          id: uid("tx"),
+          type: "earned",
+          amount: 0,
+          description: `Free Spin: ${vaultName} Vault`,
+          timestamp: Date.now()
+        }
+      ]);
+      advanceQuests("vault_purchase", 1);
+      advanceQuests("spend_amount", price);
+      return true;
+    },
+    [freeSpins, advanceQuests]
+  );
+
   const canPrestige = levelInfo.level >= 10 && prestigeLevel < 3;
 
   const prestige = useCallback(() => {
@@ -622,10 +663,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setHasSeenProfileTutorial(false);
     setHasSeenInventoryTutorial(false);
     setHasSeenShopTutorial(false);
+    setHasSeenBossFightTutorial(false);
     setQuestProgress(initQuestProgress());
     setQuestToast(null);
     setPrestigeLevel(0);
     setDefeatedBosses([]);
+    setFreeSpins(0);
     document.documentElement.removeAttribute("data-prestige");
   }, []);
 
@@ -643,6 +686,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       hasSeenProfileTutorial,
       hasSeenInventoryTutorial,
       hasSeenShopTutorial,
+      hasSeenBossFightTutorial,
       questProgress,
       questToast,
       dismissQuestToast,
@@ -663,6 +707,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setHasSeenProfileTutorial,
       setHasSeenInventoryTutorial,
       setHasSeenShopTutorial,
+      setHasSeenBossFightTutorial,
       seedDemoItem,
       removeDemoItem,
       resetDemo,
@@ -670,7 +715,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       canPrestige,
       prestige,
       defeatedBosses,
-      defeatBoss
+      defeatBoss,
+      freeSpins,
+      grantFreeSpins,
+      useFreeSpinForVault
     }),
     [
       creditTransactions,
@@ -685,6 +733,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       hasSeenProfileTutorial,
       hasSeenInventoryTutorial,
       hasSeenShopTutorial,
+      hasSeenBossFightTutorial,
       questProgress,
       questToast,
       dismissQuestToast,
@@ -707,7 +756,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       canPrestige,
       prestige,
       defeatedBosses,
-      defeatBoss
+      defeatBoss,
+      freeSpins,
+      grantFreeSpins,
+      useFreeSpinForVault
     ]
   );
 

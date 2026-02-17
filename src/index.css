@@ -162,6 +162,62 @@
     0%, 100% { opacity: 1; }
     50% { opacity: 0.6; }
   }
+  /* Screen shake keyframes */
+  @keyframes screen-shake-light {
+    0%, 100% { transform: translate(0, 0); }
+    10% { transform: translate(-2px, 1px); }
+    30% { transform: translate(2px, -1px); }
+    50% { transform: translate(-1px, 2px); }
+    70% { transform: translate(1px, -2px); }
+    90% { transform: translate(-2px, 0); }
+  }
+  @keyframes screen-shake-heavy {
+    0%, 100% { transform: translate(0, 0); }
+    8% { transform: translate(-6px, 3px); }
+    16% { transform: translate(5px, -4px); }
+    24% { transform: translate(-4px, 6px); }
+    32% { transform: translate(6px, -2px); }
+    40% { transform: translate(-3px, 5px); }
+    50% { transform: translate(4px, -6px); }
+    60% { transform: translate(-5px, 2px); }
+    70% { transform: translate(3px, -3px); }
+    80% { transform: translate(-2px, 4px); }
+    90% { transform: translate(1px, -1px); }
+  }
+  .shake-light { animation: screen-shake-light 0.3s ease-out; }
+  .shake-heavy { animation: screen-shake-heavy 0.5s ease-out; }
+
+  /* Vault Lock rainbow border */
+  @keyframes rainbow-border {
+    0%   { border-color: #ff2d95; }
+    16%  { border-color: #ffd700; }
+    33%  { border-color: #39ff14; }
+    50%  { border-color: #00f0ff; }
+    66%  { border-color: #a855f7; }
+    83%  { border-color: #ff2d95; }
+    100% { border-color: #ff2d95; }
+  }
+  .animate-rainbow-border { animation: rainbow-border 2s linear infinite; }
+
+  @keyframes edge-lightning {
+    0%, 100% { box-shadow: inset 0 0 60px rgba(57,255,20,0), inset 0 0 120px rgba(0,240,255,0); }
+    50% { box-shadow: inset 0 0 80px rgba(57,255,20,0.25), inset 0 0 160px rgba(0,240,255,0.12); }
+  }
+  .animate-edge-lightning { animation: edge-lightning 0.8s ease-in-out infinite; }
+
+  /* Legendary breathing background */
+  @keyframes legendary-bg-breathe {
+    0%, 100% { opacity: 0.05; }
+    50% { opacity: 0.12; }
+  }
+  .animate-legendary-breathe { animation: legendary-bg-breathe 2s ease-in-out infinite; }
+
+  /* Rarity glow utilities */
+  .glow-rarity-common { box-shadow: 0 0 10px rgba(107,114,128,0.2); }
+  .glow-rarity-uncommon { box-shadow: 0 0 25px rgba(59,130,246,0.35), 0 0 50px rgba(59,130,246,0.12); }
+  .glow-rarity-rare { box-shadow: 0 0 30px rgba(168,85,247,0.4), 0 0 60px rgba(168,85,247,0.15); }
+  .glow-rarity-legendary { box-shadow: 0 0 40px rgba(255,215,0,0.5), 0 0 80px rgba(255,215,0,0.2); }
+
   /* Josh Comeau 3D pushable button */
   .pushable {
     position: relative;
@@ -240,5 +296,38 @@
       padding: 14px 42px;
       font-size: 1.15rem;
     }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-gradient,
+  .animate-vault-spin-slow,
+  .animate-vault-glow-pulse,
+  .animate-spin-slow,
+  .animate-hud-shimmer,
+  .animate-urgency-pulse,
+  .animate-legendary-breathe,
+  .animate-rainbow-border,
+  .animate-edge-lightning,
+  .animate-pulse,
+  .animate-spin {
+    animation: none !important;
+  }
+
+  .shake-light,
+  .shake-heavy {
+    animation: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }

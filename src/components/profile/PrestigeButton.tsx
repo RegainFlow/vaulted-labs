@@ -28,6 +28,8 @@ export function PrestigeButton({
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       className="mt-4"
+      whileHover={disabled ? {} : { y: -2 }}
+      whileTap={disabled ? {} : { y: 0 }}
     >
       <button
         onClick={disabled ? undefined : onClick}

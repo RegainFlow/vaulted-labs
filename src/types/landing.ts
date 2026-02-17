@@ -42,4 +42,5 @@ export interface NavbarProps {
   xp?: number;
   level?: number;
   prestigeLevel?: number;
+  freeSpins?: number;
 }

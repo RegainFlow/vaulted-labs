@@ -222,6 +222,61 @@ export const INVENTORY_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
   }
 ];
 
+export const BOSS_FIGHT_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
+  {
+    id: "boss-welcome",
+    type: "welcome",
+    title: "Boss Fight!",
+    description: "Defeat the boss in reel-based combat exchanges. Win to earn credits, XP, and rare loot."
+  },
+  {
+    id: "boss-player-hp",
+    type: "spotlight",
+    selector: '[data-tutorial="boss-player-hp"]',
+    title: "Your HP",
+    description: "Your health pool. Hits zero and you lose. Win exchanges to protect it.",
+    position: "bottom"
+  },
+  {
+    id: "boss-enemy-hp",
+    type: "spotlight",
+    selector: '[data-tutorial="boss-enemy-hp"]',
+    title: "Boss HP",
+    description: "Deplete the boss's health to zero to win.",
+    position: "bottom"
+  },
+  {
+    id: "boss-player-reel",
+    type: "spotlight",
+    selector: '[data-tutorial="boss-player-reel"]',
+    title: "Your Reel",
+    description: "Spins each exchange. Higher rarity = more base damage.",
+    position: "bottom"
+  },
+  {
+    id: "boss-atk-button",
+    type: "spotlight",
+    selector: '[data-tutorial="boss-atk-button"]',
+    title: "Attack Timing",
+    description: "When the bar turns red, press ATK NOW! Center timing = Perfect (bonus damage). Edges = Miss (reduced damage).",
+    position: "top"
+  },
+  {
+    id: "boss-enemy-reel",
+    type: "spotlight",
+    selector: '[data-tutorial="boss-enemy-reel"]',
+    title: "Boss Reel",
+    description: "The boss spins its own reel and attacks back. Highest damage wins the exchange.",
+    position: "bottom"
+  },
+  {
+    id: "boss-complete",
+    type: "complete",
+    title: "Ready to Fight!",
+    description: "Win exchanges to deplete the boss's HP. Good luck, Challenger!"
+  }
+];
+
 export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
   {
     id: "shop-welcome",

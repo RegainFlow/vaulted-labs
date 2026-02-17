@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { RARITY_CONFIG, VAULT_COLORS } from "../../data/vaults";
 import type { InventoryItemCardProps } from "../../types/inventory";
 import { VaultIcon } from "../vault/VaultIcons";
+import { CYBER_TRANSITIONS } from "../../lib/motion-presets";
 
 export function InventoryItemCard({
   item,
@@ -16,12 +17,13 @@ export function InventoryItemCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={CYBER_TRANSITIONS.default}
       className={`relative rounded-2xl border bg-surface-elevated/50 backdrop-blur-sm overflow-hidden transition-all duration-300 ${
         isInactive
           ? "opacity-50 grayscale"
-          : "hover:-translate-y-1 hover:shadow-xl"
+          : "hover:-translate-y-1 hover:shadow-xl hover:border-white/20"
       }`}
       style={{
         borderColor: isInactive ? "rgba(255,255,255,0.05)" : `${vaultColor}30`

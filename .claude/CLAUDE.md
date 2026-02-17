@@ -316,6 +316,7 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 | `lib/posthog.ts`           | PostHog client init (graceful no-op when unconfigured)                    |
 | `lib/analytics.ts`         | Thin analytics wrapper — `trackEvent`, `trackPageView`, `AnalyticsEvents` |
 | `lib/disposable-emails.ts` | Disposable email domain checker                                           |
+| `lib/motion-presets.ts`    | Shared Motion transition presets, glow constants, animation variants      |
 
 ### Supabase
 

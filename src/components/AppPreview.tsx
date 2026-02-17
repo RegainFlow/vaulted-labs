@@ -1,11 +1,12 @@
 import { motion } from "motion/react";
 import { PhoneMockup } from "./PhoneMockup";
 import {
-  DiamonIcon,
+  DiamondIcon,
   SellIcon,
   LockIcon,
   MobileIcon
 } from "../assets/benefits-icons";
+import { CYBER_TRANSITIONS } from "../lib/motion-presets";
 
 const benefits = [
   {
@@ -13,7 +14,7 @@ const benefits = [
     description:
       "Every vault contains a real collectible. Definite chance of winning a physical item.",
     color: "text-neon-cyan",
-    icon: <DiamonIcon />
+    icon: <DiamondIcon />
   },
   {
     title: "Sell It",
@@ -61,7 +62,7 @@ export function AppPreview() {
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
+                transition={{ ...CYBER_TRANSITIONS.default, delay: i * 0.08 }}
                 className="flex gap-4 items-start"
               >
                 <div className="w-12 h-12 shrink-0 rounded-xl bg-surface-elevated border border-white/10 flex items-center justify-center">

@@ -9,7 +9,7 @@ import { useTutorial } from "../hooks/useTutorial";
 import { trackEvent, AnalyticsEvents } from "../lib/analytics";
 
 export function PlayPage() {
-  const { balance, inventory, levelInfo, hasSeenTutorial, setHasSeenTutorial, prestigeLevel } =
+  const { balance, inventory, levelInfo, hasSeenTutorial, setHasSeenTutorial, prestigeLevel, freeSpins } =
     useGame();
   const { step, advance, goTo, completedAction, setCompletedAction, reset } =
     useTutorial(hasSeenTutorial);
@@ -48,6 +48,7 @@ export function PlayPage() {
         xp={levelInfo.currentXP}
         level={levelInfo.level}
         prestigeLevel={prestigeLevel}
+        freeSpins={freeSpins}
       />
       <main>
         <VaultGrid

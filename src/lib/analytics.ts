@@ -18,7 +18,9 @@ export const AnalyticsEvents = {
   TUTORIAL_STARTED: "tutorial_started",
   TUTORIAL_STEP_COMPLETED: "tutorial_step_completed",
   TUTORIAL_COMPLETED: "tutorial_completed",
-  BONUS_SPIN_TRIGGERED: "bonus_spin_triggered"
+  BONUS_SPIN_TRIGGERED: "bonus_spin_triggered",
+  VAULT_LOCK_COMPLETE: "vault_lock_complete",
+  FREE_SPIN_USED: "free_spin_used"
 } as const;
 
 export function trackEvent(

@@ -10,7 +10,7 @@ import { useGame } from "../context/GameContext";
 import { WALLET_TUTORIAL_STEPS } from "../data/tutorial";
 
 export function WalletPage() {
-  const { balance, inventory, levelInfo, prestigeLevel, hasSeenWalletTutorial, setHasSeenWalletTutorial } = useGame();
+  const { balance, inventory, levelInfo, prestigeLevel, freeSpins, hasSeenWalletTutorial, setHasSeenWalletTutorial } = useGame();
   const navigate = useNavigate();
   const [tutorialActive, setTutorialActive] = useState(false);
 
@@ -34,6 +34,7 @@ export function WalletPage() {
         xp={levelInfo.currentXP}
         level={levelInfo.level}
         prestigeLevel={prestigeLevel}
+        freeSpins={freeSpins}
       />
       <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-28 md:pt-28 pb-8 sm:pb-12">
         <div className="max-w-6xl mx-auto">

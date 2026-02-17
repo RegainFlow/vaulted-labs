@@ -8,7 +8,8 @@ export function Navbar({
   balance = 0,
   inventoryCount = 0,
   level,
-  prestigeLevel = 0
+  prestigeLevel = 0,
+  freeSpins = 0
 }: NavbarProps) {
   const location = useLocation();
 
@@ -178,7 +179,7 @@ export function Navbar({
                   <Link
                     to="/profile"
                     aria-label="View profile"
-                    className={`flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-white/5 rounded-r-xl ${isActive("/profile") ? "bg-white/5" : ""}`}
+                    className={`flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-white/5 ${freeSpins > 0 ? "" : "rounded-r-xl"} ${isActive("/profile") ? "bg-white/5" : ""}`}
                   >
                     <svg
                       width="16"
@@ -211,6 +212,41 @@ export function Navbar({
                             ))}
                           </span>
                         )}
+                      </span>
+                    </div>
+                  </Link>
+                )}
+
+                {freeSpins > 0 && (
+                  <Link
+                    to="/play"
+                    aria-label="Use free spins"
+                    className={`flex items-center gap-2.5 px-4 py-2.5 border-l border-white/10 transition-colors hover:bg-white/5 rounded-r-xl ${isActive("/play") ? "bg-white/5" : ""}`}
+                  >
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      className="text-neon-green shrink-0"
+                    >
+                      <path
+                        d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
+                        stroke="currentColor"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider leading-none">
+                        Spins
+                      </span>
+                      <span
+                        className="text-sm font-mono font-bold text-neon-green animate-hud-shimmer"
+                        style={{ animationDelay: "1.5s" }}
+                      >
+                        {freeSpins}
                       </span>
                     </div>
                   </Link>
@@ -354,7 +390,7 @@ export function Navbar({
               <Link
                 to="/profile"
                 aria-label="View profile"
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 transition-colors ${isActive("/profile") ? "bg-white/5" : ""}`}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 ${freeSpins > 0 ? "border-r border-white/10" : ""} transition-colors ${isActive("/profile") ? "bg-white/5" : ""}`}
               >
                 <svg
                   width="12"
@@ -380,6 +416,34 @@ export function Navbar({
                       ))}
                     </span>
                   )}
+                </span>
+              </Link>
+            )}
+
+            {/* Free Spins → Play */}
+            {freeSpins > 0 && (
+              <Link
+                to="/play"
+                aria-label="Use free spins"
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 transition-colors ${isActive("/play") ? "bg-white/5" : ""}`}
+              >
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  className="text-neon-green shrink-0"
+                >
+                  <path
+                    d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="text-[10px] font-mono font-bold text-neon-green">
+                  {freeSpins}
                 </span>
               </Link>
             )}

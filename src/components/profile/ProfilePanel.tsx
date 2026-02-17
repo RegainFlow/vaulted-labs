@@ -18,7 +18,9 @@ export function ProfilePanel() {
     canPrestige,
     prestige,
     defeatedBosses,
-    defeatBoss
+    defeatBoss,
+    hasSeenBossFightTutorial,
+    setHasSeenBossFightTutorial
   } = useGame();
 
   const [fightingBoss, setFightingBoss] = useState<BossFight | null>(null);
@@ -173,6 +175,8 @@ export function ProfilePanel() {
             prestigeLevel={prestigeLevel}
             onWin={handleBossWin}
             onClose={() => setFightingBoss(null)}
+            hasSeenBossFightTutorial={hasSeenBossFightTutorial}
+            onBossFightTutorialComplete={() => setHasSeenBossFightTutorial(true)}
           />
         )}
       </AnimatePresence>

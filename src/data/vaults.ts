@@ -1,5 +1,6 @@
 import type { IncentiveTier } from "../types/landing";
-import type { Vault, RarityBreakdown } from "../types/vault";
+import type { Vault, RarityBreakdown, VaultTierName } from "../types/vault";
+import type { VaultLockSlot } from "../types/bonus";
 
 export const VAULT_COLORS: Record<string, string> = {
   Bronze: "#cd7f32",
@@ -181,6 +182,52 @@ export const PREMIUM_BONUS_CHANCE: Record<string, number> = {
   Obsidian: 0.3,
   Diamond: 0.4
 };
+
+/* ─── Vault Lock Bonus Mini-Game ─── */
+
+export const VAULT_TIER_SLOTS: VaultLockSlot[] = [
+  { tier: "Bronze" as VaultTierName, color: "#cd7f32" },
+  { tier: "Silver" as VaultTierName, color: "#e0e0e0" },
+  { tier: "Gold" as VaultTierName, color: "#ffd700" },
+  { tier: "Platinum" as VaultTierName, color: "#79b5db" },
+  { tier: "Obsidian" as VaultTierName, color: "#6c4e85" },
+  { tier: "Diamond" as VaultTierName, color: "#b9f2ff" }
+];
+
+export function generateVaultLockStrip(purchasedTier: VaultTierName): VaultLockSlot[] {
+  // 12 base slots: each tier x2
+  const slots: VaultLockSlot[] = [];
+  for (const slot of VAULT_TIER_SLOTS) {
+    slots.push({ ...slot });
+    slots.push({ ...slot });
+  }
+  // Purchased tier gets 1-2 extra appearances (replace random other tier slots)
+  const extraCount = Math.random() < 0.5 ? 1 : 2;
+  for (let i = 0; i < extraCount; i++) {
+    const otherIndices = slots
+      .map((s, idx) => ({ tier: s.tier, idx }))
+      .filter((s) => s.tier !== purchasedTier);
+    if (otherIndices.length === 0) break;
+    const pick = otherIndices[Math.floor(Math.random() * otherIndices.length)];
+    const purchasedSlot = VAULT_TIER_SLOTS.find((s) => s.tier === purchasedTier)!;
+    slots[pick.idx] = { ...purchasedSlot };
+  }
+  // Fisher-Yates shuffle
+  for (let i = slots.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [slots[i], slots[j]] = [slots[j], slots[i]];
+  }
+  return slots;
+}
+
+export function pickVaultLockLanding(strip: VaultLockSlot[]): {
+  index: number;
+  tier: VaultTierName;
+  color: string;
+} {
+  const index = Math.floor(Math.random() * strip.length);
+  return { index, tier: strip[index].tier, color: strip[index].color };
+}
 
 export function getActiveTierInfo(count: number) {
   for (let i = 0; i < INCENTIVE_TIERS.length; i++) {

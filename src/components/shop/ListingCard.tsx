@@ -3,6 +3,7 @@ import { RARITY_CONFIG } from "../../data/vaults";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
 import type { MarketplaceListing } from "../../types/marketplace";
 import { VaultIcon } from "../vault/VaultIcons";
+import { CYBER_TRANSITIONS } from "../../lib/motion-presets";
 
 interface ListingCardProps {
   listing: MarketplaceListing;
@@ -28,9 +29,10 @@ export function ListingCard({ listing, balance, onBuy, isFirst = false }: Listin
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 10 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border bg-surface-elevated/50 backdrop-blur-sm overflow-hidden hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
+      transition={CYBER_TRANSITIONS.default}
+      className="rounded-2xl border bg-surface-elevated/50 backdrop-blur-sm overflow-hidden hover:-translate-y-1 hover:shadow-xl hover:border-white/20 transition-all duration-300"
       style={{ borderColor: `${vaultColor}20` }}
       {...(isFirst ? { "data-tutorial": "shop-listing" } : {})}
     >

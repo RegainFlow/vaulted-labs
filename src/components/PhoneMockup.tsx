@@ -115,10 +115,10 @@ function HomeScreen() {
 
       <div className="grid grid-cols-2 gap-3">
         {[
-          { name: "Bronze", color: "#cd7f32", price: "$24" },
-          { name: "Gold", color: "#ffd700", price: "$54" },
-          { name: "Platinum", color: "#79b5db", price: "$68" },
-          { name: "Diamond", color: "#b9f2ff", price: "$86" }
+          { name: "Bronze", color: "#cd7f32", price: "$19.99" },
+          { name: "Gold", color: "#ffd700", price: "$44.99" },
+          { name: "Platinum", color: "#79b5db", price: "$59.99" },
+          { name: "Diamond", color: "#b9f2ff", price: "$89.99" }
         ].map((tier) => (
           <div
             key={tier.name}
@@ -174,7 +174,7 @@ function VaultScreen() {
         Reinforced probability for <br /> Tier-1 legendary loot.
       </p>
       <div className="w-full bg-[#b9f2ff] text-black font-bold text-xs uppercase tracking-widest py-4 rounded-xl text-center shadow-lg relative overflow-hidden">
-        Unlock - $86
+        Unlock - $89.99
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}

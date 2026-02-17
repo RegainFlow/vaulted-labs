@@ -6,7 +6,7 @@ VaultedLabs is a next-generation commerce platform that turns shopping into a hi
 
 - **Gamified Unboxing:** Interactive vault opening experience with tiered rarity systems.
 - **Provably Fair:** Transparent odds displayed for every vault tier.
-- **Tier System:** 6 vault levels (Bronze $24, Silver $38, Gold $54, Platinum $68, Obsidian $78, Diamond $86) with unique visual themes and probability curves.
+- **Tier System:** 6 vault levels (Bronze $19.99, Silver $29.99, Gold $44.99, Platinum $59.99, Obsidian $74.99, Diamond $89.99) with unique visual themes and probability curves.
 - **Rarity Tiers:** Common, Uncommon, Rare, Legendary — each with value multipliers relative to vault price.
 - **Three Liquidity Options:** Hold in your digital collection, ship to your door, or cash out for platform credits.
 - **Marketplace:** Browse and buy items from other users, or bid on auctions — all using platform credits.
@@ -118,14 +118,14 @@ supabase/
 
 ## Financial Model Constants
 
-| Vault Level | Price | Common | Uncommon | Rare  | Legendary |
-| ----------- | ----- | ------ | -------- | ----- | --------- |
-| Bronze      | $24   | 60.5%  | 18.0%    | 19.8% | 1.7%      |
-| Silver      | $38   | 59.8%  | 18.8%    | 18.3% | 3.1%      |
-| Gold        | $54   | 57.9%  | 29.3%    | 8.6%  | 4.2%      |
-| Platinum    | $68   | 56.5%  | 28.3%    | 10.9% | 4.3%      |
-| Obsidian    | $78   | 55.8%  | 27.8%    | 12.0% | 4.4%      |
-| Diamond     | $86   | 55.1%  | 27.3%    | 13.2% | 4.4%      |
+| Vault Level | Price  | Common | Uncommon | Rare  | Legendary |
+| ----------- | ------ | ------ | -------- | ----- | --------- |
+| Bronze      | $19.99 | 55.0%  | 25.0%    | 17.0% | 3.0%      |
+| Silver      | $29.99 | 52.0%  | 26.0%    | 17.5% | 4.5%      |
+| Gold        | $44.99 | 48.0%  | 28.0%    | 18.0% | 6.0%      |
+| Platinum    | $59.99 | 45.0%  | 28.0%    | 19.5% | 7.5%      |
+| Obsidian    | $74.99 | 42.0%  | 27.0%    | 21.0% | 10.0%     |
+| Diamond     | $89.99 | 38.0%  | 26.0%    | 23.0% | 13.0%     |
 
 **Rarity Value Multipliers** (of vault price):
 - Common: 0.40x – 0.85x

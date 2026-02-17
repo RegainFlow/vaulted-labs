@@ -7,3 +7,4 @@ export * from "./gamification";
 export * from "./quest";
 export * from "./landing";
 export * from "./tutorial";
+export * from "./bonus";

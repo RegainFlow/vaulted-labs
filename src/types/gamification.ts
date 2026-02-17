@@ -28,3 +28,11 @@ export interface BossFightCardProps {
   isDefeated: boolean;
   onFight: (boss: BossFight) => void;
 }
+
+export type AttackQuality = "perfect" | "good" | "miss";
+
+export interface DamageResult {
+  rarity: Rarity;
+  quality: AttackQuality;
+  damage: number;
+}

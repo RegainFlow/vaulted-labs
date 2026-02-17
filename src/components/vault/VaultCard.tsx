@@ -3,6 +3,7 @@ import { motion } from "motion/react";
 import type { VaultCardProps } from "../../types/vault";
 import { VaultIcon } from "./VaultIcons";
 import { RARITY_CONFIG, PREMIUM_BONUS_CHANCE, getPrestigeOdds } from "../../data/vaults";
+import { CYBER_TRANSITIONS } from "../../lib/motion-presets";
 
 export function VaultCard({
   vault,
@@ -25,11 +26,11 @@ export function VaultCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 50 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      transition={{ delay: index * 0.1 }}
-      whileHover={canAfford ? { y: -10 } : {}}
+      transition={{ ...CYBER_TRANSITIONS.default, delay: index * 0.05 }}
+      whileHover={canAfford ? { y: -8, scale: 1.02 } : {}}
       onClick={handleSelect}
       className={`group relative h-full ${!canAfford ? "cursor-not-allowed" : "cursor-pointer"}`}
       {...(vault.name === "Diamond" ? { "data-tutorial": "vault-diamond" } : {})}
@@ -61,10 +62,24 @@ export function VaultCard({
 
           {/* Bonus Spin Badge */}
           {bonusChance && (
-            <div className="absolute bottom-12 sm:bottom-14 right-2 sm:right-3 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg bg-accent/15 border border-accent/40 text-accent z-10 flex items-center gap-0.5 sm:gap-1">
-              <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-wider">x2 Spin</span>
-              <span className="text-[6px] sm:text-[8px] font-mono opacity-70">{Math.round(bonusChance * 100)}%</span>
-            </div>
+            <motion.div 
+              animate={{ 
+                scale: [1, 1.05, 1],
+                boxShadow: [
+                  `0 0 10px ${vault.color}20`,
+                  `0 0 20px ${vault.color}50`,
+                  `0 0 10px ${vault.color}20`
+                ]
+              }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute bottom-12 sm:bottom-14 right-2 sm:right-3 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-black/60 backdrop-blur-xl border-2 z-10 flex flex-col items-center gap-0"
+              style={{ borderColor: `${vault.color}80` }}
+            >
+              <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-white whitespace-nowrap">Bonus Spin</span>
+              <span className="text-[10px] sm:text-[12px] font-mono font-black" style={{ color: vault.color }}>
+                {Math.round(bonusChance * 100)}%
+              </span>
+            </motion.div>
           )}
 
           {/* Ore Icon Container */}

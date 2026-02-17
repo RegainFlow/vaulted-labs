@@ -4,6 +4,7 @@ import { RARITY_CONFIG, VAULT_COLORS } from "../../data/vaults";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
 import type { AuctionCardProps } from "../../types/marketplace";
 import { VaultIcon } from "../vault/VaultIcons";
+import { CYBER_TRANSITIONS } from "../../lib/motion-presets";
 
 function formatTimeLeft(ms: number): string {
   if (ms <= 0) return "Ended";
@@ -67,6 +68,7 @@ export function AuctionCard({ auction, balance, onBid, isFirst = false }: Auctio
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={CYBER_TRANSITIONS.default}
       className={`rounded-2xl border bg-surface-elevated/50 backdrop-blur-sm overflow-hidden transition-all duration-300 ${
         isEnded
           ? "opacity-50 grayscale"

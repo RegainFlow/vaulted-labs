@@ -39,20 +39,20 @@ Source of truth: `src/index.css` `@theme` block.
 ### Vault Tiers (6 levels)
 | Tier | Color | Token | Price |
 |------|-------|-------|-------|
-| Bronze | #cd7f32 | `vault-bronze` | $24 |
-| Silver | #c0c0c0 | `vault-silver` | $38 |
-| Gold | #ffd700 | `vault-gold` | $54 |
-| Platinum | #79b5db | *(inline)* | $68 |
-| Obsidian | #6c4e85 | *(inline)* | $78 |
-| Diamond | #b9f2ff | `vault-diamond` | $86 |
+| Bronze | #cd7f32 | `vault-bronze` | $19.99 |
+| Silver | #c0c0c0 | `vault-silver` | $29.99 |
+| Gold | #ffd700 | `vault-gold` | $44.99 |
+| Platinum | #79b5db | *(inline)* | $59.99 |
+| Obsidian | #6c4e85 | *(inline)* | $74.99 |
+| Diamond | #b9f2ff | `vault-diamond` | $89.99 |
 
 ### Rarity Colors
 | Rarity | Color | Token | Value Multiplier |
 |--------|-------|-------|------------------|
-| Common | #9a9ab0 | `rarity-common` | 0.40x – 0.85x |
-| Uncommon | #00f0ff | `rarity-uncommon` | 0.85x – 1.40x |
+| Common | #6B7280 | `rarity-common` | 0.40x – 0.85x |
+| Uncommon | #3B82F6 | `rarity-uncommon` | 0.85x – 1.40x |
 | Rare | #a855f7 | `rarity-rare` | 1.40x – 2.20x |
-| Legendary | #ff2d95 | `rarity-legendary` | 2.20x – 3.50x |
+| Legendary | #FFD700 | `rarity-legendary` | 2.20x – 3.50x |
 
 ### Semantic
 | Token | Value | Usage |
@@ -127,6 +127,16 @@ Defined in `src/index.css` `@layer utilities`:
   - All values use `animate-hud-shimmer` with staggered delays
 - **Landing mode** (`showHUD=false`):
   - Right side: contextual nav link + "Join" button (scrolls to #waitlist)
+
+### Reel Glow
+- **Spinning state:** Subtle ambient glow via `boxShadow: 0 0 60px ${accentColor}25, 0 0 120px ${accentColor}10`
+- **Landed state:** Stronger glow using the landed rarity color: `0 0 50px ${landedColor}30, inset 0 0 25px ${landedColor}10`
+- **Boss fight reels:** Same pattern — cyan (`#00f0ff`) for player, magenta (`#ff2d95`) for boss
+
+### Boss Fight Layout
+- **Desktop (md+):** Side-by-side layout — player reel (left), attack control panel (center), boss reel (right)
+- **Mobile (< md):** Vertical stack — player on top, control panel, boss on bottom
+- **Reel sizing:** `w-full max-w-60 sm:max-w-72 md:max-w-80` — flexes down on tight layouts
 
 ### Marketplace Tabs
 - **Tab bar:** Horizontal, uppercase tracking-widest, `text-[10px] md:text-xs`

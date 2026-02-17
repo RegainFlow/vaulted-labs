@@ -224,7 +224,7 @@ export function Hero() {
               EXPLORE VAULTS
             </span>
             <br />
-            <span className="text-3xl sm:text-4xl md:text-7xl text-transparent bg-clip-text bg-gradient-to-r from-accent via-purple-500 to-accent animate-gradient bg-300% text-glow-magenta">
+            <span className="text-3xl sm:text-4xl md:text-7xl text-transparent bg-clip-text bg-gradient-to-r from-accent via-neon-cyan to-accent animate-gradient bg-300% text-glow-magenta">
               WIN REAL PRIZES
             </span>
           </h1>
