@@ -174,7 +174,7 @@ function Reel({
   const landedRowIndex = items.length + landedIndex;
   const theme = PRESTIGE_THEMES[prestigeLevel as keyof typeof PRESTIGE_THEMES] || PRESTIGE_THEMES[0];
   const rowHeight = isBonus ? 56 : 48;
-  const visibleRows = 4;
+  const visibleRows = isBonus ? 4 : 5;
   const reelHeight = rowHeight * visibleRows;
   const landedOffset = reelHeight / 2 - (landedRowIndex + 0.5) * rowHeight;
   const landedColor = landed ? displayItems[landedRowIndex]?.color ?? accentColor : accentColor;
@@ -202,8 +202,8 @@ function Reel({
     spinPhaseRef.current = 1;
     setSpinPhase(1);
     nearMissFiredRef.current = false;
-    const t1 = setTimeout(() => { spinPhaseRef.current = 2; setSpinPhase(2); }, 2000);
-    const t2 = setTimeout(() => { spinPhaseRef.current = 3; setSpinPhase(3); }, 5000);
+    const t1 = setTimeout(() => { spinPhaseRef.current = 2; setSpinPhase(2); }, 1500);
+    const t2 = setTimeout(() => { spinPhaseRef.current = 3; setSpinPhase(3); }, 3500);
     return () => { clearTimeout(t1); clearTimeout(t2); };
   }, [spinning, prefersReducedMotion]);
 
@@ -299,30 +299,41 @@ function Reel({
         }
         className="flex flex-col relative z-10"
       >
-        {displayItems.map((item, i) => (
-          <div
-            key={i}
-            className="flex items-center gap-4 px-5 sm:px-8 md:px-10 shrink-0"
-            style={{
-              height: `${rowHeight}px`,
-              background: item.rarity === "legendary"
-                ? `linear-gradient(90deg, transparent, ${item.color}12, transparent)`
-                : undefined
-            }}
-          >
-            <motion.div
-              className="w-2.5 h-10 rounded-full shrink-0"
-              animate={
-                landed && i === landedRowIndex && !prefersReducedMotion
-                  ? { scale: [1, 1.4, 1], boxShadow: `0 0 20px ${item.color}` }
+        {displayItems.map((item, i) => {
+          const isLandedItem = landed && i === landedRowIndex;
+          return (
+            <div
+              key={i}
+              className="flex items-center gap-4 px-5 sm:px-8 md:px-10 shrink-0"
+              style={{
+                height: `${rowHeight}px`,
+                background: isLandedItem && item.rarity === "legendary"
+                  ? `linear-gradient(90deg, transparent, ${item.color}12, transparent)`
                   : undefined
-              }
-              style={{ backgroundColor: item.color }}
-            />
-            <span className={`${labelClass} font-black uppercase tracking-widest italic`} style={{ color: item.color, textShadow: landed && i === landedRowIndex ? `0 0 20px ${item.color}` : "none" }}>{item.label}</span>
-            {item.rarity === "legendary" && <span className="text-lg animate-pulse" style={{ color: item.color }}>&#9733;</span>}
-          </div>
-        ))}
+              }}
+            >
+              <motion.div
+                className="w-2.5 h-10 rounded-full shrink-0"
+                animate={
+                  isLandedItem && !prefersReducedMotion
+                    ? { scale: [1, 1.4, 1], boxShadow: `0 0 20px ${item.color}` }
+                    : undefined
+                }
+                style={{ backgroundColor: item.color }}
+              />
+              <span
+                className={`${labelClass} font-black uppercase tracking-widest italic transition-all duration-300`}
+                style={{
+                  color: isLandedItem ? item.color : (landed ? `${item.color}20` : `${item.color}50`),
+                  textShadow: isLandedItem ? `0 0 20px ${item.color}` : "none"
+                }}
+              >
+                {landed ? item.label : "\u2022\u2022\u2022"}
+              </span>
+              {isLandedItem && item.rarity === "legendary" && <span className="text-lg animate-pulse" style={{ color: item.color }}>&#9733;</span>}
+            </div>
+          );
+        })}
       </motion.div>
     </div>
   );
@@ -483,7 +494,7 @@ function VaultOverlay({
   const resultTooltip = tutorialStep ? RESULT_TOOLTIP[tutorialStep] : null;
   const OPENING_STAGE_DURATION = 2400;
   const SPIN_STAGE_DELAY = OPENING_STAGE_DURATION;
-  const MAIN_SPIN_LAND_DELAY = SPIN_STAGE_DELAY + 6500;
+  const MAIN_SPIN_LAND_DELAY = SPIN_STAGE_DELAY + 5000;
   const POST_LAND_HOLD_DELAY = 2200;
   // Landing flash when spin lands
   useEffect(() => {
@@ -810,6 +821,7 @@ function VaultOverlay({
                 ) : (
                   <div className="flex justify-between py-1"><span className="text-text-dim">{tier.name} Vault</span><span className="text-error">-${tier.price.toFixed(2)}</span></div>
                 )}
+                <div className="flex justify-between py-1"><span className="text-text-dim">{product} <span style={{ color: rarityConfig.color }}>({rarityConfig.label})</span></span><span style={{ color: rarityConfig.color }}>+${resultValue.toFixed(2)}</span></div>
                 <div className="border-t border-white/10 mt-1 pt-2 flex justify-between font-bold"><span className="text-text-muted">Balance</span><span className="text-white">${postBalance.toFixed(2)}</span></div>
               </div>
 

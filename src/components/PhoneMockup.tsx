@@ -62,7 +62,7 @@ function MiniAppPreview() {
       {/* Nav */}
       <div className="h-14 flex items-center justify-between px-4 border-b border-white/5 z-20 bg-bg/95 backdrop-blur-md">
         <div className="font-black italic text-sm tracking-tighter">
-          VAULTED
+          VaultedLabs
         </div>
         <div className="flex items-center gap-2">
           <div className="px-2 py-1 bg-surface-elevated rounded-full border border-white/10 flex items-center gap-1">
@@ -287,14 +287,14 @@ function ResultScreen() {
       <div className="flex flex-col gap-2 w-full max-w-[200px] relative z-10">
         <div className="flex gap-2">
           <div className="flex-1 py-2.5 rounded-lg bg-surface-elevated border border-white/10 text-[8px] font-bold uppercase text-white/50">
-            Ship
+            Store
           </div>
           <div className="flex-1 py-2.5 rounded-lg bg-surface-elevated border border-white/10 text-[8px] font-bold uppercase text-white/50">
-            Hold
+            Ship
           </div>
         </div>
         <div className="w-full py-2.5 rounded-lg bg-[#b9f2ff] text-[8px] font-bold uppercase text-black shadow-lg relative overflow-hidden">
-          Cash Out
+          Cashout
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}

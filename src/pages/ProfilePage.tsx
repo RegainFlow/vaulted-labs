@@ -75,7 +75,7 @@ export function ProfilePage() {
                 Grant 6000 XP
               </button>
               <button
-                onClick={() => { resetDemo(); navigate("/"); }}
+                onClick={() => { resetDemo(); navigate("/"); window.scrollTo(0, 0); }}
                 className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest bg-error/10 border border-error/30 text-error hover:bg-error/20 hover:border-error/50 transition-all cursor-pointer inline-flex items-center gap-2"
               >
                 <svg

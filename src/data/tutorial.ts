@@ -1,4 +1,4 @@
-import type { TutorialStep, PageTutorialStepConfig } from "../types/tutorial";
+import type { PageTutorialStepConfig, TutorialStep } from "../types/tutorial";
 
 function getHudSelector(): string {
   const isMobile = window.innerWidth < 768;
@@ -10,7 +10,7 @@ export const LINEAR_FLOW: Record<string, TutorialStep> = {
   hud: "categories",
   categories: "open-vault",
   "result-store": "result-ship",
-  "result-ship": "result-cashout"
+  "result-ship": "result-cashout",
 };
 
 export const TOOLTIP_STEPS: Record<
@@ -27,15 +27,15 @@ export const TOOLTIP_STEPS: Record<
     title: "Your Dashboard",
     description:
       "This is your dashboard. Credits, loot, and level — always visible.",
-    position: "bottom"
+    position: "bottom",
   },
   categories: {
     selector: '[data-tutorial="categories"]',
     title: "Categories",
     description:
       "Categories filter what you're hunting for. Funko Pop! is selected.",
-    position: "bottom"
-  }
+    position: "bottom",
+  },
 };
 
 // Steps that Tutorial.tsx should NOT render (handled inside VaultOverlay)
@@ -44,7 +44,7 @@ export const OVERLAY_STEPS = new Set<string>([
   "revealing",
   "result-store",
   "result-ship",
-  "result-cashout"
+  "result-cashout",
 ]);
 
 /* ─── Page Tutorial Step Configs ─── */
@@ -54,7 +54,8 @@ export const WALLET_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     id: "wallet-welcome",
     type: "welcome",
     title: "Your Wallet",
-    description: "Track credits, view transactions, and understand your balance."
+    description:
+      "Track credits, view transactions, and understand your balance.",
   },
   {
     id: "wallet-balance",
@@ -62,15 +63,16 @@ export const WALLET_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="wallet-balance"]',
     title: "Available Balance",
     description: "Your total spendable credits shown here.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "wallet-breakdown",
     type: "spotlight",
     selector: '[data-tutorial="wallet-breakdown"]',
     title: "Credit Breakdown",
-    description: "Earned (from cashouts/reveals), Incentive (from waitlist), Spent (on vaults/shop).",
-    position: "bottom"
+    description:
+      "Earned (from cashouts/reveals), Incentive (from waitlist + quest + boss fights), Spent (on vaults/shop).",
+    position: "bottom",
   },
   {
     id: "wallet-actions",
@@ -78,7 +80,7 @@ export const WALLET_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="wallet-actions"]',
     title: "Quick Actions",
     description: "Add credits, or cash out your credits for cash.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "wallet-filters",
@@ -86,22 +88,23 @@ export const WALLET_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="wallet-filters"]',
     title: "Filter Transactions",
     description: "Filter by type: All, Earned, Incentive, Spent.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "wallet-transactions",
     type: "spotlight",
     selector: '[data-tutorial="wallet-transactions"]',
     title: "Transaction History",
-    description: "Every credit movement logged here — vault purchases, quest rewards, cashouts.",
-    position: "top"
+    description:
+      "Every credit movement logged here — vault purchases, quest rewards, cashouts.",
+    position: "top",
   },
   {
     id: "wallet-complete",
     type: "complete",
     title: "Wallet Unlocked!",
-    description: "You're ready to manage your credits."
-  }
+    description: "You're ready to manage your credits.",
+  },
 ];
 
 export const PROFILE_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
@@ -109,62 +112,68 @@ export const PROFILE_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     id: "profile-welcome",
     type: "welcome",
     title: "Player Profile",
-    description: "Your progression hub: XP, quests, boss fights, and prestige."
+    description: "Your progression hub: XP, quests, boss fights, and prestige.",
   },
   {
     id: "profile-level",
     type: "spotlight",
     selector: '[data-tutorial="profile-level"]',
     title: "Level & XP",
-    description: "Earn XP from opening vaults and marketplace purchases. Level up to unlock new quests and boss fights.",
-    position: "bottom"
+    description:
+      "Earn XP from opening vaults and marketplace purchases. Level up to unlock new quests and boss fights.",
+    position: "bottom",
   },
   {
     id: "profile-prestige",
     type: "spotlight",
     selector: '[data-tutorial="profile-prestige"]',
     title: "Prestige System",
-    description: "At Level 10, prestige to reset XP, improve vault odds, and unlock a new color scheme. Up to 3 prestige levels.",
-    position: "bottom"
+    description:
+      "At Level 10, prestige to reset XP, improve vault odds, and unlock a new color scheme. Up to 3 prestige levels.",
+    position: "bottom",
   },
   {
     id: "profile-stats",
     type: "spotlight",
     selector: '[data-tutorial="profile-stats"]',
     title: "Your Stats",
-    description: "Track your items collected, vaults opened, and credits earned.",
-    position: "bottom"
+    description:
+      "Track your items collected, vaults opened, and credits earned.",
+    position: "bottom",
   },
   {
     id: "profile-bosses",
     type: "spotlight",
     selector: '[data-tutorial="profile-bosses"]',
     title: "Boss Fights",
-    description: "Battle bosses for credit and XP rewards. New bosses unlock as you level up.",
-    position: "bottom"
+    description:
+      "Battle bosses for credit and XP rewards. New bosses unlock as you level up.",
+    position: "bottom",
   },
   {
     id: "profile-quests",
     type: "spotlight",
     selector: '[data-tutorial="profile-quests"]',
     title: "Quests",
-    description: "Complete quests for XP and credit rewards. New quests unlock as you level up.",
-    position: "top"
+    description:
+      "Complete quests for XP and credit rewards. New quests unlock as you level up.",
+    position: "top",
   },
   {
     id: "profile-reset",
     type: "spotlight",
     selector: '[data-tutorial="profile-reset"]',
     title: "Debug Tools",
-    description: "Grant XP to level up faster and test progression. Reset Demo clears all progress and starts fresh.",
-    position: "top"
+    description:
+      "Grant XP to level up faster and test progression. Reset Demo clears all progress and starts fresh.",
+    position: "top",
   },
   {
     id: "profile-complete",
     type: "complete",
     title: "Profile Mastered!",
-    description: "Level up, complete quests, and challenge bosses."
-  }
+    description: "Level up, complete quests, and challenge bosses.",
+  },
 ];
 
 export const INVENTORY_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
@@ -172,7 +181,7 @@ export const INVENTORY_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     id: "inventory-welcome",
     type: "welcome",
     title: "Your Loot",
-    description: "Manage your collection of vault reveals."
+    description: "Manage your collection of vault reveals.",
   },
   {
     id: "inventory-filters",
@@ -180,7 +189,7 @@ export const INVENTORY_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="inventory-filters"]',
     title: "Filter Items",
     description: "Filter by status: All, Held, Shipped, Cashed Out.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "inventory-item",
@@ -188,15 +197,16 @@ export const INVENTORY_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="inventory-item"]',
     title: "Item Card",
     description: "Each item shows its vault tier, rarity, and estimated value.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "inventory-ship",
     type: "spotlight",
     selector: '[data-tutorial="inventory-ship"]',
     title: "Ship to Home",
-    description: "Get the physical item delivered to your door (shipping costs apply).",
-    position: "top"
+    description:
+      "Get the physical item delivered to your door (shipping costs apply).",
+    position: "top",
   },
   {
     id: "inventory-cashout",
@@ -204,7 +214,7 @@ export const INVENTORY_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="inventory-cashout"]',
     title: "Cashout",
     description: "Convert to platform credits instantly at full item value.",
-    position: "top"
+    position: "top",
   },
   {
     id: "inventory-list",
@@ -212,14 +222,14 @@ export const INVENTORY_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="inventory-list"]',
     title: "List on Marketplace",
     description: "List items on the marketplace for other players to buy.",
-    position: "top"
+    position: "top",
   },
   {
     id: "inventory-complete",
     type: "complete",
     title: "Loot Manager Ready!",
-    description: "Hold, ship, or cashout — it's your call."
-  }
+    description: "Hold, ship, or cashout — it's your call.",
+  },
 ];
 
 export const BOSS_FIGHT_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
@@ -227,15 +237,17 @@ export const BOSS_FIGHT_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     id: "boss-welcome",
     type: "welcome",
     title: "Boss Fight!",
-    description: "Defeat the boss in reel-based combat exchanges. Win to earn credits, XP, and rare loot."
+    description:
+      "Defeat the boss in reel-based combat exchanges. Win to earn credits, XP, and rare loot.",
   },
   {
     id: "boss-player-hp",
     type: "spotlight",
     selector: '[data-tutorial="boss-player-hp"]',
     title: "Your HP",
-    description: "Your health pool. Hits zero and you lose. Win exchanges to protect it.",
-    position: "bottom"
+    description:
+      "Your health pool. Hits zero and you lose. Win exchanges to protect it.",
+    position: "bottom",
   },
   {
     id: "boss-enemy-hp",
@@ -243,7 +255,7 @@ export const BOSS_FIGHT_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="boss-enemy-hp"]',
     title: "Boss HP",
     description: "Deplete the boss's health to zero to win.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "boss-player-reel",
@@ -251,30 +263,33 @@ export const BOSS_FIGHT_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="boss-player-reel"]',
     title: "Your Reel",
     description: "Spins each exchange. Higher rarity = more base damage.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "boss-atk-button",
     type: "spotlight",
     selector: '[data-tutorial="boss-atk-button"]',
     title: "Attack Timing",
-    description: "When the bar turns red, press ATK NOW! Center timing = Perfect (bonus damage). Edges = Miss (reduced damage).",
-    position: "top"
+    description:
+      "When the bar turns red, press ATK NOW! Center timing = Perfect (bonus damage). Edges = Miss (reduced damage).",
+    position: "top",
   },
   {
     id: "boss-enemy-reel",
     type: "spotlight",
     selector: '[data-tutorial="boss-enemy-reel"]',
     title: "Boss Reel",
-    description: "The boss spins its own reel and attacks back. Highest damage wins the exchange.",
-    position: "bottom"
+    description:
+      "The boss spins its own reel and attacks back. Highest damage wins the exchange.",
+    position: "bottom",
   },
   {
     id: "boss-complete",
     type: "complete",
     title: "Ready to Fight!",
-    description: "Win exchanges to deplete the boss's HP. Good luck, Challenger!"
-  }
+    description:
+      "Win exchanges to deplete the boss's HP. Good luck, Challenger!",
+  },
 ];
 
 export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
@@ -282,15 +297,16 @@ export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     id: "shop-welcome",
     type: "welcome",
     title: "The Shop",
-    description: "Buy collectibles and bid on auctions from other players."
+    description: "Buy collectibles and bid on auctions from other players.",
   },
   {
     id: "shop-tabs",
     type: "spotlight",
     selector: '[data-tutorial="shop-tabs"]',
     title: "Two Sections",
-    description: "Marketplace for fixed-price listings, Auctions for competitive bidding.",
-    position: "bottom"
+    description:
+      "Marketplace for fixed-price listings, Auctions for competitive bidding.",
+    position: "bottom",
   },
   {
     id: "shop-listing",
@@ -298,7 +314,7 @@ export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="shop-listing"]',
     title: "Marketplace Listing",
     description: "Browse items listed by other players at fixed prices.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "shop-buy",
@@ -306,7 +322,7 @@ export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="shop-buy"]',
     title: "Buy Now",
     description: "Purchase instantly if you have enough credits.",
-    position: "top"
+    position: "top",
   },
   {
     id: "shop-auction-tab",
@@ -314,7 +330,7 @@ export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="shop-auction-tab"]',
     title: "Auctions",
     description: "Switch to auctions to bid on items before time runs out.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "shop-auction",
@@ -322,7 +338,7 @@ export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="shop-auction"]',
     title: "Auction Item",
     description: "Bid on items before time runs out. Highest bidder wins.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "shop-timer",
@@ -330,7 +346,7 @@ export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="shop-timer"]',
     title: "Countdown Timer",
     description: "When under 5 minutes, the timer pulses red — act fast!",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "shop-bid",
@@ -338,12 +354,12 @@ export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="shop-bid"]',
     title: "Place a Bid",
     description: "Enter your bid amount (must beat current bid) and submit.",
-    position: "top"
+    position: "top",
   },
   {
     id: "shop-complete",
     type: "complete",
     title: "Shop Pro!",
-    description: "Buy, bid, and build your collection."
-  }
+    description: "Buy, bid, and build your collection.",
+  },
 ];

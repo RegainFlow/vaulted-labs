@@ -21,7 +21,7 @@ const vaultSteps: Step[] = [
     number: "01",
     title: "Pick Your Vault",
     description:
-      "Choose from 6 tiers — Bronze ($19.99) to Diamond ($89.99). Every vault shows exact drop rates before you open. No hidden odds.",
+      "Choose from 6 tiers (Bronze to Diamond). Every vault shows exact drop rates before you open. No hidden odds.",
     illustration: <VaultIllustration />,
     image: "1_pick_vault.png",
     iconColor: "text-accent",
@@ -31,7 +31,7 @@ const vaultSteps: Step[] = [
     number: "02",
     title: "Reveal Your Collectible",
     description:
-      "Select a mystery box and watch the rarity reel spin. Premium vaults (Platinum+) can trigger a Vault Lock bonus round — match vault tier icons across 3 spinners to win free spins.",
+      "Select a mystery box and watch the rarity reel spin. Premium vaults (Platinum+) can trigger a Vault Lock bonus round.",
     illustration: <MysteryBoxIllustration />,
     image: "2_reveal_collectible.png",
     iconColor: "text-neon-cyan",

@@ -14,7 +14,7 @@ export const VAULT_COLORS: Record<string, string> = {
 export const VAULTS: Vault[] = [
   {
     name: "Bronze",
-    price: 19.99,
+    price: 12,
     color: "#cd7f32",
     gradient: "from-[#8B4513] to-[#cd7f32]",
     tagline: "Raw potential",
@@ -22,7 +22,7 @@ export const VAULTS: Vault[] = [
   },
   {
     name: "Silver",
-    price: 29.99,
+    price: 25,
     color: "#e0e0e0",
     gradient: "from-[#757575] to-[#e0e0e0]",
     tagline: "Refined assets",
@@ -30,7 +30,7 @@ export const VAULTS: Vault[] = [
   },
   {
     name: "Gold",
-    price: 44.99,
+    price: 40,
     color: "#ffd700",
     gradient: "from-[#b8860b] to-[#ffd700]",
     tagline: "Standard of value",
@@ -38,7 +38,7 @@ export const VAULTS: Vault[] = [
   },
   {
     name: "Platinum",
-    price: 59.99,
+    price: 55,
     color: "#79b5db",
     gradient: "from-[#4a6d85] to-[#a2d4e8]",
     tagline: "Industrial purity",
@@ -46,7 +46,7 @@ export const VAULTS: Vault[] = [
   },
   {
     name: "Obsidian",
-    price: 74.99,
+    price: 75,
     color: "#6c4e85",
     gradient: "from-[#2e2b36] to-[#6c4e85]",
     tagline: "Volcanic glass",
@@ -54,7 +54,7 @@ export const VAULTS: Vault[] = [
   },
   {
     name: "Diamond",
-    price: 89.99,
+    price: 90,
     color: "#b9f2ff",
     gradient: "from-[#00bfff] to-[#b9f2ff]",
     tagline: "The ultimate unboxing",
@@ -67,31 +67,34 @@ export const RARITY_CONFIG = {
     label: "Nice Find",
     exclaim: "!",
     color: "#6B7280",
-    minMult: 0.4,
-    maxMult: 0.85
+    minMult: 0.3333333333,
+    maxMult: 0.75
   },
   uncommon: {
     label: "Great Pull",
     exclaim: "!",
     color: "#3B82F6",
-    minMult: 0.85,
-    maxMult: 1.4
+    minMult: 0.75,
+    maxMult: 1.05
   },
   rare: {
     label: "Rare Pull",
     exclaim: "!",
     color: "#a855f7",
-    minMult: 1.4,
-    maxMult: 2.2
+    minMult: 1.05,
+    maxMult: 1.35
   },
   legendary: {
     label: "LEGENDARY",
     exclaim: "!!!",
     color: "#FFD700",
-    minMult: 2.2,
-    maxMult: 3.5
+    minMult: 1.35,
+    maxMult: 1.6666666667
   }
 } as const;
+
+/** Dollar reduction applied to all value calculations */
+export const VALUE_RANGE_REDUCTION = 2;
 
 export const PRODUCT_TYPES = [
   "Funko Pop!",
@@ -133,7 +136,7 @@ export function pickValue(
 ): number {
   const mult =
     config.minMult + Math.random() * (config.maxMult - config.minMult);
-  return Math.round(price * mult);
+  return Math.max(1, Math.round(price * mult - VALUE_RANGE_REDUCTION));
 }
 
 export function pickProduct(): (typeof PRODUCT_TYPES)[number] {

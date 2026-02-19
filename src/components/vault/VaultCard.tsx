@@ -5,9 +5,16 @@ import { VaultIcon } from "./VaultIcons";
 import {
   RARITY_CONFIG,
   PREMIUM_BONUS_CHANCE,
+  VALUE_RANGE_REDUCTION,
   getPrestigeOdds,
 } from "../../data/vaults";
 import { CYBER_TRANSITIONS } from "../../lib/motion-presets";
+
+const PRESTIGE_COLORS: Record<number, string> = {
+  1: "#ff8c00",
+  2: "#9945ff",
+  3: "#ff2d95"
+};
 
 export function VaultCard({
   vault,
@@ -19,8 +26,8 @@ export function VaultCard({
 }: VaultCardProps & { prestigeLevel?: number }) {
   const [showOdds, setShowOdds] = useState(false);
   const canAfford = !disabled && balance >= vault.price;
-  const minPull = Math.round(vault.price * 0.4);
-  const maxPull = Math.round(vault.price * 3.5);
+  const minPull = Math.max(1, Math.round(vault.price * RARITY_CONFIG.common.minMult - VALUE_RANGE_REDUCTION));
+  const maxPull = Math.round(vault.price * RARITY_CONFIG.legendary.maxMult - VALUE_RANGE_REDUCTION);
   const bonusChance = PREMIUM_BONUS_CHANCE[vault.name];
 
   const handleSelect = () => {
@@ -164,16 +171,25 @@ export function VaultCard({
               ).map(([rarity, chance]) => {
                 const rarityColor = getRarityColor(rarity);
                 const cfg = RARITY_CONFIG[rarity as keyof typeof RARITY_CONFIG];
+                const baseChance = vault.rarities[rarity as keyof typeof vault.rarities];
+                const delta = +(chance - baseChance).toFixed(1);
                 return (
                   <div key={rarity} className="space-y-1">
                     <div className="flex items-center justify-between text-[14px] uppercase font-bold tracking-wider">
                       <span style={{ color: rarityColor }}>{rarity}</span>
-                      <span className="text-white">{chance}%</span>
+                      <span className="text-white">
+                        {baseChance}%
+                        {prestigeLevel > 0 && delta !== 0 && (
+                          <span className="ml-1 text-xs font-black" style={{ color: PRESTIGE_COLORS[prestigeLevel] }}>
+                            {delta > 0 ? "+" : ""}{delta}%
+                          </span>
+                        )}
+                      </span>
                     </div>
                     <div className="text-right">
                       <span className="text-[13px] font-mono text-text-dim">
-                        ${Math.round(vault.price * cfg.minMult)} - $
-                        {Math.round(vault.price * cfg.maxMult)}
+                        ${Math.max(1, Math.round(vault.price * cfg.minMult - VALUE_RANGE_REDUCTION))} - $
+                        {Math.round(vault.price * cfg.maxMult - VALUE_RANGE_REDUCTION)}
                       </span>
                     </div>
                     <div className="h-4 w-full bg-black/60 rounded-sm overflow-hidden border border-white/5 relative">

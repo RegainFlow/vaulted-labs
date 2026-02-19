@@ -23,6 +23,16 @@ export function Hero() {
 
   return (
     <section className="relative min-h-dvh flex flex-col items-center justify-center overflow-hidden bg-bg pb-20">
+      {/* Hero background image — replace src with actual hero image when ready */}
+      <div className="absolute inset-0 z-[1] overflow-hidden">
+        <img
+          src="/images/hero/hero_bg.png"
+          alt=""
+          className="w-full h-full object-cover opacity-10"
+        />
+        <div className="w-full h-full bg-gradient-to-b from-transparent via-bg/50 to-bg" />
+      </div>
+
       {/* Dynamic Background */}
       <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,_#1a1a1a_0%,_#000_100%)]">
         {/* Animated Grid overlay */}
@@ -43,91 +53,6 @@ export function Hero() {
           className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-neon-cyan/5 rounded-full blur-[100px] animate-pulse"
           style={{ animationDelay: "1s" }}
         />
-      </div>
-
-      {/* === VAULT DOOR VISUAL === */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-[5]">
-        <div className="relative w-[280px] h-[280px] sm:w-[350px] sm:h-[350px] md:w-[500px] md:h-[500px] mt-[-5vh]">
-          {/* Outer ring with tick marks */}
-          <div className="absolute inset-0 rounded-full animate-vault-spin-slow">
-            <svg className="w-full h-full" viewBox="0 0 200 200">
-              <circle
-                cx="100"
-                cy="100"
-                r="96"
-                fill="none"
-                stroke="rgba(255,255,255,0.06)"
-                strokeWidth="0.5"
-                strokeDasharray="2 6"
-              />
-              <circle
-                cx="100"
-                cy="100"
-                r="90"
-                fill="none"
-                stroke="rgba(255,255,255,0.04)"
-                strokeWidth="0.3"
-                strokeDasharray="1 12"
-              />
-            </svg>
-          </div>
-
-          {/* Middle ring */}
-          <div
-            className="absolute inset-8 rounded-full border border-white/5"
-            style={{
-              background:
-                "radial-gradient(circle, transparent 55%, rgba(255,45,149,0.04) 80%, rgba(0,240,255,0.03) 100%)",
-            }}
-          />
-
-          {/* Inner combination dial */}
-          <motion.div
-            className="absolute inset-16 rounded-full border-[3px] border-white/[0.07]"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 20, ease: "linear", repeat: Infinity }}
-          >
-            {Array.from({ length: 24 }).map((_, i) => (
-              <div
-                key={i}
-                className="absolute left-1/2 top-0 w-px origin-bottom"
-                style={{
-                  height: i % 6 === 0 ? "12px" : "6px",
-                  backgroundColor:
-                    i % 6 === 0
-                      ? "rgba(255,255,255,0.15)"
-                      : "rgba(255,255,255,0.06)",
-                  transform: `translateX(-50%) rotate(${i * 15}deg)`,
-                  transformOrigin: `center ${250 / 2}px`,
-                }}
-              />
-            ))}
-          </motion.div>
-
-          {/* Center handle */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <motion.div
-              className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-surface-elevated/50 border-2 border-white/[0.08] relative"
-              animate={{ rotate: [0, 90, -45, 180, 270, 360] }}
-              transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-            >
-              <div className="w-full h-px bg-white/10 absolute top-1/2" />
-              <div className="h-full w-px bg-white/10 absolute left-1/2" />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-3 h-3 rounded-full bg-accent/40 shadow-[0_0_15px_rgba(255,45,149,0.4)]" />
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Neon glow seeping through cracks */}
-          <div
-            className="absolute inset-0 rounded-full animate-vault-glow-pulse pointer-events-none"
-            style={{
-              boxShadow:
-                "inset 0 0 80px rgba(255,45,149,0.08), inset 0 0 120px rgba(0,240,255,0.05)",
-            }}
-          />
-        </div>
       </div>
 
       {/* Floating mystery items */}
@@ -230,7 +155,7 @@ export function Hero() {
           </h1>
         </motion.div>
 
-        <div className="mt-6 sm:mt-8 text-base sm:text-xl md:text-2xl text-text-muted max-w-2xl mx-auto font-medium h-[2em]">
+        <div className="z-10 mt-6 sm:mt-8 text-base sm:text-xl md:text-2xl text-text-muted max-w-2xl mx-auto font-medium h-[2em]">
           <span ref={typedEl} />
         </div>
       </div>
