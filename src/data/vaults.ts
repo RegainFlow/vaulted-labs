@@ -18,7 +18,7 @@ export const VAULTS: Vault[] = [
     color: "#cd7f32",
     gradient: "from-[#8B4513] to-[#cd7f32]",
     tagline: "Raw potential",
-    rarities: { common: 55.0, uncommon: 25.0, rare: 17.0, legendary: 3.0 }
+    rarities: { common: 50.0, uncommon: 27.0, rare: 19.0, legendary: 4.0 }
   },
   {
     name: "Silver",
@@ -26,7 +26,7 @@ export const VAULTS: Vault[] = [
     color: "#e0e0e0",
     gradient: "from-[#757575] to-[#e0e0e0]",
     tagline: "Refined assets",
-    rarities: { common: 52.0, uncommon: 26.0, rare: 17.5, legendary: 4.5 }
+    rarities: { common: 47.0, uncommon: 28.0, rare: 19.5, legendary: 5.5 }
   },
   {
     name: "Gold",
@@ -34,7 +34,7 @@ export const VAULTS: Vault[] = [
     color: "#ffd700",
     gradient: "from-[#b8860b] to-[#ffd700]",
     tagline: "Standard of value",
-    rarities: { common: 48.0, uncommon: 28.0, rare: 18.0, legendary: 6.0 }
+    rarities: { common: 43.0, uncommon: 30.0, rare: 20.0, legendary: 7.0 }
   },
   {
     name: "Platinum",
@@ -42,7 +42,7 @@ export const VAULTS: Vault[] = [
     color: "#79b5db",
     gradient: "from-[#4a6d85] to-[#a2d4e8]",
     tagline: "Industrial purity",
-    rarities: { common: 45.0, uncommon: 28.0, rare: 19.5, legendary: 7.5 }
+    rarities: { common: 40.0, uncommon: 30.0, rare: 21.5, legendary: 8.5 }
   },
   {
     name: "Obsidian",
@@ -50,7 +50,7 @@ export const VAULTS: Vault[] = [
     color: "#6c4e85",
     gradient: "from-[#2e2b36] to-[#6c4e85]",
     tagline: "Volcanic glass",
-    rarities: { common: 42.0, uncommon: 27.0, rare: 21.0, legendary: 10.0 }
+    rarities: { common: 37.0, uncommon: 29.0, rare: 23.0, legendary: 11.0 }
   },
   {
     name: "Diamond",
@@ -58,7 +58,7 @@ export const VAULTS: Vault[] = [
     color: "#b9f2ff",
     gradient: "from-[#00bfff] to-[#b9f2ff]",
     tagline: "The ultimate unboxing",
-    rarities: { common: 38.0, uncommon: 26.0, rare: 23.0, legendary: 13.0 }
+    rarities: { common: 33.0, uncommon: 28.0, rare: 25.0, legendary: 14.0 }
   }
 ];
 
@@ -67,34 +67,34 @@ export const RARITY_CONFIG = {
     label: "Nice Find",
     exclaim: "!",
     color: "#6B7280",
-    minMult: 0.3333333333,
-    maxMult: 0.75
+    minMult: 0.40,
+    maxMult: 0.85
   },
   uncommon: {
     label: "Great Pull",
     exclaim: "!",
     color: "#3B82F6",
-    minMult: 0.75,
-    maxMult: 1.05
+    minMult: 0.85,
+    maxMult: 1.40
   },
   rare: {
     label: "Rare Pull",
     exclaim: "!",
     color: "#a855f7",
-    minMult: 1.05,
-    maxMult: 1.35
+    minMult: 1.40,
+    maxMult: 2.20
   },
   legendary: {
     label: "LEGENDARY",
     exclaim: "!!!",
     color: "#FFD700",
-    minMult: 1.35,
-    maxMult: 1.6666666667
+    minMult: 2.20,
+    maxMult: 3.50
   }
 } as const;
 
 /** Dollar reduction applied to all value calculations */
-export const VALUE_RANGE_REDUCTION = 2;
+export const VALUE_RANGE_REDUCTION = 0;
 
 export const PRODUCT_TYPES = [
   "Funko Pop!",
@@ -181,9 +181,9 @@ export const INCENTIVE_TIERS: IncentiveTier[] = [
 ];
 
 export const PREMIUM_BONUS_CHANCE: Record<string, number> = {
-  Platinum: 0.2,
-  Obsidian: 0.3,
-  Diamond: 0.4
+  Platinum: 0.3,
+  Obsidian: 0.4,
+  Diamond: 0.5
 };
 
 /* ─── Vault Lock Bonus Mini-Game ─── */
