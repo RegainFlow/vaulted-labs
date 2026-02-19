@@ -2,7 +2,11 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import type { VaultCardProps } from "../../types/vault";
 import { VaultIcon } from "./VaultIcons";
-import { RARITY_CONFIG, PREMIUM_BONUS_CHANCE, getPrestigeOdds } from "../../data/vaults";
+import {
+  RARITY_CONFIG,
+  PREMIUM_BONUS_CHANCE,
+  getPrestigeOdds,
+} from "../../data/vaults";
 import { CYBER_TRANSITIONS } from "../../lib/motion-presets";
 
 export function VaultCard({
@@ -11,7 +15,7 @@ export function VaultCard({
   balance,
   onSelect,
   disabled = false,
-  prestigeLevel = 0
+  prestigeLevel = 0,
 }: VaultCardProps & { prestigeLevel?: number }) {
   const [showOdds, setShowOdds] = useState(false);
   const canAfford = !disabled && balance >= vault.price;
@@ -33,7 +37,9 @@ export function VaultCard({
       whileHover={canAfford ? { y: -8, scale: 1.02 } : {}}
       onClick={handleSelect}
       className={`group relative h-full ${!canAfford ? "cursor-not-allowed" : "cursor-pointer"}`}
-      {...(vault.name === "Diamond" ? { "data-tutorial": "vault-diamond" } : {})}
+      {...(vault.name === "Diamond"
+        ? { "data-tutorial": "vault-diamond" }
+        : {})}
     >
       {/* Main Vault Structure */}
       <div
@@ -57,26 +63,31 @@ export function VaultCard({
 
           {/* Sequence Number */}
           <div className="absolute top-4 left-8 text-[10px] font-black uppercase tracking-[0.2em] text-black/50 z-10">
-            SEQ // 0{index + 1}
+            VAULT - 0{index + 1}
           </div>
 
           {/* Bonus Spin Badge */}
           {bonusChance && (
-            <motion.div 
-              animate={{ 
+            <motion.div
+              animate={{
                 scale: [1, 1.05, 1],
                 boxShadow: [
-                  `0 0 10px ${vault.color}20`,
-                  `0 0 20px ${vault.color}50`,
-                  `0 0 10px ${vault.color}20`
-                ]
+                  `0 0 10px #ff2d9520`,
+                  `0 0 20px #ff2d9550`,
+                  `0 0 10px #ff2d9520`,
+                ],
               }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute bottom-12 sm:bottom-14 right-2 sm:right-3 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-black/60 backdrop-blur-xl border-2 z-10 flex flex-col items-center gap-0"
-              style={{ borderColor: `${vault.color}80` }}
+              className="absolute top-10 left-8 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-black/60 backdrop-blur-xl border-2 z-10 flex flex-col items-center gap-0"
+              style={{ borderColor: `#ff2d9580` }}
             >
-              <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-white whitespace-nowrap">Bonus Spin</span>
-              <span className="text-[10px] sm:text-[12px] font-mono font-black" style={{ color: vault.color }}>
+              <span className="text-[7px] sm:text-[9px] font-black uppercase tracking-[0.2em] text-white whitespace-nowrap">
+                Bonus Spin
+              </span>
+              <span
+                className="text-[10px] sm:text-[12px] font-mono font-black"
+                style={{ color: "#ff2d95" }}
+              >
                 {Math.round(bonusChance * 100)}%
               </span>
             </motion.div>
@@ -92,11 +103,11 @@ export function VaultCard({
           </div>
 
           {/* Pull Range Badge */}
-          <div className="absolute bottom-1.5 sm:bottom-3 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-2 sm:px-3 py-0.5 sm:py-1.5 rounded-md sm:rounded-lg border border-white/10 z-10 flex flex-col items-center gap-0">
-            <span className="text-[5px] sm:text-[7px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] text-white/40 leading-tight">
+          <div className="absolute bottom-1.5 sm:bottom-3 left-1/2 -translate-x-1/2 bg-black/60 backdrop-blur-md px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-md sm:rounded-lg border border-white/10 z-10 flex flex-col items-center gap-0">
+            <span className="text-[7px] sm:text-[7px] font-bold uppercase tracking-[0.1em] sm:tracking-[0.2em] text-white/40 leading-tight">
               Value Range
             </span>
-            <span className="text-[8px] sm:text-[11px] font-black uppercase tracking-wider text-white/90 whitespace-nowrap leading-tight">
+            <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-white/90 whitespace-nowrap leading-tight">
               ${minPull} — ${maxPull}
             </span>
           </div>
@@ -128,7 +139,7 @@ export function VaultCard({
               style={{
                 background: showOdds
                   ? "rgba(255,45,149,0.35)"
-                  : "rgba(255,255,255,0.08)"
+                  : "rgba(255,255,255,0.08)",
               }}
             >
               <span
@@ -146,48 +157,49 @@ export function VaultCard({
           {/* Stats Section — visible only when showOdds is true */}
           {showOdds && (
             <div className="pt-6 space-y-4 border-t border-white/5">
-              {(Object.entries(getPrestigeOdds(vault.rarities, prestigeLevel)) as [string, number][]).map(
-                ([rarity, chance]) => {
-                  const rarityColor = getRarityColor(rarity);
-                  const cfg =
-                    RARITY_CONFIG[rarity as keyof typeof RARITY_CONFIG];
-                  return (
-                    <div key={rarity} className="space-y-1">
-                      <div className="flex items-center justify-between text-[14px] uppercase font-bold tracking-wider">
-                        <span style={{ color: rarityColor }}>{rarity}</span>
-                        <span className="text-white">{chance}%</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[13px] font-mono text-text-dim">
-                          ${Math.round(vault.price * cfg.minMult)} - $
-                          {Math.round(vault.price * cfg.maxMult)}
-                        </span>
-                      </div>
-                      <div className="h-4 w-full bg-black/60 rounded-sm overflow-hidden border border-white/5 relative">
-                        <div
-                          className="absolute inset-0 z-20 pointer-events-none opacity-20"
-                          style={{
-                            backgroundImage:
-                              "repeating-linear-gradient(90deg, transparent, transparent 19%, #000 19%, #000 20%)"
-                          }}
-                        />
-                        <motion.div
-                          initial={{ width: 0 }}
-                          whileInView={{ width: `${chance}%` }}
-                          transition={{ duration: 1, ease: "easeOut" }}
-                          className="h-full relative"
-                          style={{
-                            backgroundColor: rarityColor,
-                            boxShadow: `0 0 10px ${rarityColor}40`
-                          }}
-                        >
-                          <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
-                        </motion.div>
-                      </div>
+              {(
+                Object.entries(
+                  getPrestigeOdds(vault.rarities, prestigeLevel)
+                ) as [string, number][]
+              ).map(([rarity, chance]) => {
+                const rarityColor = getRarityColor(rarity);
+                const cfg = RARITY_CONFIG[rarity as keyof typeof RARITY_CONFIG];
+                return (
+                  <div key={rarity} className="space-y-1">
+                    <div className="flex items-center justify-between text-[14px] uppercase font-bold tracking-wider">
+                      <span style={{ color: rarityColor }}>{rarity}</span>
+                      <span className="text-white">{chance}%</span>
                     </div>
-                  );
-                }
-              )}
+                    <div className="text-right">
+                      <span className="text-[13px] font-mono text-text-dim">
+                        ${Math.round(vault.price * cfg.minMult)} - $
+                        {Math.round(vault.price * cfg.maxMult)}
+                      </span>
+                    </div>
+                    <div className="h-4 w-full bg-black/60 rounded-sm overflow-hidden border border-white/5 relative">
+                      <div
+                        className="absolute inset-0 z-20 pointer-events-none opacity-20"
+                        style={{
+                          backgroundImage:
+                            "repeating-linear-gradient(90deg, transparent, transparent 19%, #000 19%, #000 20%)",
+                        }}
+                      />
+                      <motion.div
+                        initial={{ width: 0 }}
+                        whileInView={{ width: `${chance}%` }}
+                        transition={{ duration: 1, ease: "easeOut" }}
+                        className="h-full relative"
+                        style={{
+                          backgroundColor: rarityColor,
+                          boxShadow: `0 0 10px ${rarityColor}40`,
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-b from-white/20 to-transparent" />
+                      </motion.div>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -210,7 +222,7 @@ export function VaultCard({
             className="absolute inset-0 z-10 rounded-2xl pointer-events-none"
             style={{
               background:
-                "repeating-linear-gradient(45deg, transparent, transparent 18px, rgba(255,59,92,0.08) 18px, rgba(255,59,92,0.08) 20px)"
+                "repeating-linear-gradient(45deg, transparent, transparent 18px, rgba(255,59,92,0.08) 18px, rgba(255,59,92,0.08) 20px)",
             }}
           />
         )}

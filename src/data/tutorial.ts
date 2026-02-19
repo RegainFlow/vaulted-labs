@@ -77,7 +77,7 @@ export const WALLET_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     type: "spotlight",
     selector: '[data-tutorial="wallet-actions"]',
     title: "Quick Actions",
-    description: "Add credits by joining the waitlist, or cashout to external.",
+    description: "Add credits, or cash out your credits for cash.",
     position: "bottom"
   },
   {
@@ -140,7 +140,7 @@ export const PROFILE_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     type: "spotlight",
     selector: '[data-tutorial="profile-bosses"]',
     title: "Boss Fights",
-    description: "Unlock boss encounters as you level up. Defeat them for credit and XP rewards in a best-of-5 reel battle.",
+    description: "Battle bosses for credit and XP rewards. New bosses unlock as you level up.",
     position: "bottom"
   },
   {
@@ -155,8 +155,8 @@ export const PROFILE_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     id: "profile-reset",
     type: "spotlight",
     selector: '[data-tutorial="profile-reset"]',
-    title: "Reset Demo",
-    description: "Start fresh: clears all progress, inventory, and credits.",
+    title: "Debug Tools",
+    description: "Grant XP to level up faster and test progression. Reset Demo clears all progress and starts fresh.",
     position: "top"
   },
   {
@@ -211,7 +211,7 @@ export const INVENTORY_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     type: "spotlight",
     selector: '[data-tutorial="inventory-list"]',
     title: "List on Marketplace",
-    description: "Coming soon! List items for other players to buy.",
+    description: "List items on the marketplace for other players to buy.",
     position: "top"
   },
   {

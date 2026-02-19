@@ -149,7 +149,7 @@ export function Tutorial({
               Welcome to VaultedLabs!
             </h2>
             <p className="text-text-muted text-sm leading-relaxed mb-8">
-              Let's open your first vault — on us. You'll pick a box, reveal a
+              Let's open your first vault. You'll pick a box, reveal a
               collectible, and decide what to do with it. Everything you earn is
               yours to keep.
             </p>
@@ -402,7 +402,7 @@ export function Tutorial({
               <span className="text-[9px] font-mono text-text-dim">{STEP_INDEX[step]} / {TOTAL_STEPS}</span>
             </div>
             <p className="text-xs sm:text-sm text-text-muted leading-relaxed mb-3">
-              Tap the Diamond vault to open it — this one's free!
+              Tap the Diamond vault to open it.
             </p>
             {onSkip && (
               <button

@@ -24,6 +24,7 @@ export interface IncentiveBannerProps {
 
 export interface WaitlistFormProps {
   count: number;
+  onJoinSuccess?: () => void;
 }
 
 export interface TurnstileWidgetHandle {

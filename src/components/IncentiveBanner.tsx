@@ -56,7 +56,7 @@ export function IncentiveBanner({ count, loading }: IncentiveBannerProps) {
               const tierFillCount = isFilled
                 ? tier.spots
                 : isActive
-                  ? Math.max(0, count - tier.startAt + 1)
+                  ? Math.max(0, count - tier.startAt)
                   : 0;
               const tierProgress = (tierFillCount / tier.spots) * 100;
               const remaining = tier.spots - tierFillCount;
@@ -68,19 +68,24 @@ export function IncentiveBanner({ count, loading }: IncentiveBannerProps) {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className={`relative rounded-xl p-4 sm:p-5 border transition-all ${
+                  className={`relative rounded-xl p-4 sm:p-5 border transition-all overflow-hidden ${
                     isActive
                       ? "bg-surface border-white/20"
                       : isFilled
-                        ? "bg-surface/50 border-white/5 opacity-50"
+                        ? "bg-surface/50"
                         : "bg-surface/30 border-white/5 opacity-40"
                   }`}
                   style={
                     isActive
                       ? {
-                          boxShadow: `0 0 25px ${tier.color}15, 0 0 50px ${tier.color}08`
+                          boxShadow: `0 0 25px ${tier.color}15, 0 0 50px ${tier.color}08`,
                         }
-                      : undefined
+                      : isFilled
+                        ? {
+                            borderColor: `${tier.color}20`,
+                            boxShadow: `0 0 15px ${tier.color}08`,
+                          }
+                        : undefined
                   }
                 >
                   {/* Active indicator dot */}
@@ -89,7 +94,7 @@ export function IncentiveBanner({ count, loading }: IncentiveBannerProps) {
                       className="absolute top-3 right-3 w-2 h-2 rounded-full animate-pulse"
                       style={{
                         backgroundColor: tier.color,
-                        boxShadow: `0 0 8px ${tier.color}`
+                        boxShadow: `0 0 8px ${tier.color}`,
                       }}
                     />
                   )}
@@ -120,10 +125,32 @@ export function IncentiveBanner({ count, loading }: IncentiveBannerProps) {
                     </span>
                   )}
 
+                  {/* Filled tier: diagonal stripe overlay + CLAIMED badge */}
+                  {isFilled && (
+                    <>
+                      <div
+                        className="absolute inset-0 pointer-events-none"
+                        style={{
+                          backgroundImage: `repeating-linear-gradient(135deg, transparent, transparent 8px, ${tier.color}08 8px, ${tier.color}08 10px)`,
+                        }}
+                      />
+                      <div
+                        className="absolute top-3 right-3 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-widest"
+                        style={{
+                          color: tier.color,
+                          backgroundColor: `${tier.color}15`,
+                          border: `1px solid ${tier.color}30`,
+                        }}
+                      >
+                        Claimed
+                      </div>
+                    </>
+                  )}
+
                   {/* Credit amount */}
                   <div
                     className={`text-2xl sm:text-3xl font-black mb-1 ${isFilled ? "line-through" : ""}`}
-                    style={{ color: isFilled ? "#6a6a80" : tier.color }}
+                    style={{ color: isFilled ? `${tier.color}50` : tier.color }}
                   >
                     ${tier.creditAmount}
                   </div>
@@ -152,14 +179,14 @@ export function IncentiveBanner({ count, loading }: IncentiveBannerProps) {
                   <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
-                      whileInView={{ width: `${tierProgress}%` }}
+                      whileInView={{ width: `${isFilled ? 100 : tierProgress}%` }}
                       transition={{
                         duration: 1,
                         ease: "easeOut",
-                        delay: i * 0.1
+                        delay: i * 0.1,
                       }}
                       className="h-full rounded-full"
-                      style={{ backgroundColor: tier.color }}
+                      style={{ backgroundColor: isFilled ? `${tier.color}80` : tier.color }}
                     />
                   </div>
                 </motion.div>

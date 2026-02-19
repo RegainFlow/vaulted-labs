@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Navbar } from "../components/shared/Navbar";
 import { VaultGrid } from "../components/vault/VaultGrid";
 import { Tutorial } from "../components/Tutorial";
@@ -13,6 +13,7 @@ export function PlayPage() {
     useGame();
   const { step, advance, goTo, completedAction, setCompletedAction, reset } =
     useTutorial(hasSeenTutorial);
+  const [vaultOpen, setVaultOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -55,6 +56,7 @@ export function PlayPage() {
           tutorialStep={step}
           onTutorialAdvance={goTo}
           onTutorialSetAction={setCompletedAction}
+          onOverlayChange={setVaultOpen}
         />
       </main>
       <Footer />
@@ -65,7 +67,7 @@ export function PlayPage() {
         onSkip={handleTutorialComplete}
         completedAction={completedAction}
       />
-      {hasSeenTutorial && !step && (
+      {hasSeenTutorial && !step && !vaultOpen && (
         <TutorialHelpButton onClick={() => goTo("welcome")} />
       )}
     </>

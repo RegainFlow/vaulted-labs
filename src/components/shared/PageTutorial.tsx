@@ -31,9 +31,13 @@ function getTooltipPosition(
     const top = rect.top + rect.height + 12;
     // If tooltip would go below viewport, position above instead
     if (top + 160 > window.innerHeight) {
+      const aboveTop = rect.top - 12 - 160;
+      if (aboveTop >= 8) {
+        return { top: aboveTop, left: leftPos };
+      }
       const bottom = window.innerHeight - rect.top + 12;
       return {
-        bottom: Math.max(8, bottom),
+        bottom: Math.max(8, Math.min(bottom, window.innerHeight - 20)),
         left: leftPos
       };
     }
@@ -42,9 +46,17 @@ function getTooltipPosition(
       left: leftPos
     };
   }
+  // Position top: place tooltip above the element
+  const aboveTop = rect.top - 12 - 160;
+  if (aboveTop >= 8) {
+    return {
+      top: aboveTop,
+      left: Math.max(12, Math.min(rect.left, window.innerWidth - tooltipMaxWidth))
+    };
+  }
   const bottom = window.innerHeight - rect.top + 12;
   return {
-    bottom: Math.max(8, bottom),
+    bottom: Math.max(8, Math.min(bottom, window.innerHeight - 20)),
     left: Math.max(12, Math.min(rect.left, window.innerWidth - tooltipMaxWidth))
   };
 }
@@ -88,7 +100,7 @@ export function PageTutorial({
     if (!isActive || !currentStep || currentStep.type !== "spotlight" || !currentStep.selector) return;
     const el = document.querySelector(currentStep.selector);
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
       setTimeout(updateRect, 400);
     }
   }, [isActive, currentIndex, currentStep, updateRect]);
@@ -143,11 +155,12 @@ export function PageTutorial({
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 className="text-accent"
               >
-                <circle cx="12" cy="12" r="10" />
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
+                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
               </svg>
             </div>
             <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight mb-3">

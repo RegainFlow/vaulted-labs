@@ -110,10 +110,7 @@ docs/
   STYLES.md                     # Design system and style guide
 supabase/
   migrations/
-    001_create_waitlist.sql     # Waitlist table + RLS
-    002_waitlist_indexes.sql    # Email + created_at indexes
-    003_waitlist_incentive_tier.sql  # credit_amount + tier columns
-    004_marketplace_schema.sql  # Phase 2: inventory, credits, listings, auctions, profiles
+    20260218052432_init.sql     # Squashed baseline schema (waitlist + anti-spam only)
 ```
 
 ## Financial Model Constants

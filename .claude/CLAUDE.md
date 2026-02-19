@@ -2,18 +2,18 @@
 
 ## Project Overview
 
-VaultedLabs is a gamified commerce platform. Users open "Vaults" to reveal collectibles, manage inventory, trade on a marketplace, and progress through an XP/level system. The repo contains a landing page (waitlist), a demo game page (vault opening with guided tutorial), and dedicated pages for shop, inventory, profile, and wallet.
+VaultedLabs is a gamified commerce platform. Users open "Vaults" to reveal collectibles, manage inventory, trade on a marketplace, and progress through an XP/level/prestige system. The repo contains a landing page (waitlist), a demo game page (vault opening with guided tutorial, Vault Lock bonus mini-game), and dedicated pages for shop, inventory, profile (with boss fights and prestige), and wallet.
 
 ## Tech Stack
 
 - **Build**: Vite 6 with `@tailwindcss/vite` plugin
 - **Framework**: React 19 with TypeScript (strict mode)
-- **Routing**: React Router DOM v7 — six routes: `/` (landing), `/play` (demo game), `/shop` (listings & auctions), `/inventory` (loot management), `/profile` (XP, quests, boss fights), `/wallet`
-- **State**: React Context (`GameProvider` in `src/context/GameContext.tsx`) wraps all routes — shared credits, inventory, XP, marketplace state
+- **Routing**: React Router DOM v7 — six routes: `/` (landing), `/play` (demo game), `/shop` (listings & auctions), `/inventory` (loot management), `/profile` (XP, quests, boss fights, prestige), `/wallet`
+- **State**: React Context (`GameProvider` in `src/context/GameContext.tsx`) wraps all routes — shared credits, inventory, XP, marketplace, prestige, boss fights, free spins state
 - **Styling**: Tailwind CSS v4 (CSS-native config via `@theme` in `index.css`)
 - **Animations**: Motion (formerly Framer Motion) — import from `motion/react`
 - **Typewriter**: Typed.js — hero subtitle typing animation
-- **Backend**: Supabase (waitlist email capture + real-time count; marketplace schema designed for Phase 2)
+- **Backend**: Supabase (waitlist email capture + real-time count via Edge Functions; marketplace schema designed for Phase 2)
 - **Analytics**: PostHog (`posthog-js`) — page views, funnels, session replays, heatmaps, and custom event tracking (see `docs/POSTHOG_EVENTS.md`)
 - **Anti-bot**: Cloudflare Turnstile (managed mode), server-side rate limiting (1/min + 3/hour per IP), honeypot field, timing check (3s minimum), disposable email blocklist (client + server-side)
 - **Deployment target**: Vercel (SPA rewrite in `vercel.json`)
@@ -40,6 +40,16 @@ VaultedLabs is a gamified commerce platform. Users open "Vaults" to reveal colle
 | Rare      | 1.40x | 2.20x |
 | Legendary | 2.20x | 3.50x |
 
+### Premium Bonus Chance (Vault Lock mini-game trigger)
+
+| Vault Tier | Bonus Chance |
+| ---------- | ------------ |
+| Platinum   | 20%          |
+| Obsidian   | 30%          |
+| Diamond    | 40%          |
+
+Bronze, Silver, and Gold do not trigger the bonus round.
+
 ### User Behavior Rates
 
 - Hold (digital): 65% — no COGS
@@ -50,14 +60,16 @@ VaultedLabs is a gamified commerce platform. Users open "Vaults" to reveal colle
 
 ### XP Earning
 
-- Vault purchase: XP = vault price (e.g. $19.99 Bronze → 19.99 XP)
+- Vault purchase: XP = vault price (e.g. $19.99 Bronze -> 19.99 XP)
 - Marketplace buy: XP = price paid in credits
 - Auction win: XP = winning bid amount
+- Boss fight win: XP = boss xpReward
+- Quest completion: XP = quest xpReward
 - No XP for cashouts, ships, or listing items
 
 ### Level Curve
 
-Quadratic: `threshold(L) = 50L² + 50L`
+Quadratic: `threshold(L) = 50L^2 + 50L`
 
 | Level | Cumulative XP |
 | ----- | ------------- |
@@ -68,27 +80,68 @@ Quadratic: `threshold(L) = 50L² + 50L`
 | 10    | 5,500         |
 | 12    | 7,800         |
 
-### Boss Fights (4 placeholder encounters)
+### Prestige System (3 levels)
 
-| Boss             | Required Level |
-| ---------------- | -------------- |
-| The Vault Keeper | 3              |
-| Chrono Shard     | 5              |
-| Neon Hydra       | 8              |
-| Diamond Golem    | 12             |
+Players can prestige at Level 10, resetting XP to 0 and defeated bosses. Each prestige level:
+- Improves vault odds: shifts 4% per level from Common to Uncommon/Rare/Legendary (30%/30%/40% split)
+- Scales boss difficulty: shifts 5% per level from Common to Legendary in boss odds
+- Unlocks a new UI color scheme applied via `html[data-prestige="N"]` CSS attribute
+
+| Prestige Level | Theme Color | Accent       |
+| -------------- | ----------- | ------------ |
+| 1              | Gold        | #ff8c00      |
+| 2              | Violet      | #9945ff      |
+| 3              | Prismatic   | #ff2d95 cyan |
+
+Max prestige level is 3.
+
+### Boss Fights (4 encounters with reel-based combat)
+
+| Boss             | Required Level | Credit Reward | XP Reward | Special Item   |
+| ---------------- | -------------- | ------------- | --------- | -------------- |
+| The Vault Keeper | 3              | 50            | 100       | Keeper's Badge |
+| Chrono Shard     | 5              | 100           | 200       | Time Fragment  |
+| Neon Hydra       | 8              | 200           | 400       | Hydra Scale    |
+| Diamond Golem    | 12             | 500           | 1000      | Diamond Core   |
+
+Boss fights use a reel-based combat system:
+- Player and boss each have independent slot reels with rarity outcomes
+- Player HP: 120; Boss HP: 120 + (requiredLevel - 3) * 8
+- Attack timing window determines quality: Perfect (center), Good, Miss
+- Damage = base rarity damage + quality modifier
+- Player reel odds: 30% common, 35% uncommon, 25% rare, 10% legendary (constant)
+- Boss reel odds: per-boss config, scaled harder by prestige level
+
+### Vault Lock Bonus Mini-Game
+
+Triggered after vault reveal for Platinum/Obsidian/Diamond tiers (chance-based). Three independent reel spinners showing vault tier icons. Player locks each spinner sequentially. Match all 3 for free spins:
+
+| Matched Tier        | Free Spins Awarded |
+| ------------------- | ------------------ |
+| Bronze or Silver    | 1                  |
+| Gold or Platinum    | 2                  |
+| Obsidian or Diamond | 3                  |
+
+Free spins allow vault opens without spending credits (XP still awarded).
+
+### Quests
+
+Quest categories: `onboarding` (cyan), `engagement` (magenta), `milestone` (gold). Quests unlock at specific player levels. Completion awards XP and optional credits. Quest types track: `vault_purchase`, `hold_item`, `cashout_item`, `ship_item`, `marketplace_buy`, `marketplace_list`, `auction_bid`, `spend_amount`.
 
 ### Wallet
 
-Credits are typed: `incentive` (non-withdrawable, from waitlist), `earned` (from cashouts/reveals), `spent` (purchases). Balance = sum of all transaction amounts. Starting demo balance: +100 earned.
+Credits are typed: `incentive` (non-withdrawable, from waitlist), `earned` (from cashouts/reveals/boss rewards), `spent` (purchases). Balance = sum of all transaction amounts. Starting demo balance: +100 earned.
 
-### Waitlist Incentive Tiers (4 tiers, 450 total spots)
+### Waitlist Incentive Tiers (4 tiers, 400 total spots)
 
 | Tier         | Positions | Credit | Color             |
 | ------------ | --------- | ------ | ----------------- |
-| Founder      | 1–50      | $200   | Gold `#ffd700`    |
-| Early Access | 51–150    | $100   | Magenta `#ff2d95` |
-| Beta         | 151–350   | $50    | Cyan `#00f0ff`    |
-| Early Bird   | 351–450   | $25    | Green `#39ff14`   |
+| Founder      | 1-25      | $100   | Gold `#ffd700`    |
+| Early Access | 26-50     | $75    | Magenta `#ff2d95` |
+| Beta         | 51-75     | $50    | Cyan `#00f0ff`    |
+| Early Bird   | 76-100    | $25    | Green `#39ff14`   |
+
+Credits are applied to vault purchases and cannot be withdrawn as cash.
 
 ## Design Tokens (defined in src/index.css @theme)
 
@@ -119,24 +172,35 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 | `--color-success`          | #00f0ff | Success states                    |
 | `--color-error`            | #ff3b5c | Error states                      |
 
+### Prestige Theme Overrides
+
+Applied via `html[data-prestige="N"]` in CSS. Each prestige level overrides `--color-accent`, `--color-accent-hover`, and related tokens to shift the entire UI palette.
+
 ## Custom Utility Classes (defined in src/index.css @layer utilities)
 
-| Class                       | Effect                                       |
-| --------------------------- | -------------------------------------------- |
-| `.glow-magenta`             | Magenta box-shadow glow                      |
-| `.glow-cyan`                | Cyan box-shadow glow                         |
-| `.text-glow-magenta`        | Magenta text-shadow                          |
-| `.text-glow-cyan`           | Cyan text-shadow                             |
-| `.text-glow-white`          | White text-shadow                            |
-| `.bg-clip-text`             | Background-clip text fix (Firefox)           |
-| `.animate-gradient`         | Animated gradient background flow            |
-| `.bg-300%`                  | 300% background-size for gradient animations |
-| `.animate-vault-spin-slow`  | Slow 60s rotation (vault rings)              |
-| `.animate-vault-glow-pulse` | Pulsing opacity glow (vault door)            |
-| `.animate-spin-slow`        | Moderate 8s rotation (reveal rays)           |
-| `.animate-hud-shimmer`      | Subtle shimmer on HUD values                 |
-| `.animate-urgency-pulse`    | Pulsing opacity for auction countdown < 5min |
-| `.pushable`                 | 3D pushable button (Josh Comeau pattern)     |
+| Class                        | Effect                                                   |
+| ---------------------------- | -------------------------------------------------------- |
+| `.glow-magenta`              | Magenta box-shadow glow                                  |
+| `.glow-cyan`                 | Cyan box-shadow glow                                     |
+| `.text-glow-magenta`         | Magenta text-shadow                                      |
+| `.text-glow-cyan`            | Cyan text-shadow                                         |
+| `.text-glow-green`           | Green text-shadow                                        |
+| `.text-glow-white`           | White text-shadow                                        |
+| `.bg-clip-text`              | Background-clip text fix (Firefox)                       |
+| `.animate-gradient`          | Animated gradient background flow                        |
+| `.bg-300%`                   | 300% background-size for gradient animations             |
+| `.animate-vault-spin-slow`   | Slow 60s rotation (vault rings)                          |
+| `.animate-vault-glow-pulse`  | Pulsing opacity glow (vault door)                        |
+| `.animate-spin-slow`         | Moderate 8s rotation (reveal rays)                       |
+| `.animate-hud-shimmer`       | Subtle shimmer on HUD values                             |
+| `.animate-urgency-pulse`     | Pulsing opacity for auction countdown < 5min             |
+| `.animate-legendary-breathe` | Breathing glow for legendary items                       |
+| `.animate-rainbow-border`    | Rainbow cycling border for Vault Lock escalation         |
+| `.animate-edge-lightning`    | Edge lightning effect for Vault Lock jackpot             |
+| `.glow-rarity-*`             | Per-rarity glow effects (common/uncommon/rare/legendary) |
+| `.shake-light`               | Light screen shake (boss fight moderate damage)          |
+| `.shake-heavy`               | Heavy screen shake (boss fight high damage)              |
+| `.pushable`                  | 3D pushable button (Josh Comeau pattern)                 |
 
 ## Page Structure
 
@@ -150,34 +214,39 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 7. **Footer** — Brand + feedback link + copyright
 
 ### Demo Game Page (`/play`)
-1. **Navbar** — Fixed nav with HUD (credits/loot/level)
-2. **VaultGrid** — Category selector, 6 vault cards, full-screen 4-stage reveal overlay
-3. **Tutorial** — Guided first-time onboarding overlay (welcome → HUD → categories → open vault → pick box → result actions) with skip support
+1. **Navbar** — Fixed nav with HUD (credits/loot/level/free spins)
+2. **VaultGrid** — Category selector, 6 vault cards, full-screen multi-stage reveal overlay, Vault Lock bonus stage
+3. **Tutorial** — Guided first-time onboarding overlay (welcome -> HUD -> categories -> open vault -> pick box -> result actions) with skip support
 4. **TutorialHelpButton** — Floating "?" to replay tutorial (visible after completion)
 5. **Footer** — Brand + feedback link + copyright
 
 ### Shop Page (`/shop`)
 1. **Navbar** — Fixed nav with HUD
 2. **ShopTabs** — Listings + Auctions tabs with buy/bid functionality
-3. **Footer**
+3. **PageTutorial** — First-time shop tutorial
+4. **Footer**
 
 ### Inventory Page (`/inventory`)
 1. **Navbar** — Fixed nav with HUD
-2. **InventoryGrid** — Owned items grid with status filter, Hold/Ship/Cashout actions
-3. **Footer**
+2. **InventoryGrid** — Owned items grid with status filter, Hold/Ship/Cashout/List actions
+3. **PageTutorial** — First-time inventory tutorial
+4. **Footer**
 
 ### Profile Page (`/profile`)
 1. **Navbar** — Fixed nav with HUD
-2. **ProfilePanel** — XP bar, level, stats, boss fight cards
-3. **QuestList** — Active quests with progress tracking
-4. **Reset Demo** — Button to clear all progress
-5. **Footer**
+2. **ProfilePanel** — XP bar, level, stats, boss fight cards with BossFightOverlay
+3. **PrestigeButton** — Shown when level >= 10 and prestige < 3; triggers PrestigeOverlay
+4. **QuestList** — Active quests with progress tracking
+5. **Reset Demo** — Button to clear all progress
+6. **PageTutorial** — First-time profile tutorial
+7. **Footer**
 
 ### Wallet Page (`/wallet`)
 1. **Navbar** — Fixed nav with HUD
 2. **WalletHeader** — Credit balance summary
 3. **TransactionList** — Filterable credit transaction history
-4. **Footer**
+4. **PageTutorial** — First-time wallet tutorial
+5. **Footer**
 
 ## Source Files
 
@@ -190,20 +259,20 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 | `pages/PlayPage.tsx`      | Game page with tutorial integration                                        |
 | `pages/ShopPage.tsx`      | Shop page — listings + auctions via ShopTabs                               |
 | `pages/InventoryPage.tsx` | Inventory page — loot grid with status filter                              |
-| `pages/ProfilePage.tsx`   | Profile page — XP, quests, boss fights, demo reset                         |
+| `pages/ProfilePage.tsx`   | Profile page — XP, quests, boss fights, prestige, demo reset               |
 | `pages/WalletPage.tsx`    | Wallet page — credit balance + transaction history                         |
 
 ### Components — Shared (`components/shared/`)
 
-| File                        | Description                                                             |
-| --------------------------- | ----------------------------------------------------------------------- |
-| `shared/Navbar.tsx`         | Fixed nav with optional HUD (credits/loot/level) + contextual nav links |
-| `shared/Footer.tsx`         | Footer with branding + feedback link                                    |
-| `shared/PlayNowButton.tsx`  | 3D pushable CTA button with analytics tracking                          |
-| `shared/FeedbackButton.tsx` | Google Form feedback button (graceful no-op when env var missing)       |
-| `shared/QuestToast.tsx`     | Quest completion toast notification                                     |
-| `shared/PageTutorial.tsx`   | Reusable page tutorial overlay with welcome/spotlight/complete steps + skip + viewport-clamped tooltips |
-| `shared/TutorialHelpButton.tsx` | Floating "?" button to replay a page tutorial                       |
+| File                              | Description                                                             |
+| --------------------------------- | ----------------------------------------------------------------------- |
+| `shared/Navbar.tsx`               | Fixed nav with optional HUD (credits/loot/level) + contextual nav links |
+| `shared/Footer.tsx`               | Footer with branding + feedback link                                    |
+| `shared/PlayNowButton.tsx`        | 3D pushable CTA button with analytics tracking                          |
+| `shared/FeedbackButton.tsx`       | Google Form feedback button (graceful no-op when env var missing)       |
+| `shared/QuestToast.tsx`           | Quest completion toast notification                                     |
+| `shared/PageTutorial.tsx`         | Reusable page tutorial overlay with welcome/spotlight/complete steps + skip + viewport-clamped tooltips |
+| `shared/TutorialHelpButton.tsx`   | Floating "?" button to replay a page tutorial                           |
 
 ### Components — Landing
 
@@ -221,11 +290,12 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 
 ### Components — Vault (`components/vault/`)
 
-| File                   | Description                                                                            |
-| ---------------------- | -------------------------------------------------------------------------------------- |
-| `vault/VaultGrid.tsx`  | Category selector, vault cards + full-screen 4-stage reveal overlay (uses GameContext) |
-| `vault/VaultCard.tsx`  | Individual vault card with rarity bars                                                 |
-| `vault/VaultIcons.tsx` | SVG mineral/ore icon mapper per tier (delegates to `assets/vault-icons.tsx`)           |
+| File                              | Description                                                                            |
+| --------------------------------- | -------------------------------------------------------------------------------------- |
+| `vault/VaultGrid.tsx`             | Category selector, vault cards + full-screen reveal overlay + bonus stage integration  |
+| `vault/VaultCard.tsx`             | Individual vault card with rarity bars                                                 |
+| `vault/VaultIcons.tsx`            | SVG mineral/ore icon mapper per tier (delegates to `assets/vault-icons.tsx`)           |
+| `vault/VaultLockBonusStage.tsx`   | 3-reel Vault Lock mini-game with cascading lock, escalating effects, free spin rewards |
 
 ### Components — Shop (`components/shop/`)
 
@@ -246,12 +316,15 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 
 ### Components — Profile (`components/profile/`)
 
-| File                        | Description                            |
-| --------------------------- | -------------------------------------- |
-| `profile/ProfilePanel.tsx`  | XP bar, level, stats, boss fights grid |
-| `profile/BossFightCard.tsx` | Locked/unlocked boss fight card        |
-| `profile/QuestCard.tsx`     | Quest card with progress bar           |
-| `profile/QuestList.tsx`     | Quest list with category filter        |
+| File                            | Description                                                              |
+| ------------------------------- | ------------------------------------------------------------------------ |
+| `profile/ProfilePanel.tsx`      | XP bar, level, stats, boss fights grid                                   |
+| `profile/BossFightCard.tsx`     | Locked/unlocked boss fight card                                          |
+| `profile/BossFightOverlay.tsx`  | Full-screen reel-based combat UI with HP bars, attack timing, tutorials  |
+| `profile/PrestigeButton.tsx`    | Prestige trigger button (shown at Level 10+, max prestige 3)            |
+| `profile/PrestigeOverlay.tsx`   | Prestige celebration with particle effects, benefit badges, phase reveal |
+| `profile/QuestCard.tsx`         | Quest card with progress bar                                             |
+| `profile/QuestList.tsx`         | Quest list with category filter                                          |
 
 ### Components — Wallet (`components/wallet/`)
 
@@ -263,8 +336,8 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 
 ### Components — Tutorial
 
-| File                      | Description                                                    |
-| ------------------------- | -------------------------------------------------------------- |
+| File                      | Description                                                              |
+| ------------------------- | ------------------------------------------------------------------------ |
 | `components/Tutorial.tsx` | Guided first-time vault tutorial with spotlight + tooltips + skip support |
 
 ### Types (`types/`)
@@ -276,30 +349,32 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 | `types/inventory.ts`    | `ItemStatus`, `InventoryItem`, `InventoryItemCardProps`                                                     |
 | `types/marketplace.ts`  | `MarketplaceListing`, `Auction`, `AuctionCardProps`                                                         |
 | `types/wallet.ts`       | `CreditType`, `CreditTransaction`, `TransactionRowProps`                                                    |
-| `types/gamification.ts` | `LevelInfo`, `BossFight`, `BossFightCardProps`                                                              |
+| `types/gamification.ts` | `PrestigeLevel`, `LevelInfo`, `BossFight`, `BossFightCardProps`, `AttackQuality`, `DamageResult`            |
 | `types/quest.ts`        | `Quest`, `QuestProgress`, `QuestToast`, `QuestCardProps`, `QuestRequirement` + related union types          |
 | `types/landing.ts`      | `Step`, `IncentiveTier`, `IncentiveBannerProps`, `WaitlistFormProps`, `TurnstileWidget*`, `NavbarProps`     |
 | `types/tutorial.ts`     | `TutorialStep`, `TutorialProps` (with `onSkip`), `TargetRect`, `PageTutorialStepConfig`, `PageTutorialProps` |
+| `types/bonus.ts`        | `VaultLockPhase`, `VaultLockSlot`, `VaultLockBonusStageProps`, `FREE_SPIN_REWARDS`                          |
 
 ### Data (`data/`)
 
-| File                   | Description                                                              |
-| ---------------------- | ------------------------------------------------------------------------ |
-| `data/vaults.ts`       | Vault tiers, rarity config, pick helpers, incentive tiers, product types |
-| `data/gamification.ts` | XP formulas, level curve functions, boss fight config                    |
-| `data/mock-data.ts`    | Seed marketplace listings + auctions with mock sellers                   |
-| `data/quests.ts`       | Quest definitions (onboarding, engagement, milestone categories)         |
-| `data/tutorial.ts`     | Tutorial step flow, overlay/tooltip step configs, page tutorial step definitions |
-| `data/inventory.ts`    | Inventory status filter config                                           |
-| `data/wallet.ts`       | Wallet/credit type display config                                        |
+| File                   | Description                                                                          |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| `data/vaults.ts`       | Vault tiers, rarity config, pick helpers, incentive tiers, product types, vault lock strip generation, prestige odds |
+| `data/gamification.ts` | XP formulas, level curve functions, boss fight config + odds, prestige boss scaling   |
+| `data/mock-data.ts`    | Seed marketplace listings + auctions with mock sellers                               |
+| `data/quests.ts`       | Quest definitions (onboarding, engagement, milestone categories)                     |
+| `data/tutorial.ts`     | Tutorial step flow, overlay/tooltip step configs, page tutorial steps (play, wallet, profile, inventory, shop, boss fight) |
+| `data/inventory.ts`    | Inventory status filter config                                                       |
+| `data/wallet.ts`       | Wallet/credit type display config                                                    |
 
 ### Assets (`assets/`)
 
-| File                        | Description                                    |
-| --------------------------- | ---------------------------------------------- |
-| `assets/vault-icons.tsx`    | SVG mineral/ore icon functions per tier        |
-| `assets/step-icons.tsx`     | SVG illustrations + icons for HowItWorks steps |
-| `assets/benefits-icons.tsx` | SVG icons for AppPreview benefits list         |
+| File                        | Description                                                    |
+| --------------------------- | -------------------------------------------------------------- |
+| `assets/vault-icons.tsx`    | SVG mineral/ore icon functions per tier                        |
+| `assets/step-icons.tsx`     | SVG illustrations + icons for HowItWorks steps                 |
+| `assets/benefits-icons.tsx` | SVG icons for AppPreview benefits list                         |
+| `assets/boss-icons.tsx`     | SVG icons for 4 boss fights (Vault Keeper, Chrono Shard, Neon Hydra, Diamond Golem) |
 
 ### Hooks
 
@@ -316,14 +391,16 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 | `lib/posthog.ts`           | PostHog client init (graceful no-op when unconfigured)                    |
 | `lib/analytics.ts`         | Thin analytics wrapper — `trackEvent`, `trackPageView`, `AnalyticsEvents` |
 | `lib/disposable-emails.ts` | Disposable email domain checker                                           |
-| `lib/motion-presets.ts`    | Shared Motion transition presets, glow constants, animation variants      |
+| `lib/motion-presets.ts`    | Shared Motion transition presets, glow constants, rarity configs, celebration springs |
 
 ### Supabase
 
 | File                                          | Description                                                            |
 | --------------------------------------------- | ---------------------------------------------------------------------- |
-| `supabase/functions/waitlist-signup/index.ts` | Edge Function — Turnstile verify, rate limit, disposable check, insert |
-| `supabase/migrations/005_spam_hardening.sql`  | Migration — ip_address column, rate_limits table, drop anon INSERT     |
+| `supabase/functions/waitlist-signup/index.ts`  | Edge Function — Turnstile verify, rate limit, disposable check, insert |
+| `supabase/functions/waitlist-count/index.ts`   | Edge Function — GET endpoint returning current waitlist count with 15s cache |
+| `supabase/migrations/20260218052432_init.sql`  | Squashed baseline schema — waitlist + rate_limits tables               |
+| `supabase/seed/waitlist.sql`                   | Seed data for local development                                        |
 
 ### Static Assets
 
@@ -331,9 +408,23 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 | ----------------------------- | -------------------------------------------------- |
 | `public/images/how-it-works/` | 6 HowItWorks step images (served as static assets) |
 
+## Documentation
+
+| File                                   | Description                                            |
+| -------------------------------------- | ------------------------------------------------------ |
+| `docs/STYLES.md`                       | Design system and style guide                          |
+| `docs/POSTHOG_EVENTS.md`              | Analytics event reference with funnel suggestions      |
+| `docs/IMAGE_GENERATION.md`            | 3D render system specs for consistent visual universe  |
+| `docs/how-it-works-prompts/*.md`       | 6 Midjourney/3D prompts for HowItWorks step images    |
+| `docs/marketing/MARKETING_PLAN.md`    | 14-day content sprint with daily schedule              |
+| `docs/marketing/ICP.md`               | Ideal customer profiles                                |
+| `docs/marketing/MESSAGING.md`         | Positioning, headlines, CTAs                           |
+| `docs/marketing/ANALYTICS.md`         | UTM convention, PostHog event mapping, funnels, dashboard |
+| `docs/marketing/EXPERIMENTS.md`       | ICE-scored growth experiments                          |
+
 ## Documentation Lookup
 
-- **Always check Context7** (via `resolve-library-id` → `query-docs`) before writing or modifying code that uses any library or framework. This ensures implementations use up-to-date APIs and best practices rather than relying on potentially outdated training data.
+- **Always check Context7** (via `resolve-library-id` -> `query-docs`) before writing or modifying code that uses any library or framework. This ensures implementations use up-to-date APIs and best practices rather than relying on potentially outdated training data.
 
 ## Coding Conventions
 
@@ -342,26 +433,56 @@ Cyber synth aesthetic: magenta neon + green neon + cyan on dark blue-shifted bac
 - Props interfaces named `{ComponentName}Props`
 - Tailwind utility classes directly on elements (no @apply except in index.css)
 - Motion animations: keep lightweight — subtle hovers, gentle scroll reveals, polished form feedback
+- `useReducedMotion()` from Motion used in complex animations (boss fights, prestige, vault lock) for accessibility
 - Mobile-first responsive design: use `sm:`, `md:`, `lg:` breakpoints for progressive enhancement
 - One hook per file in `hooks/`
 - Relative imports (no path aliases configured)
-- Game state accessed via `useGame()` hook from GameContext — never local state for credits/inventory/XP
-- Types organized by domain in `types/` — import from domain file in new code (e.g. `types/vault`, `types/quest`); `types/game.ts` barrel re-export maintained for backwards compatibility
+- Game state accessed via `useGame()` hook from GameContext — never local state for credits/inventory/XP/prestige/boss fights
+- Types organized by domain in `types/` — import from domain file in new code (e.g. `types/vault`, `types/quest`, `types/bonus`); `types/game.ts` barrel re-export maintained for backwards compatibility
 - Components organized by domain: `shared/`, `vault/`, `shop/`, `inventory/`, `profile/`, `wallet/`
-- SVG icon assets in `assets/` (vault-icons, step-icons, benefits-icons), not inline in components
+- SVG icon assets in `assets/` (vault-icons, step-icons, benefits-icons, boss-icons), not inline in components
 - Static images in `public/` for production-safe paths (not `src/assets/`)
+- All page tutorials follow the PageTutorial pattern: welcome step -> spotlight steps -> complete step, with skip support and localStorage persistence via GameContext
+
+## GameContext State Shape
+
+Persisted to `localStorage` key `vaultedlabs-game-state`:
+
+```typescript
+interface PersistedState {
+  creditTransactions: CreditTransaction[];
+  inventory: InventoryItem[];
+  xp: number;
+  listings: MarketplaceListing[];
+  auctions: Auction[];
+  questProgress: QuestProgress[];
+  hasSeenTutorial: boolean;          // /play vault tutorial
+  hasSeenWalletTutorial: boolean;
+  hasSeenProfileTutorial: boolean;
+  hasSeenInventoryTutorial: boolean;
+  hasSeenShopTutorial: boolean;
+  hasSeenBossFightTutorial: boolean;
+  prestigeLevel: number;             // 0-3
+  defeatedBosses: string[];          // ["boss-1", ...]
+  freeSpins: number;                 // from Vault Lock bonus
+  nextId: number;
+}
+```
+
+Key context methods: `purchaseVault`, `addItem`, `cashoutItem`, `shipItem`, `listItem`, `buyListing`, `placeBid`, `prestige`, `defeatBoss`, `grantFreeSpins`, `useFreeSpinForVault`, `tutorialOpenVault`, `seedDemoItem`, `removeDemoItem`, `resetDemo`.
 
 ## Commands
 
 ```bash
 npm run dev      # Start dev server (localhost:5173)
-npm run build    # Production build to dist/
+npm run build    # tsc -b && vite build — production build to dist/
+npm run lint     # ESLint
 npm run preview  # Preview production build locally
 ```
 
 ## Environment Variables
 
-Supabase credentials in `.env` (not committed):
+Client-side in `.env` (not committed):
 
 - `VITE_SUPABASE_URL` — Supabase project URL
 - `VITE_SUPABASE_DEFAULT_API_KEY` — Supabase anon/public key
@@ -380,22 +501,31 @@ Server-side secrets (set in Supabase Edge Function config, not in `.env`):
 
 ## Supabase Schema
 
-### Active: `waitlist` table
+### Active Tables
 
 ```sql
+-- Waitlist
 CREATE TABLE waitlist (
   id serial PRIMARY KEY,
   email text UNIQUE NOT NULL,
+  created_at timestamptz DEFAULT now(),
   credit_amount integer DEFAULT 0,
   tier text DEFAULT NULL,
-  created_at timestamptz DEFAULT now()
+  ip_address text DEFAULT NULL
+);
+
+-- Rate limiting (service-role only)
+CREATE TABLE waitlist_rate_limits (
+  id serial PRIMARY KEY,
+  ip_address text NOT NULL,
+  attempted_at timestamptz DEFAULT now()
 );
 ```
 
-RLS: anonymous select enabled. Inserts go through the `waitlist-signup` Edge Function (service role key), not the anon key.
+Both tables have RLS enabled. Anonymous select on `waitlist` only. Inserts go through Edge Functions (service role key).
 
-**Architecture**: `Browser → Edge Function (waitlist-signup) → supabase insert [service role key]`. The anon INSERT policy has been dropped; only the Edge Function can write to `waitlist`.
+**Architecture**: `Browser -> Edge Function (waitlist-signup) -> supabase insert [service role key]`. The anon INSERT policy has been dropped; only the Edge Function can write to `waitlist`. Count retrieved via `waitlist-count` Edge Function (GET, 15s cache).
 
 ### Phase 2 (designed, not yet wired): Marketplace tables
 
-Migration `004_marketplace_schema.sql` defines: `user_profiles`, `inventory_items`, `credit_transactions`, `marketplace_listings`, `auctions`, `auction_bids`. All with RLS policies for authenticated users. Currently, marketplace state is managed in-memory via GameContext with mock data.
+Planned: `user_profiles`, `inventory_items`, `credit_transactions`, `marketplace_listings`, `auctions`, `auction_bids`. All with RLS policies for authenticated users. Currently, marketplace state is managed in-memory via GameContext with mock data.

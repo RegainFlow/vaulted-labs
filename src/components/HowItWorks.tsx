@@ -31,7 +31,7 @@ const vaultSteps: Step[] = [
     number: "02",
     title: "Reveal Your Collectible",
     description:
-      "Select a mystery box and watch the reel spin. Premium vaults can trigger a bonus spin — land a higher rarity and your item upgrades instantly.",
+      "Select a mystery box and watch the rarity reel spin. Premium vaults (Platinum+) can trigger a Vault Lock bonus round — match vault tier icons across 3 spinners to win free spins.",
     illustration: <MysteryBoxIllustration />,
     image: "2_reveal_collectible.png",
     iconColor: "text-neon-cyan",
@@ -41,7 +41,7 @@ const vaultSteps: Step[] = [
     number: "03",
     title: "Hold, Ship, or Cashout",
     description:
-      "Your item, your call. Store it in your digital vault, ship the physical collectible to your door, or cash out instantly for credits you can withdraw as real cash.",
+      "Your item, your call. Store it in your digital vault, ship the physical collectible to your door, or cash out instantly for platform credits.",
     illustration: <DecisionIllustration />,
     image: "3_hold_ship_cash.png",
     iconColor: "text-neon-green",
@@ -74,7 +74,7 @@ const platformSteps: Step[] = [
     number: "06",
     title: "Credits Fuel Everything",
     description:
-      "Earn credits from cashouts, boss fights, quests, and rewards. Spend them on vaults and marketplace items — or withdraw as real cash. The loop never stops.",
+      "Earn credits from cashouts, boss fights, quests, and rewards. Spend them on vaults and marketplace items. The loop never stops.",
     illustration: <CoinsIllustration />,
     image: "6_credits.jpg",
     iconColor: "text-vault-gold",

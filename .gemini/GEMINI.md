@@ -14,7 +14,9 @@ VaultedLabs is a gamified commerce platform. Users open "Vaults" to reveal colle
 - **Animations**: Motion (formerly Framer Motion) — import from `motion/react`
 - **Typewriter**: Typed.js — hero subtitle typing animation
 - **Backend**: Supabase (waitlist email capture + real-time count; marketplace schema designed for Phase 2)
-- **Analytics**: PostHog (`posthog-js`) — custom events, funnels, heatmaps (see `docs/POSTHOG_EVENTS.md`)
+- **Analytics**: 
+  - **PostHog**: Custom events, funnels, heatmaps (see `docs/POSTHOG_EVENTS.md`). Use `trackEvent` from `src/lib/analytics.ts`.
+  - **Vercel Analytics**: Page views and custom conversion events.
 - **Anti-bot**: Cloudflare Turnstile, server-side rate limiting, honeypot field, timing check, disposable email blocklist
 - **Deployment target**: Vercel (SPA rewrite in `vercel.json`)
 
@@ -26,21 +28,21 @@ VaultedLabs is a gamified commerce platform. Users open "Vaults" to reveal colle
 
 ### Vault Levels (6 tiers)
 
-| Level    | Price  | Common | Uncommon | Rare  | Legendary |
-| -------- | ------ | ------ | -------- | ----- | --------- |
-| Bronze   | $19.99 | 55.0%  | 25.0%    | 17.0% | 3.0%      |
-| Silver   | $29.99 | 52.0%  | 26.0%    | 17.5% | 4.5%      |
-| Gold     | $44.99 | 48.0%  | 28.0%    | 18.0% | 6.0%      |
-| Platinum | $59.99 | 45.0%  | 28.0%    | 19.5% | 7.5%      |
-| Obsidian | $74.99 | 42.0%  | 27.0%    | 21.0% | 10.0%     |
-| Diamond  | $89.99 | 38.0%  | 26.0%    | 23.0% | 13.0%     |
+| Level    | Price  | Common | Uncommon | Rare  | Legendary | Token |
+| -------- | ------ | ------ | -------- | ----- | --------- | ----- |
+| Bronze   | $19.99 | 55.0%  | 25.0%    | 17.0% | 3.0%      | `vault-bronze` |
+| Silver   | $29.99 | 52.0%  | 26.0%    | 17.5% | 4.5%      | `vault-silver` |
+| Gold     | $44.99 | 48.0%  | 28.0%    | 18.0% | 6.0%      | `vault-gold` |
+| Platinum | $59.99 | 45.0%  | 28.0%    | 19.5% | 7.5%      | *(inline)* |
+| Obsidian | $74.99 | 42.0%  | 27.0%    | 21.0% | 10.0%     | *(inline)* |
+| Diamond  | $89.99 | 38.0%  | 26.0%    | 23.0% | 13.0%     | `vault-diamond` |
 
 ### Rarity Value Multipliers (of vault price)
 
-- **Common**: 0.40x – 0.85x
-- **Uncommon**: 0.85x – 1.40x
-- **Rare**: 1.40x – 2.20x
-- **Legendary**: 2.20x – 3.50x
+- **Common**: 0.40x – 0.85x (`rarity-common`: #6B7280)
+- **Uncommon**: 0.85x – 1.40x (`rarity-uncommon`: #3B82F6)
+- **Rare**: 1.40x – 2.20x (`rarity-rare`: #a855f7)
+- **Legendary**: 2.20x – 3.50x (`rarity-legendary`: #FFD700)
 
 ### User Behavior Rates
 
@@ -77,6 +79,7 @@ Detailed in `docs/STYLES.md`.
 | --- | --- | --- |
 | `--color-bg` | #0a0a0f | Dark background |
 | `--color-surface` | #111118 | Card surfaces |
+| `--color-surface-elevated` | #1a1a24 | Elevated panels |
 | `--color-accent` | #ff2d95 | Magenta neon (Primary CTA) |
 | `--color-neon-cyan` | #00f0ff | Cyan neon (Focus/Hold) |
 | `--color-neon-green` | #39ff14 | Green neon (Success/Mint) |
@@ -99,6 +102,7 @@ Detailed in `docs/STYLES.md`.
 - **State**: Access via `useGame()`. Never use local state for global game values.
 - **Responsive**: Mobile-first (`sm:`, `md:`, `lg:`).
 - **Icons**: Shared SVG components in `assets/`. Do not inline unless unique.
+- **Analytics**: Always use `trackEvent(AnalyticsEvents.EVENT_NAME, { ...props })` from `src/lib/analytics.ts`. Never import `posthog-js` directly into components.
 - **Verification**: Run `npm run lint`, `tsc -b`, and `npm run build` after major changes.
 
 ## Source Files & Directory Structure

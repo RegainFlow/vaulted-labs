@@ -1,32 +1,49 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// Follow this setup guide to integrate the Deno language server with your editor:
+// https://deno.land/manual/getting_started/setup_your_environment
+// This enables autocomplete, go to definition, etc.
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS"
-};
+// Setup type definitions for built-in Supabase Runtime APIs
+import { corsHeaders } from "jsr:@supabase/supabase-js@2/cors";
+import { createClient } from "npm:@supabase/supabase-js@2";
 
-const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-
-// Tier calculation — mirrors src/data/vaults.ts getActiveTierInfo()
-const INCENTIVE_TIERS = [
-  { label: "founder", creditAmount: 200, endAt: 50 },
-  { label: "early_access", creditAmount: 100, endAt: 150 },
-  { label: "beta", creditAmount: 50, endAt: 350 },
-  { label: "early_bird", creditAmount: 25, endAt: 450 }
+const INCENTIVE_TIERS: IncentiveTier[] = [
+  {
+    label: "Founder",
+    creditAmount: 100,
+    endAt: 25,
+  },
+  {
+    label: "Early Access",
+    creditAmount: 75,
+    endAt: 50,
+  },
+  {
+    label: "Beta",
+    creditAmount: 50,
+    endAt: 75,
+  },
+  {
+    label: "Early Bird",
+    creditAmount: 25,
+    endAt: 100,
+  },
 ];
 
-function getTierForCount(count: number): {
-  tier: string | null;
-  creditAmount: number;
-} {
-  for (const t of INCENTIVE_TIERS) {
-    if (count < t.endAt) {
-      return { tier: t.label, creditAmount: t.creditAmount };
-    }
-  }
-  return { tier: null, creditAmount: 0 };
+const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+const TURNSTILE_VERIFY_URL =
+  "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY =
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
+const supabaseAdmin =
+  SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    : null;
+
+interface TurnstileVerificationResponse {
+  success: boolean;
+  ["error-codes"]?: string[];
 }
 
 // Disposable email domain blocklist — fetched once, cached in module scope
@@ -53,6 +70,18 @@ async function loadDisposableDomains(): Promise<Set<string>> {
   return disposableDomainsCache;
 }
 
+function getTierForCount(count: number): {
+  tier: string | null;
+  creditAmount: number;
+} {
+  for (const t of INCENTIVE_TIERS) {
+    if (count < t.endAt) {
+      return { tier: t.label, creditAmount: t.creditAmount };
+    }
+  }
+  return { tier: null, creditAmount: 0 };
+}
+
 function getClientIP(req: Request): string {
   const forwarded = req.headers.get("x-forwarded-for");
   if (forwarded) return forwarded.split(",")[0].trim();
@@ -62,8 +91,48 @@ function getClientIP(req: Request): string {
 function jsonResponse(body: Record<string, unknown>, status: number) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" }
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+function getTurnstileSecret() {
+  return (
+    Deno.env.get("CLOUDFLARE_TURNSTILE_SECRET_KEY") ??
+    Deno.env.get("CLOUDFLARE_SECRET_KEY") ??
+    Deno.env.get("TURNSTILE_SECRET_KEY") ??
+    ""
+  );
+}
+
+async function verifyTurnstile(token: string, ipAddress: string) {
+  const secret = getTurnstileSecret();
+  if (!secret) {
+    return true;
+  }
+
+  const formData = new FormData();
+  formData.append("secret", secret);
+  formData.append("response", token);
+  if (ipAddress && ipAddress !== "unknown") {
+    formData.append("remoteip", ipAddress);
+  }
+
+  const verifyRes = await fetch(TURNSTILE_VERIFY_URL, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!verifyRes.ok) {
+    return false;
+  }
+
+  const verification =
+    (await verifyRes.json()) as TurnstileVerificationResponse;
+  if (!verification.success) {
+    console.warn("Turnstile verification failed:", verification["error-codes"]);
+  }
+
+  return verification.success;
 }
 
 Deno.serve(async (req) => {
@@ -77,31 +146,28 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { email, turnstileToken } = await req.json();
+    const { email, token, turnstileToken } = await req.json();
 
     // --- Turnstile verification ---
-    const turnstileSecret = Deno.env.get("TURNSTILE_SECRET_KEY");
-    if (turnstileSecret) {
-      if (!turnstileToken) {
-        return jsonResponse(
-          { error: "Bot verification failed. Please try again." },
-          403
-        );
-      }
-      const verifyRes = await fetch(
-        "https://challenges.cloudflare.com/turnstile/v0/siteverify",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            secret: turnstileSecret,
-            response: turnstileToken,
-            remoteip: getClientIP(req)
-          })
-        }
+    const turnstileSecret = getTurnstileSecret();
+    const captchaToken =
+      typeof token === "string"
+        ? token
+        : typeof turnstileToken === "string"
+          ? turnstileToken
+          : "";
+
+    if (turnstileSecret && !captchaToken) {
+      return jsonResponse(
+        { error: "Bot verification failed. Please try again." },
+        403
       );
-      const verifyData = await verifyRes.json();
-      if (!verifyData.success) {
+    }
+
+    const ip = getClientIP(req);
+    if (turnstileSecret) {
+      const verified = await verifyTurnstile(captchaToken, ip);
+      if (!verified) {
         return jsonResponse(
           { error: "Bot verification failed. Please try again." },
           403
@@ -128,16 +194,13 @@ Deno.serve(async (req) => {
       );
     }
 
-    // --- Supabase client (service role) ---
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-    const ip = getClientIP(req);
+    if (!supabaseAdmin) {
+      return jsonResponse({ error: "Server is not configured." }, 500);
+    }
 
     // --- Rate limiting ---
     const oneMinuteAgo = new Date(Date.now() - 60 * 1000).toISOString();
-    const { count: minuteCount } = await supabase
+    const { count: minuteCount } = await supabaseAdmin
       .from("waitlist_rate_limits")
       .select("*", { count: "exact", head: true })
       .eq("ip_address", ip)
@@ -151,7 +214,7 @@ Deno.serve(async (req) => {
     }
 
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-    const { count: hourCount } = await supabase
+    const { count: hourCount } = await supabaseAdmin
       .from("waitlist_rate_limits")
       .select("*", { count: "exact", head: true })
       .eq("ip_address", ip)
@@ -165,18 +228,21 @@ Deno.serve(async (req) => {
     }
 
     // --- Get verified waitlist count for tier calculation ---
-    const { count: waitlistCount } = await supabase
+    const { count: waitlistCount } = await supabaseAdmin
       .from("waitlist")
       .select("*", { count: "exact", head: true });
 
     const { tier, creditAmount } = getTierForCount(waitlistCount ?? 0);
 
     // --- Insert into waitlist ---
-    const { error: insertError } = await supabase
-      .from("waitlist")
-      .insert([
-        { email: cleanEmail, credit_amount: creditAmount, tier, ip_address: ip }
-      ]);
+    const { error: insertError } = await supabaseAdmin.from("waitlist").insert([
+      {
+        email: cleanEmail,
+        credit_amount: creditAmount,
+        tier,
+        ip_address: ip,
+      },
+    ]);
 
     if (insertError) {
       if (insertError.code === "23505") {
@@ -189,7 +255,9 @@ Deno.serve(async (req) => {
     }
 
     // --- Record rate limit hit ---
-    await supabase.from("waitlist_rate_limits").insert([{ ip_address: ip }]);
+    await supabaseAdmin
+      .from("waitlist_rate_limits")
+      .insert([{ ip_address: ip }]);
 
     return jsonResponse({ success: true, tier, creditAmount }, 200);
   } catch (err) {
@@ -200,3 +268,15 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+/* To invoke locally:
+
+  1. Run `supabase start` (see: https://supabase.com/docs/reference/cli/supabase-start)
+  2. Make an HTTP request:
+
+  curl -i --location --request POST 'http://127.0.0.1:54321/functions/v1/waitlist-signup' \
+    --header 'Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' \
+    --header 'Content-Type: application/json' \
+    --data '{"email":"person@example.com","token":"optional-token"}'
+
+*/

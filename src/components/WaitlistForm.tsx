@@ -6,7 +6,7 @@ import { TurnstileWidget } from "./TurnstileWidget";
 import { FeedbackButton } from "./shared/FeedbackButton";
 import type {
   TurnstileWidgetHandle,
-  WaitlistFormProps
+  WaitlistFormProps,
 } from "../types/landing";
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
@@ -17,7 +17,7 @@ const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as
   | string
   | undefined;
 
-export function WaitlistForm({ count: _count }: WaitlistFormProps) {
+export function WaitlistForm({ count: _count, onJoinSuccess }: WaitlistFormProps) {
   const [email, setEmail] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [status, setStatus] = useState<
@@ -60,7 +60,7 @@ export function WaitlistForm({ count: _count }: WaitlistFormProps) {
       setStatus("error");
       setMessage("INVALID EMAIL FORMAT. CHECK YOUR CREDENTIALS.");
       trackEvent(AnalyticsEvents.WAITLIST_SUBMIT_ERROR, {
-        reason: "invalid_email"
+        reason: "invalid_email",
       });
       return;
     }
@@ -70,42 +70,47 @@ export function WaitlistForm({ count: _count }: WaitlistFormProps) {
       setStatus("error");
       setMessage("DISPOSABLE EMAILS NOT ACCEPTED. USE A PERMANENT ADDRESS.");
       trackEvent(AnalyticsEvents.WAITLIST_SUBMIT_ERROR, {
-        reason: "disposable_email"
-      });
-      return;
-    }
-
-    // --- Graceful degradation: no Supabase URL → mock success ---
-    if (!SUPABASE_URL) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      setStatus("success");
-      setMessage("ACCESS GRANTED. YOU'RE ON THE SECURE LIST.");
-      setEmail("");
-      trackEvent(AnalyticsEvents.WAITLIST_SUBMIT_SUCCESS, {
-        tier: "mock",
-        credit_amount: 0
+        reason: "disposable_email",
       });
       return;
     }
 
     // --- Get Turnstile token (null if widget not rendered) ---
     const turnstileToken = turnstileRef.current?.getResponse() ?? null;
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      setStatus("error");
+      setMessage("VERIFY YOU ARE HUMAN BEFORE JOINING.");
+      trackEvent(AnalyticsEvents.WAITLIST_SUBMIT_ERROR, {
+        reason: "captcha_missing",
+      });
+      return;
+    }
 
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/waitlist-signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: cleanEmail, turnstileToken })
+        body: JSON.stringify({ email: cleanEmail, token: turnstileToken }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
+        if (res.status === 409) {
+          setStatus("success");
+          setMessage("ALREADY REGISTERED. YOU ARE ON THE SECURE LIST.");
+          setEmail("");
+          trackEvent(AnalyticsEvents.WAITLIST_SUBMIT_SUCCESS, {
+            tier: "existing",
+            credit_amount: 0,
+          });
+          return;
+        }
+
         const reasonMap: Record<number, string> = {
           403: "bot_detected",
-          409: "duplicate_email",
           429: "rate_limited",
-          400: "validation_error"
+          400: "validation_error",
         };
         const reason = reasonMap[res.status] ?? "system_error";
 
@@ -125,15 +130,16 @@ export function WaitlistForm({ count: _count }: WaitlistFormProps) {
           : "ACCESS GRANTED. YOU'RE ON THE SECURE LIST."
       );
       setEmail("");
+      onJoinSuccess?.();
       trackEvent(AnalyticsEvents.WAITLIST_SUBMIT_SUCCESS, {
         tier: data.tier,
-        credit_amount: data.creditAmount
+        credit_amount: data.creditAmount,
       });
     } catch {
       setStatus("error");
       setMessage("SYSTEM ERROR. PLEASE TRY AGAIN.");
       trackEvent(AnalyticsEvents.WAITLIST_SUBMIT_ERROR, {
-        reason: "system_error"
+        reason: "system_error",
       });
       turnstileRef.current?.reset();
     }

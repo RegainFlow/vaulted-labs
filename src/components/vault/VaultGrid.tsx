@@ -620,7 +620,7 @@ function VaultOverlay({
                 )}
                 <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white uppercase tracking-tight">Open the Vault</h2>
                 <p className="text-text-muted max-w-lg mx-auto text-xs sm:text-sm md:text-base">
-                  {isTutorial ? <>This one's on us!</> : freeSpins > 0 ? <>Nine chambers. One collectible. <span className="font-bold text-neon-green">Free!</span></> : <>Nine chambers. One collectible. <span className="font-bold" style={{ color: tier.color }}>${tier.price}</span> to open it.</>}
+                  {isTutorial ? <>Pick a box and reveal what's inside.</> : freeSpins > 0 ? <>Nine chambers. One collectible. <span className="font-bold text-neon-green">Free!</span></> : <>Nine chambers. One collectible. <span className="font-bold" style={{ color: tier.color }}>${tier.price}</span> to open it.</>}
                 </p>
                 {purchaseError && <p className="text-error text-sm font-bold">{purchaseError}</p>}
               </div>
@@ -840,8 +840,9 @@ function VaultOverlay({
 export function VaultGrid({
   tutorialStep,
   onTutorialAdvance,
-  onTutorialSetAction
-}: VaultGridProps) {
+  onTutorialSetAction,
+  onOverlayChange
+}: VaultGridProps & { onOverlayChange?: (isOpen: boolean) => void }) {
   const {
     balance,
     purchaseVault,
@@ -859,6 +860,10 @@ export function VaultGrid({
   const overlayKeyRef = useRef(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>("Funko Pop!");
   const [comingSoonCategory, setComingSoonCategory] = useState<string | null>(null);
+
+  useEffect(() => {
+    onOverlayChange?.(selectedVault != null);
+  }, [selectedVault, onOverlayChange]);
 
   const isTutorialActive = tutorialStep != null;
 
@@ -914,8 +919,8 @@ export function VaultGrid({
                     trackEvent(AnalyticsEvents.CTA_CLICK, { cta_name: "community_vote_waitlist", location: "play_categories" });
                     navigate("/");
                     setTimeout(() => {
-                      document.getElementById("waitlist-form")?.scrollIntoView({ behavior: "smooth" });
-                    }, 100);
+                      document.getElementById("waitlist-form")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                    }, 300);
                   }}
                   className="mt-4 inline-flex items-center justify-center px-5 py-2.5 rounded-xl border border-neon-cyan/50 bg-neon-cyan/10 text-neon-cyan text-[10px] sm:text-xs font-black uppercase tracking-[0.18em] hover:bg-neon-cyan/18 transition-all cursor-pointer"
                 >
@@ -941,7 +946,7 @@ export function VaultGrid({
             <div className="bg-surface/80 backdrop-blur-xl border-2 border-error/20 p-12 rounded-3xl shadow-2xl">
               <h3 className="text-2xl font-black text-white uppercase tracking-widest mb-2">Credits Depleted</h3>
               <p className="text-error font-mono text-sm font-bold mb-4">${balance.toFixed(2)} remaining</p>
-              <button onClick={() => navigate("/")} className="inline-block px-8 py-3 bg-accent text-white text-sm font-black uppercase tracking-widest rounded-xl shadow-lg border-b-4 border-accent-hover active:border-b-0 transition-all cursor-pointer hover:bg-accent-hover">Add Credits</button>
+              <button onClick={() => { navigate("/"); setTimeout(() => { document.getElementById("waitlist-form")?.scrollIntoView({ behavior: "smooth", block: "center" }); }, 300); }} className="inline-block px-8 py-3 bg-accent text-white text-sm font-black uppercase tracking-widest rounded-xl shadow-lg border-b-4 border-accent-hover active:border-b-0 transition-all cursor-pointer hover:bg-accent-hover">Add Credits</button>
             </div>
           </div>
         )}

@@ -1,14 +1,7 @@
-import {
-  useEffect,
-  useRef,
-  useImperativeHandle,
-  forwardRef,
-  useCallback,
-  useState
-} from "react";
+import { useEffect, useRef, useImperativeHandle, forwardRef } from "react";
 import type {
   TurnstileWidgetHandle,
-  TurnstileWidgetProps
+  TurnstileWidgetProps,
 } from "../types/landing";
 
 declare global {
@@ -30,6 +23,47 @@ declare global {
   }
 }
 
+const TURNSTILE_SCRIPT_SRC =
+  "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+let turnstileScriptPromise: Promise<void> | null = null;
+
+function loadTurnstileScript() {
+  if (window.turnstile) {
+    return Promise.resolve();
+  }
+
+  if (turnstileScriptPromise) {
+    return turnstileScriptPromise;
+  }
+
+  turnstileScriptPromise = new Promise((resolve, reject) => {
+    const existingScript = document.querySelector(
+      `script[src="${TURNSTILE_SCRIPT_SRC}"]`
+    ) as HTMLScriptElement | null;
+
+    if (existingScript) {
+      const onLoad = () => resolve();
+      const onError = () =>
+        reject(new Error("Failed to load Cloudflare Turnstile script."));
+
+      existingScript.addEventListener("load", onLoad, { once: true });
+      existingScript.addEventListener("error", onError, { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.src = TURNSTILE_SCRIPT_SRC;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => resolve();
+    script.onerror = () =>
+      reject(new Error("Failed to load Cloudflare Turnstile script."));
+    document.head.appendChild(script);
+  });
+
+  return turnstileScriptPromise;
+}
+
 export const TurnstileWidget = forwardRef<
   TurnstileWidgetHandle,
   TurnstileWidgetProps
@@ -37,7 +71,6 @@ export const TurnstileWidget = forwardRef<
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
   const tokenRef = useRef<string | null>(null);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
 
   useImperativeHandle(ref, () => ({
     getResponse: () => tokenRef.current,
@@ -46,60 +79,58 @@ export const TurnstileWidget = forwardRef<
       if (widgetIdRef.current && window.turnstile) {
         window.turnstile.reset(widgetIdRef.current);
       }
-    }
+    },
   }));
-
-  const renderWidget = useCallback(() => {
-    if (
-      !siteKey ||
-      !containerRef.current ||
-      !window.turnstile ||
-      widgetIdRef.current
-    )
-      return;
-    widgetIdRef.current = window.turnstile.render(containerRef.current, {
-      sitekey: siteKey,
-      theme: "dark",
-      callback: (token: string) => {
-        tokenRef.current = token;
-      },
-      "expired-callback": () => {
-        tokenRef.current = null;
-      },
-      "error-callback": () => {
-        tokenRef.current = null;
-      }
-    });
-  }, [siteKey]);
 
   useEffect(() => {
     if (!siteKey) return;
+    let isCancelled = false;
 
-    // If turnstile is already loaded (e.g. HMR), render immediately
-    if (window.turnstile) {
-      setScriptLoaded(true);
-      return;
-    }
+    loadTurnstileScript()
+      .then(() => {
+        if (
+          isCancelled ||
+          !siteKey ||
+          !containerRef.current ||
+          !window.turnstile
+        ) {
+          return;
+        }
 
-    const script = document.createElement("script");
-    script.src =
-      "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-    script.async = true;
-    script.onload = () => setScriptLoaded(true);
-    document.head.appendChild(script);
+        if (widgetIdRef.current) {
+          window.turnstile.remove(widgetIdRef.current);
+          widgetIdRef.current = null;
+        }
+
+        containerRef.current.innerHTML = "";
+        tokenRef.current = null;
+        widgetIdRef.current = window.turnstile.render(containerRef.current, {
+          sitekey: siteKey,
+          theme: "dark",
+          callback: (token: string) => {
+            tokenRef.current = token;
+          },
+          "expired-callback": () => {
+            tokenRef.current = null;
+          },
+          "error-callback": () => {
+            tokenRef.current = null;
+          },
+        });
+      })
+      .catch((err) => {
+        console.error("Unable to initialize Turnstile widget:", err);
+      });
 
     return () => {
+      isCancelled = true;
       if (widgetIdRef.current && window.turnstile) {
         window.turnstile.remove(widgetIdRef.current);
         widgetIdRef.current = null;
       }
-      script.remove();
+      tokenRef.current = null;
     };
   }, [siteKey]);
-
-  useEffect(() => {
-    if (scriptLoaded) renderWidget();
-  }, [scriptLoaded, renderWidget]);
 
   if (!siteKey) return null;
 

@@ -4,7 +4,8 @@
       "mcp__claude_ai_Context7__resolve-library-id",
       "WebSearch",
       "Bash(git init:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "mcp__context7__resolve-library-id"
     ]
   }
 }

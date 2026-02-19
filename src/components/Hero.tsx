@@ -22,7 +22,7 @@ export function Hero() {
   }, []);
 
   return (
-    <section className="relative min-h-[85vh] sm:min-h-screen flex flex-col items-center justify-center overflow-hidden bg-bg">
+    <section className="relative min-h-dvh flex flex-col items-center justify-center overflow-hidden bg-bg pb-20">
       {/* Dynamic Background */}
       <div className="absolute inset-0 z-0 bg-[radial-gradient(circle_at_center,_#1a1a1a_0%,_#000_100%)]">
         {/* Animated Grid overlay */}
@@ -192,7 +192,7 @@ export function Hero() {
       </motion.div>
 
       {/* Main content */}
-      <div className="relative z-10 text-center px-4 max-w-5xl mx-auto mt-[-10vh]">
+      <div className="relative z-10 text-center px-4 max-w-5xl mx-auto flex flex-col items-center justify-center">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -233,17 +233,17 @@ export function Hero() {
         <div className="mt-6 sm:mt-8 text-base sm:text-xl md:text-2xl text-text-muted max-w-2xl mx-auto font-medium h-[2em]">
           <span ref={typedEl} />
         </div>
-
-        {/* Play Now CTA */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1 }}
-          className="mt-10"
-        >
-          <PlayNowButton location="hero" />
-        </motion.div>
       </div>
+
+      {/* Play Now CTA — centered between subtitle and scroll indicator */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1 }}
+        className="relative z-10 mt-35 sm:mt-30"
+      >
+        <PlayNowButton location="hero" />
+      </motion.div>
 
       {/* Scroll Down Indicator */}
       <motion.div
@@ -268,7 +268,11 @@ export function Hero() {
         >
           <motion.div
             animate={{ y: [0, 6, 0] }}
-            transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
             className="flex flex-col items-center"
           >
             <svg
