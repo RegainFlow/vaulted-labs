@@ -526,6 +526,7 @@ function VaultOverlay({
     if (onUseFreeSpinForVault?.(tier.name, tier.price)) {
       setUsedFreeSpin(true);
       setPurchasedBalance(balance); setPurchaseError(null);
+      trackEvent(AnalyticsEvents.FREE_SPIN_USED, { vault_tier: tier.name, vault_price: tier.price, free_spins_before: freeSpins, free_spins_after: Math.max(freeSpins - 1, 0) });
       trackEvent(AnalyticsEvents.VAULT_OPENED, { vault_tier: tier.name, vault_price: tier.price, free_spin: true });
       setStage("revealing");
       setTimeout(() => setStage("spinning"), SPIN_STAGE_DELAY); setTimeout(() => setSpinLanded(true), MAIN_SPIN_LAND_DELAY);
@@ -544,16 +545,19 @@ function VaultOverlay({
 
   const handleClaimLocal = () => {
     if (isTutorial) { onTutorialSetAction?.("cashed out"); onTutorialAdvance?.("complete"); onClose(); return; }
+    trackEvent(AnalyticsEvents.ITEM_ACTION, { action: "cashout", vault_tier: tier.name, rarity: wonRarity, value: resultValue, vault_price: tier.price, free_spin: usedFreeSpin });
     setIsClaiming(true); setTimeout(() => onClaim(resultValue), 1000);
   };
 
   const handleStore = () => {
     if (isTutorial) { onTutorialSetAction?.("stored"); onTutorialAdvance?.("complete"); onClose(); return; }
+    trackEvent(AnalyticsEvents.ITEM_ACTION, { action: "hold", vault_tier: tier.name, rarity: wonRarity, value: resultValue, vault_price: tier.price, free_spin: usedFreeSpin });
     onStore(product, tier.name as VaultTierName, wonRarity as Rarity, resultValue);
   };
 
   const handleShip = () => {
     if (isTutorial) { onTutorialSetAction?.("shipped"); onTutorialAdvance?.("complete"); onClose(); return; }
+    trackEvent(AnalyticsEvents.ITEM_ACTION, { action: "ship", vault_tier: tier.name, rarity: wonRarity, value: resultValue, vault_price: tier.price, free_spin: usedFreeSpin });
     onShip(product, tier.name as VaultTierName, wonRarity as Rarity, resultValue);
   };
 
@@ -563,10 +567,11 @@ function VaultOverlay({
   };
 
   const handleBonusComplete = useCallback((freeSpinsAwarded: number) => {
+    trackEvent(AnalyticsEvents.VAULT_LOCK_COMPLETE, { vault_tier: tier.name, free_spins_awarded: freeSpinsAwarded, awarded: freeSpinsAwarded > 0 });
     if (freeSpinsAwarded > 0) onBonusFreeSpins?.(freeSpinsAwarded);
     setStage("result");
     if (isTutorial) onTutorialAdvance?.("result-store");
-  }, [isTutorial, onTutorialAdvance, onBonusFreeSpins]);
+  }, [isTutorial, onTutorialAdvance, onBonusFreeSpins, tier.name]);
 
   const storeIcon = (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-neon-cyan"><path d="M21 8V21H3V8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M23 3H1V8H23V3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M10 12H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>);
   const shipIcon = (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>);

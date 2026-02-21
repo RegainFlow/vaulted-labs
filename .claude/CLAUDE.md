@@ -22,14 +22,14 @@ VaultedLabs is a gamified commerce platform. Users open "Vaults" to reveal colle
 
 ### Vault Levels (6 tiers)
 
-| Level    | Price  | Common | Uncommon | Rare  | Legendary |
-| -------- | ------ | ------ | -------- | ----- | --------- |
-| Bronze   | $19.99 | 55.0%  | 25.0%    | 17.0% | 3.0%      |
-| Silver   | $29.99 | 52.0%  | 26.0%    | 17.5% | 4.5%      |
-| Gold     | $44.99 | 48.0%  | 28.0%    | 18.0% | 6.0%      |
-| Platinum | $59.99 | 45.0%  | 28.0%    | 19.5% | 7.5%      |
-| Obsidian | $74.99 | 42.0%  | 27.0%    | 21.0% | 10.0%     |
-| Diamond  | $89.99 | 38.0%  | 26.0%    | 23.0% | 13.0%     |
+| Level    | Price | Common | Uncommon | Rare  | Legendary |
+| -------- | ----- | ------ | -------- | ----- | --------- |
+| Bronze   | $12   | 50.0%  | 27.0%    | 19.0% | 4.0%      |
+| Silver   | $25   | 47.0%  | 28.0%    | 19.5% | 5.5%      |
+| Gold     | $40   | 43.0%  | 30.0%    | 20.0% | 7.0%      |
+| Platinum | $55   | 40.0%  | 30.0%    | 21.5% | 8.5%      |
+| Obsidian | $75   | 37.0%  | 29.0%    | 23.0% | 11.0%     |
+| Diamond  | $90   | 33.0%  | 28.0%    | 25.0% | 14.0%     |
 
 ### Rarity Value Multipliers (of vault price)
 
@@ -44,9 +44,9 @@ VaultedLabs is a gamified commerce platform. Users open "Vaults" to reveal colle
 
 | Vault Tier | Bonus Chance |
 | ---------- | ------------ |
-| Platinum   | 20%          |
-| Obsidian   | 30%          |
-| Diamond    | 40%          |
+| Platinum   | 30%          |
+| Obsidian   | 40%          |
+| Diamond    | 50%          |
 
 Bronze, Silver, and Gold do not trigger the bonus round.
 
@@ -60,7 +60,7 @@ Bronze, Silver, and Gold do not trigger the bonus round.
 
 ### XP Earning
 
-- Vault purchase: XP = vault price (e.g. $19.99 Bronze -> 19.99 XP)
+- Vault purchase: XP = vault price (e.g. $12 Bronze -> 12 XP)
 - Marketplace buy: XP = price paid in credits
 - Auction win: XP = winning bid amount
 - Boss fight win: XP = boss xpReward

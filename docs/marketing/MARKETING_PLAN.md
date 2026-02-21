@@ -48,7 +48,7 @@ https://vaultedlabs.com?utm_source={platform}&utm_medium=organic&utm_campaign={c
 | Time | Platform | Content | Caption | CTA | UTM `content` |
 |------|----------|---------|---------|-----|----------------|
 | AM | Reddit | r/mysteryboxes — Odds comparison post across 6 platforms (Experiment #2) | "I compared odds transparency across 6 mystery box platforms — most don't show anything" | Demo link in body | `odds_comparison` |
-| PM | TikTok | Quick-cut: "What does $24 get you?" — 5 Bronze vault opens with value overlay | "Opened 5 Bronze vaults to show you the range. Odds are right there on the card. #mysterybox #whatyouget" | Link in bio | `whatyouget_v1` |
+| PM | TikTok | Quick-cut: "What does $12 get you?" — 5 Bronze vault opens with value overlay | "Opened 5 Bronze vaults to show you the range. Odds are right there on the card. #mysterybox #whatyouget" | Link in bio | `whatyouget_v1` |
 
 #### Day 3 (Wednesday) — Comparison Content
 
@@ -102,7 +102,7 @@ https://vaultedlabs.com?utm_source={platform}&utm_medium=organic&utm_campaign={c
 | Time | Platform | Content | Caption | CTA | UTM `content` |
 |------|----------|---------|---------|-----|----------------|
 | AM | Reddit | New subreddit from research (r/ToyCollecting, r/ActionFigures, or r/Scams depending on Week 1 performance) | Relevant angle for the community | Demo link | `reddit_round2` |
-| PM | TikTok | "Every vault tier explained in 30 seconds" — Bronze through Diamond, prices and odds | "6 vault tiers. $24 to $86. Every single one shows the odds. #mysterybox #explained" | Link in bio | `tiers_explained` |
+| PM | TikTok | "Every vault tier explained in 30 seconds" — Bronze through Diamond, prices and odds | "6 vault tiers. $12 to $90. Every single one shows the odds. #mysterybox #explained" | Link in bio | `tiers_explained` |
 
 #### Day 10 (Wednesday) — Scarcity Push
 

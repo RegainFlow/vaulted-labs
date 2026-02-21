@@ -32,7 +32,7 @@ Mystery box sites hide their odds and sell you disappointment — VaultedLabs sh
 
 ## Subheadlines
 
-1. Six vault tiers from $24 to $86. Every one shows exact drop rates.
+1. Six vault tiers from $12 to $90. Every one shows exact drop rates.
 2. Funko Pops, rare collectibles, and chase variants — shipped to your door or cashed out for credits.
 3. Hold it. Ship it. Cash it out. Three options for every item you pull.
 4. First 50 signups get $200 in free credits. No deposit. No strings.
@@ -44,8 +44,8 @@ Mystery box sites hide their odds and sell you disappointment — VaultedLabs sh
 10. 450 waitlist spots. 4 tiers. The earlier you join, the more free credits you get.
 11. The first mystery box platform built on transparency instead of trust-me-bro.
 12. HypeDrop got hacked. We got auditable. Try the demo and see for yourself.
-13. Every vault card shows: Common 60%, Uncommon 18%, Rare 20%, Legendary 1.7%. No secrets.
-14. Pull a Legendary from the Bronze vault at 1.7% odds — and we told you upfront.
+13. Every vault card shows: Common 50%, Uncommon 27%, Rare 19%, Legendary 4%. No secrets.
+14. Pull a Legendary from the Bronze vault at 4% odds — and we told you upfront.
 
 ---
 
@@ -87,7 +87,7 @@ Mystery box sites hide their odds and sell you disappointment — VaultedLabs sh
 
 ### Do
 - Use uppercase for labels and headings (VAULT TIER, ODDS, CLAIM)
-- Reference specific numbers ($24 Bronze, 1.7% Legendary, $200 Founder credits)
+- Reference specific numbers ($12 Bronze, 4% Legendary, $200 Founder credits)
 - Invite skepticism ("Don't believe us? Play the demo.")
 - Use monospace or code-style formatting when appropriate
 - Keep sentences short. Punch hard.
@@ -119,7 +119,7 @@ Mystery box sites hide their odds and sell you disappointment — VaultedLabs sh
 | 2 | "Is this a scam?" | TikTok comments, Reddit | "Odds are printed on every vault card — not hidden in a TOS page. Play the demo for free right now, no account needed. If it were a scam, we wouldn't let you test it before signing up." |
 | 3 | "Are the items real?" | Discord, comments | "Every item is a real, licensed collectible (Funko Pop! etc.). You can ship it to your door, hold it digitally, or cashout for credits. Real products, real shipping, real tracking numbers." |
 | 4 | "HypeDrop does the same thing." | Twitter, Reddit | "HypeDrop got hacked for $60M, hides their odds, and sells mostly crypto/digital items. We show odds on every card, stock physical collectibles, and give you three options for every pull." |
-| 5 | "What if I always get Common?" | TikTok, Reddit | "Common items are real collectibles worth 40–85% of vault price. Plus you can cashout for credits and try again. But the odds are transparent — a Bronze vault has a 1.7% Legendary chance, and we tell you that before you open." |
+| 5 | "What if I always get Common?" | TikTok, Reddit | "Common items are real collectibles worth 40–85% of vault price. Plus you can cashout for credits and try again. But the odds are transparent — a Bronze vault has a 4% Legendary chance, and we tell you that before you open." |
 | 6 | "Why should I trust a new platform?" | Everywhere | "You shouldn't trust us — you should test us. Demo is live at vaultedlabs.com/play. No account, no deposit. See the odds, open vaults, judge for yourself." |
-| 7 | "$24 for a mystery box is expensive." | Reddit, TikTok | "A Funko blind box at Hot Topic is $15 with zero odds shown and no cashout option. A $24 Bronze vault shows you the exact probabilities and lets you cashout if you don't like the pull." |
+| 7 | "$12 for a mystery box is expensive." | Reddit, TikTok | "A Funko blind box at Hot Topic is $15 with zero odds shown and no cashout option. A $12 Bronze vault shows you the exact probabilities and lets you cashout if you don't like the pull." |
 | 8 | "I'll just wait for launch." | Waitlist objection | "Founder tier ($200 free credits) is first 50 spots only. Once those fill, it drops to $100, then $50, then $25. You can't get Founder pricing after it's gone." |

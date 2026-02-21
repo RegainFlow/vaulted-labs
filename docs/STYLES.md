@@ -39,12 +39,12 @@ Source of truth: `src/index.css` `@theme` block.
 ### Vault Tiers (6 levels)
 | Tier | Color | Token | Price |
 |------|-------|-------|-------|
-| Bronze | #cd7f32 | `vault-bronze` | $19.99 |
-| Silver | #c0c0c0 | `vault-silver` | $29.99 |
-| Gold | #ffd700 | `vault-gold` | $44.99 |
-| Platinum | #79b5db | *(inline)* | $59.99 |
-| Obsidian | #6c4e85 | *(inline)* | $74.99 |
-| Diamond | #b9f2ff | `vault-diamond` | $89.99 |
+| Bronze | #cd7f32 | `vault-bronze` | $12 |
+| Silver | #c0c0c0 | `vault-silver` | $25 |
+| Gold | #ffd700 | `vault-gold` | $40 |
+| Platinum | #79b5db | *(inline)* | $55 |
+| Obsidian | #6c4e85 | *(inline)* | $75 |
+| Diamond | #b9f2ff | `vault-diamond` | $90 |
 
 ### Rarity Colors
 | Rarity | Color | Token | Value Multiplier |

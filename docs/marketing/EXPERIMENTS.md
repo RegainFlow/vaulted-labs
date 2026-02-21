@@ -14,7 +14,7 @@ Each experiment is scored using ICE (Impact / Confidence / Ease, each 1–10). H
 
 **Steps**:
 1. Open the demo at `/play` on mobile or desktop
-2. Screen record opening a Bronze vault ($24) — capture the full animation sequence
+2. Screen record opening a Bronze vault ($12) — capture the full animation sequence
 3. Add a face cam reaction or voiceover (even a simple "wait for it...")
 4. Overlay text: "This mystery box shows you the odds BEFORE you open"
 5. Cut to the reveal — zoom in on the rarity result
@@ -135,22 +135,22 @@ Each experiment is scored using ICE (Impact / Confidence / Ease, each 1–10). H
 
 ---
 
-## Experiment 7: TikTok "What $24 Gets You" Series
+## Experiment 7: TikTok "What $12 Gets You" Series
 
 **ICE Score**: 8 / 7 / 9 = **24**
 
-**Hypothesis**: Showing the range of outcomes from a $24 Bronze vault (Common to Legendary) makes the value proposition concrete and hookable.
+**Hypothesis**: Showing the range of outcomes from a $12 Bronze vault (Common to Legendary) makes the value proposition concrete and hookable.
 
 **Channel**: TikTok (organic)
 
 **Steps**:
 1. Open 5–10 Bronze vaults on the demo in a single recording session
-2. Quick-cut the results together with price overlay: "$24 → Common ($12 value)" ... "$24 → Legendary ($72 value)"
-3. Show the odds card before each opening: "1.7% chance of Legendary"
+2. Quick-cut the results together with price overlay: "$12 → Common ($5 value)" ... "$12 → Legendary ($42 value)"
+3. Show the odds card before each opening: "4% chance of Legendary"
 4. React to each pull
 5. End: "Free demo — link in bio"
 
-**Draft caption**: "What does $24 get you? Opened 10 Bronze vaults to find out. The odds are right there on the card. #mysterybox #whatyouget #unboxing #vaultedlabs"
+**Draft caption**: "What does $12 get you? Opened 10 Bronze vaults to find out. The odds are right there on the card. #mysterybox #whatyouget #unboxing #vaultedlabs"
 
 **UTM**: `?utm_source=tiktok&utm_medium=organic&utm_campaign=launch_week1&utm_content=whatyouget_v1`
 
@@ -267,7 +267,7 @@ Each experiment is scored using ICE (Impact / Confidence / Ease, each 1–10). H
 |------|-----------|-----|---------|------|
 | 1 | #1 TikTok Unboxing Screen Record | 26 | TikTok | 1 hr |
 | 2 | #4 TikTok Odds Side-by-Side | 24 | TikTok | 1 hr |
-| 3 | #7 TikTok "$24 Gets You" Series | 24 | TikTok | 2 hrs |
+| 3 | #7 TikTok "$12 Gets You" Series | 24 | TikTok | 2 hrs |
 | 4 | #2 Reddit Odds Comparison Post | 23 | Reddit | 2 hrs |
 | 5 | #3 Twitter Industry Thread | 22 | Twitter/X | 1 hr |
 | 6 | #9 Instagram Reels Repurpose | 22 | Instagram | 30 min |

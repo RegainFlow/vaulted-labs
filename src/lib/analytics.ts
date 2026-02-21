@@ -1,4 +1,4 @@
-import { posthog, isPostHogEnabled } from "./posthog";
+import posthog, { isPostHogEnabled } from "./posthog";
 
 export const AnalyticsEvents = {
   CTA_CLICK: "cta_click",
@@ -20,18 +20,37 @@ export const AnalyticsEvents = {
   TUTORIAL_COMPLETED: "tutorial_completed",
   BONUS_SPIN_TRIGGERED: "bonus_spin_triggered",
   VAULT_LOCK_COMPLETE: "vault_lock_complete",
-  FREE_SPIN_USED: "free_spin_used"
+  FREE_SPIN_USED: "free_spin_used",
+  FEEDBACK_BUTTON_CLICK: "feedback_button_click"
 } as const;
 
+type AnalyticsEventName = (typeof AnalyticsEvents)[keyof typeof AnalyticsEvents];
+
+function withPagePath(properties?: Record<string, unknown>) {
+  if (typeof window === "undefined") return properties;
+  return {
+    ...properties,
+    page_path: window.location.pathname
+  };
+}
+
+function toAbsoluteUrl(url: string) {
+  if (typeof window === "undefined") return url;
+  return new URL(url, window.location.origin).toString();
+}
+
 export function trackEvent(
-  event: string,
+  event: AnalyticsEventName | string,
   properties?: Record<string, unknown>
 ) {
   if (!isPostHogEnabled) return;
-  posthog.capture(event, properties);
+  posthog.capture(event, withPagePath(properties));
 }
 
 export function trackPageView(url: string) {
   if (!isPostHogEnabled) return;
-  posthog.capture("$pageview", { $current_url: url });
+  posthog.capture("$pageview", {
+    $current_url: toAbsoluteUrl(url),
+    page_path: typeof window !== "undefined" ? window.location.pathname : url
+  });
 }

@@ -105,6 +105,6 @@ Do NOT target these segments:
 |---------|--------|
 | Crypto / NFT crowd | Wrong product — VaultedLabs sells physical collectibles, not tokens. This audience will expect NFT mechanics, blockchain provenance, and crypto payments. Messaging will confuse them and attract the wrong feedback. |
 | Under 18 | Chance-based commerce has age-sensitivity. All messaging, CTAs, and community participation should assume 18+. |
-| Bargain hunters seeking guaranteed value | VaultedLabs is chance-based. People who want "$24 for a guaranteed $30 item" will be disappointed. The value prop is the thrill + chance at rare items, not arbitrage. |
-| High-roller whales (initially) | At waitlist stage, we can't support $500+ spenders operationally. Focus on $24–$86 vault range customers. |
+| Bargain hunters seeking guaranteed value | VaultedLabs is chance-based. People who want "$12 for a guaranteed $15 item" will be disappointed. The value prop is the thrill + chance at rare items, not arbitrage. |
+| High-roller whales (initially) | At waitlist stage, we can't support $500+ spenders operationally. Focus on $12–$90 vault range customers. |
 | International markets with gambling regulations | Some jurisdictions classify mystery boxes as gambling. Stick to US/UK/Canada/Australia for initial launch. |

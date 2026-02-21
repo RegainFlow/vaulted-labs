@@ -1,4 +1,4 @@
-import { trackEvent } from "../../lib/analytics";
+import { AnalyticsEvents, trackEvent } from "../../lib/analytics";
 
 const FEEDBACK_PREFILL_URL = import.meta.env.VITE_FEEDBACK_FORM_PREFILL_URL as
   | string
@@ -55,7 +55,9 @@ export function FeedbackButton({
   if (!feedbackUrl) return null;
 
   const handleClick = () => {
-    trackEvent("feedback_button_click", { page: window.location.pathname });
+    trackEvent(AnalyticsEvents.FEEDBACK_BUTTON_CLICK, {
+      page: window.location.pathname
+    });
     window.open(feedbackUrl, "_blank", "noopener,noreferrer");
   };
 

@@ -30,12 +30,12 @@ VaultedLabs is a gamified commerce platform. Users open "Vaults" to reveal colle
 
 | Level    | Price  | Common | Uncommon | Rare  | Legendary | Token |
 | -------- | ------ | ------ | -------- | ----- | --------- | ----- |
-| Bronze   | $19.99 | 55.0%  | 25.0%    | 17.0% | 3.0%      | `vault-bronze` |
-| Silver   | $29.99 | 52.0%  | 26.0%    | 17.5% | 4.5%      | `vault-silver` |
-| Gold     | $44.99 | 48.0%  | 28.0%    | 18.0% | 6.0%      | `vault-gold` |
-| Platinum | $59.99 | 45.0%  | 28.0%    | 19.5% | 7.5%      | *(inline)* |
-| Obsidian | $74.99 | 42.0%  | 27.0%    | 21.0% | 10.0%     | *(inline)* |
-| Diamond  | $89.99 | 38.0%  | 26.0%    | 23.0% | 13.0%     | `vault-diamond` |
+| Bronze   | $12   | 50.0%  | 27.0%    | 19.0% | 4.0%      | `vault-bronze` |
+| Silver   | $25   | 47.0%  | 28.0%    | 19.5% | 5.5%      | `vault-silver` |
+| Gold     | $40   | 43.0%  | 30.0%    | 20.0% | 7.0%      | `vault-gold` |
+| Platinum | $55   | 40.0%  | 30.0%    | 21.5% | 8.5%      | *(inline)* |
+| Obsidian | $75   | 37.0%  | 29.0%    | 23.0% | 11.0%     | *(inline)* |
+| Diamond  | $90   | 33.0%  | 28.0%    | 25.0% | 14.0%     | `vault-diamond` |
 
 ### Rarity Value Multipliers (of vault price)
 
