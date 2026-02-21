@@ -1,0 +1,43 @@
+site: https://vaulted-labs.com
+generated_on: 2026-02-21
+routes:
+  - path: /
+    url: https://vaulted-labs.com/
+    changefreq: daily
+    priority: 1.0
+    lastmod: 2026-02-21
+  - path: /play
+    url: https://vaulted-labs.com/play
+    changefreq: daily
+    priority: 0.9
+    lastmod: 2026-02-21
+  - path: /shop
+    url: https://vaulted-labs.com/shop
+    changefreq: daily
+    priority: 0.8
+    lastmod: 2026-02-21
+  - path: /inventory
+    url: https://vaulted-labs.com/inventory
+    changefreq: weekly
+    priority: 0.7
+    lastmod: 2026-02-21
+  - path: /profile
+    url: https://vaulted-labs.com/profile
+    changefreq: weekly
+    priority: 0.7
+    lastmod: 2026-02-21
+  - path: /wallet
+    url: https://vaulted-labs.com/wallet
+    changefreq: weekly
+    priority: 0.7
+    lastmod: 2026-02-21
+  - path: /privacy
+    url: https://vaulted-labs.com/privacy
+    changefreq: monthly
+    priority: 0.4
+    lastmod: 2026-02-21
+  - path: /terms
+    url: https://vaulted-labs.com/terms
+    changefreq: monthly
+    priority: 0.4
+    lastmod: 2026-02-21

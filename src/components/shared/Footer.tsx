@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { FeedbackButton } from "./FeedbackButton";
 
 export function Footer() {
@@ -7,6 +8,20 @@ export function Footer() {
         <span className="text-xl font-bold tracking-tighter text-white">
           Vaulted<span className="text-accent">Labs</span>
         </span>
+      </div>
+      <div className="mb-4 flex items-center justify-center gap-4 text-xs sm:text-sm">
+        <Link
+          to="/privacy"
+          className="text-text-muted hover:text-accent transition-colors underline underline-offset-4"
+        >
+          Privacy
+        </Link>
+        <Link
+          to="/terms"
+          className="text-text-muted hover:text-accent transition-colors underline underline-offset-4"
+        >
+          Terms
+        </Link>
       </div>
       <FeedbackButton className="text-sm text-text-muted hover:text-accent transition-colors underline underline-offset-4 mb-4 inline-block cursor-pointer" />
       <p className="text-text-dim text-sm">

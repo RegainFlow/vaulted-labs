@@ -7,13 +7,17 @@ import { ShopPage } from "./pages/ShopPage";
 import { InventoryPage } from "./pages/InventoryPage";
 import { ProfilePage } from "./pages/ProfilePage";
 import { WalletPage } from "./pages/WalletPage";
+import { PrivacyPage } from "./pages/PrivacyPage";
+import { TermsPage } from "./pages/TermsPage";
 import { QuestToastNotification } from "./components/shared/QuestToast";
 import { trackPageView } from "./lib/analytics";
+import { applySeo } from "./lib/apply-seo";
 
 function App() {
   const location = useLocation();
 
   useEffect(() => {
+    applySeo(location.pathname);
     trackPageView(location.pathname + location.search);
   }, [location.pathname, location.search]);
 
@@ -27,6 +31,8 @@ function App() {
           <Route path="/inventory" element={<InventoryPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/wallet" element={<WalletPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
         </Routes>
         <QuestToastNotification />
       </GameProvider>
