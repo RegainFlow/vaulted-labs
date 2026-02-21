@@ -9,12 +9,17 @@ export function Hero() {
   useEffect(() => {
     const typed = new Typed(typedEl.current!, {
       strings: [
-        "Real collectibles. Real value. <span class='text-neon-green text-glow-green font-black'>Real Cash</span>. Pick a vault and win.",
+        "Visible odds on every vault. No hidden percentages.",
+        "Every reveal is your call: <span class='text-neon-cyan text-glow-cyan font-black'>Hold</span>, <span class='text-vault-gold font-black'>Ship</span>, or <span class='text-neon-green text-glow-green font-black'>Cashout</span>.",
+        "Collect what you want. Cash out what you don't.",
       ],
-      typeSpeed: 40,
+      typeSpeed: 34,
+      backSpeed: 18,
+      backDelay: 1400,
+      loop: true,
       showCursor: true,
       cursorChar: "|",
-      startDelay: 800,
+      startDelay: 500,
       contentType: "html",
     });
 
@@ -124,38 +129,20 @@ export function Hero() {
           transition={{ duration: 1 }}
           className="relative inline-block"
         >
-          <h1 className="relative text-3xl sm:text-4xl md:text-7xl lg:text-8xl font-black tracking-tighter">
-            {/* Neon stroke layer behind */}
-            <span
-              aria-hidden="true"
-              className="absolute inset-0 text-transparent"
-              style={{
-                WebkitTextStroke: "1.5px #ff2d95",
-                textShadow:
-                  "0 0 10px rgba(255,45,149,0.6), 0 0 30px rgba(255,45,149,0.3), 0 0 60px rgba(255,45,149,0.15)",
-              }}
-            >
-              EXPLORE VAULTS
-              <br />
-              <span
-                className="text-3xl sm:text-4xl md:text-7xl"
-                style={{ WebkitTextStroke: "0px transparent" }}
-              >
-                {"\u00A0"}
-              </span>
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[1.05]">
+            <span className="block text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/60 filter drop-shadow-[0_0_26px_rgba(255,255,255,0.18)]">
+              OPEN VAULTS
             </span>
-            {/* Gradient fill text on top */}
-            <span className="relative text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/50 filter drop-shadow-[0_0_30px_rgba(255,255,255,0.2)]">
-              EXPLORE VAULTS
+            <span className="block mt-1 text-transparent bg-clip-text bg-gradient-to-r from-accent via-neon-cyan to-accent animate-gradient bg-300% text-glow-magenta">
+              WIN REAL COLLECTIBLES
             </span>
-            <br />
-            <span className="text-3xl sm:text-4xl md:text-7xl text-transparent bg-clip-text bg-gradient-to-r from-accent via-neon-cyan to-accent animate-gradient bg-300% text-glow-magenta">
-              WIN REAL PRIZES
+            <span className="block mt-1 text-neon-green text-glow-green text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
+              WIN REAL CASH
             </span>
           </h1>
         </motion.div>
 
-        <div className="z-10 mt-6 sm:mt-8 text-base sm:text-xl md:text-2xl text-text-muted max-w-2xl mx-auto font-medium h-[2em]">
+        <div className="z-10 mt-6 sm:mt-8 text-sm sm:text-lg md:text-2xl text-text-muted max-w-3xl mx-auto font-medium h-[3.2em] md:h-[2.6em]">
           <span ref={typedEl} />
         </div>
       </div>
@@ -165,7 +152,7 @@ export function Hero() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 1 }}
-        className="relative z-10 mt-35 sm:mt-30"
+        className="relative z-10 mt-12 sm:mt-14"
       >
         <PlayNowButton location="hero" />
       </motion.div>

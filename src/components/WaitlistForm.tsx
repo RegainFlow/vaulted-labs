@@ -1,5 +1,6 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { Link } from "react-router-dom";
 import { isDisposableEmail } from "../lib/disposable-emails";
 import { trackEvent, AnalyticsEvents } from "../lib/analytics";
 import { TurnstileWidget } from "./TurnstileWidget";
@@ -16,16 +17,25 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as
   | string
   | undefined;
+const EARLY_BETA_COMMENTS = [
+  "New updated version of Pokemon just a different style with real rewards.",
+  "Very interesting concept here I'm excited to see the finished product release in the future.",
+  "Gambling that does not feel like gambling.",
+];
 
-export function WaitlistForm({ count: _count, onJoinSuccess }: WaitlistFormProps) {
+export function WaitlistForm({ onJoinSuccess }: WaitlistFormProps) {
   const [email, setEmail] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [message, setMessage] = useState("");
-  const mountedAt = useRef(Date.now());
+  const mountedAt = useRef<number | null>(null);
   const turnstileRef = useRef<TurnstileWidgetHandle>(null);
+
+  useEffect(() => {
+    mountedAt.current = Date.now();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,7 +55,8 @@ export function WaitlistForm({ count: _count, onJoinSuccess }: WaitlistFormProps
     }
 
     // --- Anti-bot: timing ---
-    if (Date.now() - mountedAt.current < MIN_SUBMIT_MS) {
+    const mountedAtMs = mountedAt.current ?? Date.now();
+    if (Date.now() - mountedAtMs < MIN_SUBMIT_MS) {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setStatus("success");
       setMessage("ACCESS GRANTED. YOU'RE ON THE SECURE LIST.");
@@ -160,10 +171,34 @@ export function WaitlistForm({ count: _count, onJoinSuccess }: WaitlistFormProps
             Secure Your <span className="text-accent">Beta Slot</span>
           </h2>
           <p className="text-text-muted text-base md:text-lg">
-            Founding member registration is currently limited. Provide your
-            credentials to secure priority vault access.
+            Join early access to test the core experience first and lock in
+            tiered credits before public launch.
           </p>
         </motion.div>
+
+        <div className="max-w-2xl mx-auto rounded-2xl border border-white/10 bg-surface/40 p-5 sm:p-6 text-left">
+          <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-text-dim mb-3">
+            Early Access Includes
+          </p>
+          <ul className="space-y-2.5 text-sm text-text-muted">
+            <li className="flex items-start gap-3">
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+              <span>Tiered launch credits based on waitlist position.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+              <span>Priority access to beta feature drops.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+              <span>Direct input on product direction through feedback rounds.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
+              <span>Potential access to limited launch-era vault drops.</span>
+            </li>
+          </ul>
+        </div>
 
         <form
           id="waitlist-form"
@@ -209,7 +244,38 @@ export function WaitlistForm({ count: _count, onJoinSuccess }: WaitlistFormProps
           </div>
 
           <TurnstileWidget ref={turnstileRef} siteKey={TURNSTILE_SITE_KEY} />
+
+          <p className="mt-4 text-[11px] text-text-dim text-left leading-relaxed">
+            For users 18+ only. By joining, you agree to our{" "}
+            <Link
+              to="/terms"
+              className="text-text-muted hover:text-accent transition-colors underline underline-offset-2"
+            >
+              Terms
+            </Link>{" "}
+            and{" "}
+            <Link
+              to="/privacy"
+              className="text-text-muted hover:text-accent transition-colors underline underline-offset-2"
+            >
+              Privacy Policy
+            </Link>
+            .
+          </p>
         </form>
+
+        <details className="max-w-md mx-auto text-left rounded-xl border border-white/10 bg-surface/30 px-4 py-3">
+          <summary className="text-[11px] text-text-dim font-mono uppercase tracking-[0.18em] cursor-pointer">
+            Optional: early beta comments
+          </summary>
+          <div className="mt-3 space-y-2">
+            {EARLY_BETA_COMMENTS.map((comment) => (
+              <p key={comment} className="text-xs text-text-muted leading-relaxed">
+                "{comment}"
+              </p>
+            ))}
+          </div>
+        </details>
 
         <AnimatePresence>
           {message && (

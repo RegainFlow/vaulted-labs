@@ -3,9 +3,10 @@ import { PlayNowButton } from "./shared/PlayNowButton";
 
 export function CTASection() {
   return (
-    <section className="py-16 md:py-24 px-4 sm:px-6 bg-bg relative overflow-hidden">
+    <section className="pt-16 pb-8 md:pt-20 md:pb-10 px-4 sm:px-6 bg-bg relative overflow-hidden">
       {/* Background glow */}
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,45,149,0.06),transparent_70%)]" />
+      <div className="absolute inset-x-0 bottom-0 h-24 md:h-32 bg-gradient-to-b from-transparent to-[#120a1f]/70 pointer-events-none" />
 
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -19,7 +20,7 @@ export function CTASection() {
         <p className="text-text-muted text-base md:text-lg max-w-lg mx-auto">
           Choose your category, pick a vault, and reveal your loot.
         </p>
-        <div className="flex justify-center pb-16">
+        <div className="flex justify-center">
           <PlayNowButton location="cta_section" />
         </div>
       </motion.div>

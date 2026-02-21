@@ -4,6 +4,7 @@ import { HowItWorks } from "../components/HowItWorks";
 import { AppPreview } from "../components/AppPreview";
 import { PrestigeProgression } from "../components/PrestigeProgression";
 import { CTASection } from "../components/CTASection";
+import { PrelaunchClarity } from "../components/PrelaunchClarity";
 import { WaitlistSection } from "../components/WaitlistSection";
 import { Footer } from "../components/shared/Footer";
 
@@ -17,6 +18,7 @@ export function LandingPage() {
         <AppPreview />
         <PrestigeProgression />
         <CTASection />
+        <PrelaunchClarity />
         <WaitlistSection />
       </main>
       <Footer />
