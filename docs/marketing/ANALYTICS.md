@@ -5,15 +5,15 @@
 Use this structure on inbound links:
 
 ```
-https://vaultedlabs.com?utm_source={source}&utm_medium=organic&utm_campaign={campaign}&utm_content={content}
+https://vaulted-labs.com?utm_source={source}&utm_medium=organic&utm_campaign={campaign}&utm_content={content}
 ```
 
-| Parameter | Format | Examples |
-| --------- | ------ | -------- |
-| `utm_source` | Platform name (lowercase) | `tiktok`, `reddit`, `twitter`, `instagram`, `discord`, `facebook`, `youtube` |
-| `utm_medium` | Channel type | `organic` |
-| `utm_campaign` | Sprint identifier | `launch_week1`, `launch_week2` |
-| `utm_content` | Content slug | `unboxing_v1`, `odds_comparison`, `counter_day3`, `storytime_v1` |
+| Parameter      | Format                    | Examples                                                                     |
+| -------------- | ------------------------- | ---------------------------------------------------------------------------- |
+| `utm_source`   | Platform name (lowercase) | `tiktok`, `reddit`, `twitter`, `instagram`, `discord`, `facebook`, `youtube` |
+| `utm_medium`   | Channel type              | `organic`                                                                    |
+| `utm_campaign` | Sprint identifier         | `launch_week1`, `launch_week2`                                               |
+| `utm_content`  | Content slug              | `unboxing_v1`, `odds_comparison`, `counter_day3`, `storytime_v1`             |
 
 PostHog captures UTM params from pageview URLs.
 
@@ -21,18 +21,18 @@ PostHog captures UTM params from pageview URLs.
 
 Source of truth for event names: `src/lib/analytics.ts`.
 
-| Event | Why it matters | Key properties |
-| ----- | -------------- | -------------- |
-| `$pageview` | Traffic volume and source | `$current_url`, `page_path`, UTMs |
-| `cta_click` | CTA effectiveness | `cta_name`, `location`, `page_path` |
-| `play_click` | Demo intent | `page_path` |
-| `waitlist_submit` | Signup attempts | `page_path` |
-| `waitlist_submit_success` | Actual conversion | `tier`, `credit_amount` |
-| `waitlist_submit_error` | Conversion blockers | `reason` |
-| `vault_opened` | Activation depth | `vault_tier`, `vault_price`, `is_tutorial?`, `free_spin?` |
-| `vault_result` | Reveal completion | `rarity`, `value`, `bonus_triggered`, `free_spin` |
-| `item_action` | Post-reveal conversion intent | `action` |
-| `feedback_button_click` | Qualitative feedback intent | `page` |
+| Event                     | Why it matters                | Key properties                                            |
+| ------------------------- | ----------------------------- | --------------------------------------------------------- |
+| `$pageview`               | Traffic volume and source     | `$current_url`, `page_path`, UTMs                         |
+| `cta_click`               | CTA effectiveness             | `cta_name`, `location`, `page_path`                       |
+| `play_click`              | Demo intent                   | `page_path`                                               |
+| `waitlist_submit`         | Signup attempts               | `page_path`                                               |
+| `waitlist_submit_success` | Actual conversion             | `tier`, `credit_amount`                                   |
+| `waitlist_submit_error`   | Conversion blockers           | `reason`                                                  |
+| `vault_opened`            | Activation depth              | `vault_tier`, `vault_price`, `is_tutorial?`, `free_spin?` |
+| `vault_result`            | Reveal completion             | `rarity`, `value`, `bonus_triggered`, `free_spin`         |
+| `item_action`             | Post-reveal conversion intent | `action`                                                  |
+| `feedback_button_click`   | Qualitative feedback intent   | `page`                                                    |
 
 ## Funnels To Build
 

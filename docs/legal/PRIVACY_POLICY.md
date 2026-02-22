@@ -70,4 +70,4 @@ We may update this Privacy Policy from time to time. We will update the "Last up
 
 ## 12. Contact
 
-For privacy requests or questions, contact: **support@vaultedlabs.com**
+For privacy requests or questions, contact: **support@vaulted-labs.com**

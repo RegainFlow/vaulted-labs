@@ -101,25 +101,25 @@ Mystery box sites hide their odds and sell you disappointment — VaultedLabs sh
 
 ### Platform-Specific Tone
 
-| Platform | Tone Adjustment |
-|----------|----------------|
-| TikTok | Hook in <3 seconds. Visual-first. Casual voice. "POV: you open a vault and the odds are actually on the screen." |
-| Reddit | Value-first. Educational. Answer questions. Never self-promote in title. Comment with context, link only when relevant. |
-| Twitter/X | Punchy. Thread-friendly. Hot takes on mystery box industry. Quote-tweet competitor drama. |
-| Discord | Community member first. Help people. Share the demo casually. Don't spam join links. |
-| Instagram | Visual polish. Reels = TikTok reposts. Stories for scarcity updates ("42 Founder spots left"). |
+| Platform  | Tone Adjustment                                                                                                         |
+| --------- | ----------------------------------------------------------------------------------------------------------------------- |
+| TikTok    | Hook in <3 seconds. Visual-first. Casual voice. "POV: you open a vault and the odds are actually on the screen."        |
+| Reddit    | Value-first. Educational. Answer questions. Never self-promote in title. Comment with context, link only when relevant. |
+| Twitter/X | Punchy. Thread-friendly. Hot takes on mystery box industry. Quote-tweet competitor drama.                               |
+| Discord   | Community member first. Help people. Share the demo casually. Don't spam join links.                                    |
+| Instagram | Visual polish. Reels = TikTok reposts. Stories for scarcity updates ("42 Founder spots left").                          |
 
 ---
 
 ## Objection Handling Matrix
 
-| # | Objection | Context | Rebuttal |
-|---|-----------|---------|----------|
-| 1 | "This is gambling." | Reddit comments, DMs | "Every vault contains a real collectible — there's no 'lose' outcome. You're buying a chance-based product with guaranteed item delivery. We show exact odds upfront so you know what you're getting into." |
-| 2 | "Is this a scam?" | TikTok comments, Reddit | "Odds are printed on every vault card — not hidden in a TOS page. Play the demo for free right now, no account needed. If it were a scam, we wouldn't let you test it before signing up." |
-| 3 | "Are the items real?" | Discord, comments | "Every item is a real, licensed collectible (Funko Pop! etc.). You can ship it to your door, hold it digitally, or cashout for credits. Real products, real shipping, real tracking numbers." |
-| 4 | "HypeDrop does the same thing." | Twitter, Reddit | "HypeDrop got hacked for $60M, hides their odds, and sells mostly crypto/digital items. We show odds on every card, stock physical collectibles, and give you three options for every pull." |
-| 5 | "What if I always get Common?" | TikTok, Reddit | "Common items are real collectibles worth 40–85% of vault price. Plus you can cashout for credits and try again. But the odds are transparent — a Bronze vault has a 4% Legendary chance, and we tell you that before you open." |
-| 6 | "Why should I trust a new platform?" | Everywhere | "You shouldn't trust us — you should test us. Demo is live at vaultedlabs.com/play. No account, no deposit. See the odds, open vaults, judge for yourself." |
-| 7 | "$12 for a mystery box is expensive." | Reddit, TikTok | "A Funko blind box at Hot Topic is $15 with zero odds shown and no cashout option. A $12 Bronze vault shows you the exact probabilities and lets you cashout if you don't like the pull." |
-| 8 | "I'll just wait for launch." | Waitlist objection | "Founder tier ($200 free credits) is first 50 spots only. Once those fill, it drops to $100, then $50, then $25. You can't get Founder pricing after it's gone." |
+| #   | Objection                             | Context                 | Rebuttal                                                                                                                                                                                                                         |
+| --- | ------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | "This is gambling."                   | Reddit comments, DMs    | "Every vault contains a real collectible — there's no 'lose' outcome. You're buying a chance-based product with guaranteed item delivery. We show exact odds upfront so you know what you're getting into."                      |
+| 2   | "Is this a scam?"                     | TikTok comments, Reddit | "Odds are printed on every vault card — not hidden in a TOS page. Play the demo for free right now, no account needed. If it were a scam, we wouldn't let you test it before signing up."                                        |
+| 3   | "Are the items real?"                 | Discord, comments       | "Every item is a real, licensed collectible (Funko Pop! etc.). You can ship it to your door, hold it digitally, or cashout for credits. Real products, real shipping, real tracking numbers."                                    |
+| 4   | "HypeDrop does the same thing."       | Twitter, Reddit         | "HypeDrop got hacked for $60M, hides their odds, and sells mostly crypto/digital items. We show odds on every card, stock physical collectibles, and give you three options for every pull."                                     |
+| 5   | "What if I always get Common?"        | TikTok, Reddit          | "Common items are real collectibles worth 40–85% of vault price. Plus you can cashout for credits and try again. But the odds are transparent — a Bronze vault has a 4% Legendary chance, and we tell you that before you open." |
+| 6   | "Why should I trust a new platform?"  | Everywhere              | "You shouldn't trust us — you should test us. Demo is live at vaulted-labs.com/play. No account, no deposit. See the odds, open vaults, judge for yourself."                                                                     |
+| 7   | "$12 for a mystery box is expensive." | Reddit, TikTok          | "A Funko blind box at Hot Topic is $15 with zero odds shown and no cashout option. A $12 Bronze vault shows you the exact probabilities and lets you cashout if you don't like the pull."                                        |
+| 8   | "I'll just wait for launch."          | Waitlist objection      | "Founder tier ($200 free credits) is first 50 spots only. Once those fill, it drops to $100, then $50, then $25. You can't get Founder pricing after it's gone."                                                                 |

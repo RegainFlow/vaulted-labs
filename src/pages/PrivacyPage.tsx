@@ -13,8 +13,8 @@ const PRIVACY_SECTIONS: LegalSection[] = [
   {
     title: "1. Scope",
     paragraphs: [
-      "This Privacy Policy applies to information collected through the VaultedLabs website and related online services."
-    ]
+      "This Privacy Policy applies to information collected through the VaultedLabs website and related online services.",
+    ],
   },
   {
     title: "2. Information We Collect",
@@ -23,15 +23,15 @@ const PRIVACY_SECTIONS: LegalSection[] = [
       "Usage and analytics data: page views, clicks, navigation paths, and in-app interactions.",
       "Device and technical data: browser type, operating system, approximate location inferred from IP, and session metadata.",
       "Security and anti-abuse data: signals used to prevent spam and abuse, including CAPTCHA and Turnstile verification results.",
-      "Replay and heatmap data: interaction playback and aggregate click/scroll behavior."
-    ]
+      "Replay and heatmap data: interaction playback and aggregate click/scroll behavior.",
+    ],
   },
   {
     title: "3. Cookies and Similar Technologies",
     paragraphs: [
       "VaultedLabs uses cookies and local storage to operate analytics and product telemetry, including session continuity and feature behavior.",
-      "Analytics is currently collected by default and an in-product cookie consent banner is not yet implemented."
-    ]
+      "Analytics is currently collected by default and an in-product cookie consent banner is not yet implemented.",
+    ],
   },
   {
     title: "4. How We Use Information",
@@ -40,14 +40,14 @@ const PRIVACY_SECTIONS: LegalSection[] = [
       "Analyze engagement and product performance.",
       "Monitor reliability, troubleshoot issues, and secure the service.",
       "Detect and prevent spam, fraud, and abuse.",
-      "Communicate service updates and waitlist-related messages."
-    ]
+      "Communicate service updates and waitlist-related messages.",
+    ],
   },
   {
     title: "5. Analytics, Replay, and Heatmaps",
     paragraphs: [
-      "VaultedLabs uses PostHog for product analytics, session replay, and heatmaps. This may include event tracking, page metadata, interaction signals, and replayed session behavior configured with input masking controls."
-    ]
+      "VaultedLabs uses PostHog for product analytics, session replay, and heatmaps. This may include event tracking, page metadata, interaction signals, and replayed session behavior configured with input masking controls.",
+    ],
   },
   {
     title: "6. How We Share Information",
@@ -55,43 +55,43 @@ const PRIVACY_SECTIONS: LegalSection[] = [
       "PostHog (analytics, session replay, heatmaps).",
       "Supabase (application backend and data services).",
       "Cloudflare Turnstile (bot and abuse prevention).",
-      "We may also disclose information when required by law, legal process, or to protect rights, safety, and platform integrity."
-    ]
+      "We may also disclose information when required by law, legal process, or to protect rights, safety, and platform integrity.",
+    ],
   },
   {
     title: "7. Data Retention",
     paragraphs: [
-      "Information is retained for as long as reasonably necessary for the purposes in this policy, including security, analytics, legal, and operational needs."
-    ]
+      "Information is retained for as long as reasonably necessary for the purposes in this policy, including security, analytics, legal, and operational needs.",
+    ],
   },
   {
     title: "8. Security",
     paragraphs: [
-      "VaultedLabs uses reasonable administrative, technical, and organizational safeguards to protect information. No system is fully secure, and absolute security cannot be guaranteed."
-    ]
+      "VaultedLabs uses reasonable administrative, technical, and organizational safeguards to protect information. No system is fully secure, and absolute security cannot be guaranteed.",
+    ],
   },
   {
     title: "9. Eligibility and Children",
     paragraphs: [
-      "VaultedLabs is intended for users age 18 and older. VaultedLabs does not knowingly collect personal information from children."
-    ]
+      "VaultedLabs is intended for users age 18 and older. VaultedLabs does not knowingly collect personal information from children.",
+    ],
   },
   {
     title: "10. Your Choices",
     paragraphs: [
-      "You may request access, correction, or deletion of personal information by contacting support@vaultedlabs.com."
-    ]
+      "You may request access, correction, or deletion of personal information by contacting support@vaulted-labs.com.",
+    ],
   },
   {
     title: "11. Changes to this Policy",
     paragraphs: [
-      "This Privacy Policy may be updated from time to time. The Last updated date reflects the current version."
-    ]
+      "This Privacy Policy may be updated from time to time. The Last updated date reflects the current version.",
+    ],
   },
   {
     title: "12. Contact",
-    paragraphs: ["Questions or privacy requests: support@vaultedlabs.com."]
-  }
+    paragraphs: ["Questions or privacy requests: support@vaulted-labs.com."],
+  },
 ];
 
 export function PrivacyPage() {

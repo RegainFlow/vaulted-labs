@@ -60,4 +60,4 @@ We may update these Terms from time to time. Continued use of the Service after 
 
 ## 13. Contact
 
-Questions about these Terms: **support@vaultedlabs.com**
+Questions about these Terms: **support@vaulted-labs.com**
