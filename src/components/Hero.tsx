@@ -129,20 +129,20 @@ export function Hero() {
           transition={{ duration: 1 }}
           className="relative inline-block"
         >
-          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[1.05]">
+          <h1 className="flex flex-col items-center gap-2 sm:gap-3 md:gap-4 text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-black tracking-tighter leading-[1.02]">
             <span className="block text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/60 filter drop-shadow-[0_0_26px_rgba(255,255,255,0.18)]">
               OPEN VAULTS
             </span>
-            <span className="block mt-1 text-transparent bg-clip-text bg-gradient-to-r from-accent via-neon-cyan to-accent animate-gradient bg-300% text-glow-magenta">
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-accent via-neon-cyan to-accent animate-gradient bg-300% text-glow-magenta">
               WIN REAL COLLECTIBLES
             </span>
-            <span className="block mt-1 text-neon-green text-glow-green text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
+            <span className="block text-neon-green text-glow-green text-2xl sm:text-3xl md:text-4xl lg:text-5xl">
               WIN REAL CASH
             </span>
           </h1>
         </motion.div>
 
-        <div className="z-10 mt-6 sm:mt-8 text-sm sm:text-lg md:text-2xl text-text-muted max-w-3xl mx-auto font-medium h-[3.2em] md:h-[2.6em]">
+        <div className="z-10 mt-8 sm:mt-10 text-sm sm:text-lg md:text-2xl text-text-muted max-w-3xl mx-auto font-medium h-[3.2em] md:h-[2.6em]">
           <span ref={typedEl} />
         </div>
       </div>
