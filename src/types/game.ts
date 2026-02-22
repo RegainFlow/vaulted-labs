@@ -8,3 +8,4 @@ export * from "./quest";
 export * from "./landing";
 export * from "./tutorial";
 export * from "./bonus";
+export * from "./funko";

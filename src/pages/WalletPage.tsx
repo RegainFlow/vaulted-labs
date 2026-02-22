@@ -10,7 +10,7 @@ import { useGame } from "../context/GameContext";
 import { WALLET_TUTORIAL_STEPS } from "../data/tutorial";
 
 export function WalletPage() {
-  const { balance, inventory, levelInfo, prestigeLevel, freeSpins, hasSeenWalletTutorial, setHasSeenWalletTutorial } = useGame();
+  const { balance, inventory, levelInfo, prestigeLevel, freeSpins, cashoutFlashTimestamp, cashoutStreak, hasSeenWalletTutorial, setHasSeenWalletTutorial } = useGame();
   const navigate = useNavigate();
   const [tutorialActive, setTutorialActive] = useState(false);
 
@@ -35,6 +35,8 @@ export function WalletPage() {
         level={levelInfo.level}
         prestigeLevel={prestigeLevel}
         freeSpins={freeSpins}
+        cashoutFlashTimestamp={cashoutFlashTimestamp}
+        cashoutStreak={cashoutStreak}
       />
       <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-28 md:pt-28 pb-8 sm:pb-12">
         <div className="max-w-6xl mx-auto">
@@ -61,16 +63,12 @@ export function WalletPage() {
               </button>
               <button
                 onClick={() => {
-                  navigate("/");
-                  setTimeout(() => {
-                    document
-                      .getElementById("waitlist-form")
-                      ?.scrollIntoView({ behavior: "smooth", block: "center" });
-                  }, 300);
+                  navigate("/inventory");
+                  window.scrollTo(0, 0);
                 }}
                 className="inline-block px-6 py-2.5 bg-neon-green text-bg text-xs font-black uppercase tracking-widest rounded-xl border-b-[3px] border-[#2bcc10] shadow-[0_4px_12px_rgba(57,255,20,0.3)] hover:shadow-[0_4px_16px_rgba(57,255,20,0.4)] active:border-b-[1px] transition-all duration-100 cursor-pointer"
               >
-                Cashout
+                Cashout Items
               </button>
             </div>
           </div>

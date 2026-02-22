@@ -10,6 +10,8 @@ export interface InventoryItem {
   value: number;
   status: ItemStatus;
   acquiredAt: number;
+  funkoId?: string;
+  funkoName?: string;
 }
 
 export interface InventoryItemCardProps {

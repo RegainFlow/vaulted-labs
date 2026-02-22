@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import type { TutorialProps, TargetRect } from "../types/tutorial";
 import { OVERLAY_STEPS, TOOLTIP_STEPS } from "../data/tutorial";
@@ -60,6 +60,22 @@ export function Tutorial({
   onSkip
 }: TutorialProps) {
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
+  const clickTimestamps = useRef<number[]>([]);
+
+  // Auto-dismiss on rapid clicking (>3 clicks in 1 second)
+  useEffect(() => {
+    if (!step || !onSkip) return;
+    const handleClick = () => {
+      const now = Date.now();
+      clickTimestamps.current.push(now);
+      clickTimestamps.current = clickTimestamps.current.filter((t) => now - t < 1000);
+      if (clickTimestamps.current.length > 3) {
+        onSkip();
+      }
+    };
+    window.addEventListener("click", handleClick);
+    return () => window.removeEventListener("click", handleClick);
+  }, [step, onSkip]);
 
   const updateRect = useCallback(() => {
     if (!step) return;
@@ -84,16 +100,17 @@ export function Tutorial({
   }, [step]);
 
   useEffect(() => {
-    updateRect();
+    const initialMeasureTimer = window.setTimeout(updateRect, 0);
     window.addEventListener("resize", updateRect);
     window.addEventListener("scroll", updateRect, true);
     return () => {
+      window.clearTimeout(initialMeasureTimer);
       window.removeEventListener("resize", updateRect);
       window.removeEventListener("scroll", updateRect, true);
     };
   }, [updateRect]);
 
-  // Scroll Bronze card into view when reaching open-vault step
+  // Scroll Diamond card into view when reaching open-vault step
   useEffect(() => {
     if (step === "open-vault") {
       const el = document.querySelector('[data-tutorial="vault-diamond"]');
@@ -149,7 +166,7 @@ export function Tutorial({
               Welcome to VaultedLabs!
             </h2>
             <p className="text-text-muted text-sm leading-relaxed mb-8">
-              Let's open your first vault. You'll pick a box, reveal a
+              Let's open your first vault. You'll spin the reel, reveal a
               collectible, and decide what to do with it. Everything you earn is
               yours to keep.
             </p>

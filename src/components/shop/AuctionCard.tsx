@@ -3,7 +3,7 @@ import { motion } from "motion/react";
 import { RARITY_CONFIG, VAULT_COLORS } from "../../data/vaults";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
 import type { AuctionCardProps } from "../../types/marketplace";
-import { VaultIcon } from "../vault/VaultIcons";
+import { FunkoImage } from "../shared/FunkoImage";
 import { CYBER_TRANSITIONS } from "../../lib/motion-presets";
 
 function formatTimeLeft(ms: number): string {
@@ -21,7 +21,7 @@ export function AuctionCard({ auction, balance, onBid, isFirst = false }: Auctio
   const rarityConfig = RARITY_CONFIG[item.rarity];
   const vaultColor = VAULT_COLORS[item.vaultTier] || "#ffffff";
 
-  const [timeLeft, setTimeLeft] = useState(endsAt - Date.now());
+  const [timeLeft, setTimeLeft] = useState(0);
   const [bidAmount, setBidAmount] = useState("");
   const [bidError, setBidError] = useState("");
 
@@ -30,8 +30,12 @@ export function AuctionCard({ auction, balance, onBid, isFirst = false }: Auctio
   const isWinning = currentBidder === "You";
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const updateTimeLeft = () => {
       setTimeLeft(endsAt - Date.now());
+    };
+    updateTimeLeft();
+    const interval = setInterval(() => {
+      updateTimeLeft();
     }, 1000);
     return () => clearInterval(interval);
   }, [endsAt]);
@@ -88,18 +92,10 @@ export function AuctionCard({ auction, balance, onBid, isFirst = false }: Auctio
       <div className="p-3 sm:p-4">
         {/* Icon + info */}
         <div className="flex items-center gap-2.5 sm:gap-3 mb-3">
-          <div
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center border shrink-0"
-            style={{
-              borderColor: `${vaultColor}30`,
-              backgroundColor: `${vaultColor}08`
-            }}
-          >
-            <VaultIcon name={item.vaultTier} color={vaultColor} />
-          </div>
+          <FunkoImage name={item.funkoName || item.product} rarity={item.rarity} size="sm" />
           <div className="flex-1 min-w-0">
             <p className="text-xs sm:text-sm font-bold text-white truncate">
-              {item.product}
+              {item.funkoName || item.product}
             </p>
             <p
               className="text-[10px] font-bold uppercase tracking-wider"

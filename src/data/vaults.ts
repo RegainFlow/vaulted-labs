@@ -181,9 +181,12 @@ export const INCENTIVE_TIERS: IncentiveTier[] = [
 ];
 
 export const PREMIUM_BONUS_CHANCE: Record<string, number> = {
-  Platinum: 0.3,
-  Obsidian: 0.4,
-  Diamond: 0.5
+  Bronze: 0.15,
+  Silver: 0.20,
+  Gold: 0.25,
+  Platinum: 0.45,
+  Obsidian: 0.55,
+  Diamond: 0.65
 };
 
 /* ─── Vault Lock Bonus Mini-Game ─── */
@@ -204,8 +207,8 @@ export function generateVaultLockStrip(purchasedTier: VaultTierName): VaultLockS
     slots.push({ ...slot });
     slots.push({ ...slot });
   }
-  // Purchased tier gets 1-2 extra appearances (replace random other tier slots)
-  const extraCount = Math.random() < 0.5 ? 1 : 2;
+  // Purchased tier gets 3-4 extra appearances (replace random other tier slots)
+  const extraCount = Math.random() < 0.5 ? 3 : 4;
   for (let i = 0; i < extraCount; i++) {
     const otherIndices = slots
       .map((s, idx) => ({ tier: s.tier, idx }))

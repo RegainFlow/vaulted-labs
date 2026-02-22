@@ -46,6 +46,7 @@ interface PersistedState {
   prestigeLevel: number;
   defeatedBosses: string[];
   freeSpins: number;
+  cashoutStreak: number;
 }
 
 const DEFAULT_TX: CreditTransaction = {
@@ -98,7 +99,9 @@ interface GameContextValue {
     product: string,
     vaultTier: VaultTierName,
     rarity: Rarity,
-    value: number
+    value: number,
+    funkoId?: string,
+    funkoName?: string
   ) => InventoryItem;
   cashoutItem: (itemId: string) => void;
   shipItem: (itemId: string) => void;
@@ -131,6 +134,8 @@ interface GameContextValue {
   freeSpins: number;
   grantFreeSpins: (count: number) => void;
   useFreeSpinForVault: (vaultName: string, price: number) => boolean;
+  cashoutFlashTimestamp: number;
+  cashoutStreak: number;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -197,6 +202,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     initial?.defeatedBosses ?? []
   );
   const [freeSpins, setFreeSpins] = useState(initial?.freeSpins ?? 0);
+  const [cashoutStreak, setCashoutStreak] = useState(initial?.cashoutStreak ?? 0);
+  const [cashoutFlashTimestamp, setCashoutFlashTimestamp] = useState(0);
 
   // Ref to track toast auto-dismiss timer
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -236,7 +243,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       nextId,
       prestigeLevel,
       defeatedBosses,
-      freeSpins
+      freeSpins,
+      cashoutStreak
     });
   }, [
     creditTransactions,
@@ -253,7 +261,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     questProgress,
     prestigeLevel,
     defeatedBosses,
-    freeSpins
+    freeSpins,
+    cashoutStreak
   ]);
 
   const balance = useMemo(
@@ -265,15 +274,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // Auto-unlock quests when level increases
   useEffect(() => {
-    setQuestProgress((prev) => {
-      const existingIds = new Set(prev.map((qp) => qp.questId));
-      const newQuests = QUESTS.filter(
-        (q) => q.requiredLevel <= levelInfo.level && !existingIds.has(q.id)
-      ).map((q) => ({ questId: q.id, status: "active" as const, progress: 0 }));
+    const timer = window.setTimeout(() => {
+      setQuestProgress((prev) => {
+        const existingIds = new Set(prev.map((qp) => qp.questId));
+        const newQuests = QUESTS.filter(
+          (q) => q.requiredLevel <= levelInfo.level && !existingIds.has(q.id)
+        ).map((q) => ({ questId: q.id, status: "active" as const, progress: 0 }));
 
-      if (newQuests.length === 0) return prev;
-      return [...prev, ...newQuests];
-    });
+        if (newQuests.length === 0) return prev;
+        return [...prev, ...newQuests];
+      });
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [levelInfo.level]);
 
   // Quest progress helper
@@ -373,7 +386,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       product: string,
       vaultTier: VaultTierName,
       rarity: Rarity,
-      value: number
+      value: number,
+      funkoId?: string,
+      funkoName?: string
     ): InventoryItem => {
       const item: InventoryItem = {
         id: uid("item"),
@@ -382,9 +397,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
         rarity,
         value,
         status: "held",
-        acquiredAt: Date.now()
+        acquiredAt: Date.now(),
+        ...(funkoId ? { funkoId } : {}),
+        ...(funkoName ? { funkoName } : {})
       };
       setInventory((prev) => [...prev, item]);
+      setCashoutStreak(0);
       advanceQuests("hold_item", 1);
       return item;
     },
@@ -407,6 +425,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
             }
           ]);
           advanceQuests("cashout_item", 1);
+          setCashoutFlashTimestamp(Date.now());
+          setCashoutStreak((prev) => prev + 1);
           return { ...item, status: "cashed_out" as const };
         })
       );
@@ -420,6 +440,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         prev.map((item) => {
           if (item.id === itemId && item.status === "held") {
             advanceQuests("ship_item", 1);
+            setCashoutStreak(0);
             return { ...item, status: "shipped" as const };
           }
           return item;
@@ -483,6 +504,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         timestamp: Date.now()
       }
     ]);
+    setCashoutFlashTimestamp(Date.now());
+    setCashoutStreak((prev) => prev + 1);
   }, []);
 
   const buyListing = useCallback(
@@ -669,6 +692,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setPrestigeLevel(0);
     setDefeatedBosses([]);
     setFreeSpins(0);
+    setCashoutStreak(0);
     document.documentElement.removeAttribute("data-prestige");
   }, []);
 
@@ -718,7 +742,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       defeatBoss,
       freeSpins,
       grantFreeSpins,
-      useFreeSpinForVault
+      useFreeSpinForVault,
+      cashoutFlashTimestamp,
+      cashoutStreak
     }),
     [
       creditTransactions,
@@ -759,13 +785,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
       defeatBoss,
       freeSpins,
       grantFreeSpins,
-      useFreeSpinForVault
+      useFreeSpinForVault,
+      cashoutFlashTimestamp,
+      cashoutStreak
     ]
   );
 
   return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useGame(): GameContextValue {
   const ctx = useContext(GameContext);
   if (!ctx) throw new Error("useGame must be used within a GameProvider");

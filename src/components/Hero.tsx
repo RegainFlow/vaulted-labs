@@ -31,7 +31,7 @@ export function Hero() {
       {/* Hero background image — replace src with actual hero image when ready */}
       <div className="absolute inset-0 z-[1] overflow-hidden">
         <img
-          src="/images/hero/hero_bg.png"
+          src="/images/hero/new_hero_bg.jpeg"
           alt=""
           className="w-full h-full object-cover opacity-10"
         />

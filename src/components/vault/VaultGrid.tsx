@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo, useRef, useCallback, memo } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence, useReducedMotion, useMotionValue } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import {
   VAULTS,
   RARITY_CONFIG,
@@ -11,6 +11,8 @@ import {
   pickProduct,
   getPrestigeOdds
 } from "../../data/vaults";
+import { pickFunko } from "../../data/funkos";
+import { FunkoImage } from "../shared/FunkoImage";
 import { VaultCard } from "./VaultCard";
 import { useGame } from "../../context/GameContext";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
@@ -21,11 +23,10 @@ import type {
   VaultTierName
 } from "../../types/vault";
 import type { TutorialStep } from "../../types/tutorial";
-import { VaultIcon } from "./VaultIcons";
 import { VaultLockBonusStage } from "./VaultLockBonusStage";
+import { ItemSpinner } from "./ItemSpinner";
+import { LegendaryHypeOverlay } from "./LegendaryHypeOverlay";
 import {
-  SPIN_PHASES,
-  RARITY_GLOWS,
   RARITY_CELEBRATION,
   RARITY_TEXT_CONFIG,
   CELEBRATION_SPRINGS
@@ -33,20 +34,7 @@ import {
 
 /* ─── Constants & Types ─── */
 
-type Stage = "picking" | "revealing" | "spinning" | "bonus-spinning" | "result";
-
-const PRESTIGE_THEMES: Record<number, { primary: string; secondary: string }> = {
-  0: { primary: "#ff2d95", secondary: "#00f0ff" },
-  1: { primary: "#ff8c00", secondary: "#ffd700" },
-  2: { primary: "#9945ff", secondary: "#c77dff" },
-  3: { primary: "#ff2d95", secondary: "#00e5ff" }
-};
-
-interface ReelItem {
-  rarity: Rarity;
-  color: string;
-  label: string;
-}
+type Stage = "idle" | "spinning" | "bonus-spinning" | "result";
 
 interface VaultOverlayProps {
   tier: Vault;
@@ -59,13 +47,17 @@ interface VaultOverlayProps {
     product: string,
     vaultTier: VaultTierName,
     rarity: Rarity,
-    value: number
+    value: number,
+    funkoId?: string,
+    funkoName?: string
   ) => void;
   onShip: (
     product: string,
     vaultTier: VaultTierName,
     rarity: Rarity,
-    value: number
+    value: number,
+    funkoId?: string,
+    funkoName?: string
   ) => void;
   isTutorial?: boolean;
   tutorialStep?: TutorialStep | null;
@@ -78,55 +70,32 @@ interface VaultOverlayProps {
   freeSpins?: number;
 }
 
-/* ─── Helper Functions ─── */
-
-function generateReelItems(wonRarity: Rarity): ReelItem[] {
-  const rarities: Rarity[] = ["common", "uncommon", "rare", "legendary"];
-  const weights = [50, 30, 15, 5];
-
-  function weightedRandom(): Rarity {
-    const total = weights.reduce((a, b) => a + b, 0);
-    let r = Math.random() * total;
-    for (let i = 0; i < rarities.length; i++) {
-      r -= weights[i];
-      if (r <= 0) return rarities[i];
-    }
-    return "common";
-  }
-
-  const items: ReelItem[] = [];
-  for (let i = 0; i < 8; i++) {
-    const r = weightedRandom();
-    items.push({
-      rarity: r,
-      color: RARITY_CONFIG[r].color,
-      label: r.charAt(0).toUpperCase() + r.slice(1)
-    });
-  }
-  items.push({
-    rarity: "legendary",
-    color: RARITY_CONFIG.legendary.color,
-    label: "Legendary"
-  });
-  const bufferRarity = weightedRandom();
-  items.push({
-    rarity: bufferRarity,
-    color: RARITY_CONFIG[bufferRarity].color,
-    label: bufferRarity.charAt(0).toUpperCase() + bufferRarity.slice(1)
-  });
-  items.push({
-    rarity: wonRarity,
-    color: RARITY_CONFIG[wonRarity].color,
-    label: wonRarity.charAt(0).toUpperCase() + wonRarity.slice(1)
-  });
-  const tailRarity = weightedRandom();
-  items.push({
-    rarity: tailRarity,
-    color: RARITY_CONFIG[tailRarity].color,
-    label: tailRarity.charAt(0).toUpperCase() + tailRarity.slice(1)
-  });
-  return items;
+interface ClaimParticle {
+  id: number;
+  xMid: number;
+  xEnd: number;
+  yStart: number;
+  yMid: number;
+  yEnd: number;
+  size: number;
+  duration: number;
+  delay: number;
+  rotate: number;
 }
+
+interface ConfettiParticle {
+  id: number;
+  x: number;
+  y: number;
+  color: string;
+  scale: number;
+  rotate: number;
+}
+
+const seededUnit = (seed: number) => {
+  const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
+  return x - Math.floor(x);
+};
 
 const RESULT_TOOLTIP: Record<
   string,
@@ -149,203 +118,12 @@ const RESULT_TOOLTIP: Record<
   }
 };
 
-/* ─── Shared UI Logic Components ─── */
-
-function Reel({
-  items,
-  spinning,
-  landed,
-  accentColor,
-  isBonus = false,
-  prestigeLevel = 0,
-  startAtLanded = false
-}: {
-  items: ReelItem[];
-  spinning: boolean;
-  landed: boolean;
-  accentColor: string;
-  isBonus?: boolean;
-  prestigeLevel?: number;
-  startAtLanded?: boolean;
-}) {
-  const prefersReducedMotion = useReducedMotion();
-  const landedIndex = 10;
-  const displayItems = [...items, ...items, ...items];
-  const landedRowIndex = items.length + landedIndex;
-  const theme = PRESTIGE_THEMES[prestigeLevel as keyof typeof PRESTIGE_THEMES] || PRESTIGE_THEMES[0];
-  const rowHeight = isBonus ? 56 : 48;
-  const visibleRows = isBonus ? 4 : 5;
-  const reelHeight = rowHeight * visibleRows;
-  const landedOffset = reelHeight / 2 - (landedRowIndex + 0.5) * rowHeight;
-  const landedColor = landed ? displayItems[landedRowIndex]?.color ?? accentColor : accentColor;
-  const y = useMotionValue(startAtLanded ? landedOffset : 0);
-  const scaleClass = isBonus
-    ? "w-full max-w-[20rem] sm:max-w-[26rem] md:max-w-[36rem] lg:max-w-[48rem] xl:max-w-[56rem]"
-    : "w-full max-w-[19rem] sm:max-w-[24rem] md:max-w-[34rem] lg:max-w-[44rem] xl:max-w-[52rem]";
-  const labelClass = isBonus
-    ? "text-base sm:text-lg md:text-xl"
-    : "text-sm sm:text-base md:text-lg";
-
-  // 3-phase spin speed arc
-  const spinPhaseRef = useRef(1);
-  const [spinPhase, setSpinPhase] = useState(1);
-  const [nearMissFlash, setNearMissFlash] = useState(false);
-  const nearMissFiredRef = useRef(false);
-
-  useEffect(() => {
-    if (!spinning || prefersReducedMotion) {
-      spinPhaseRef.current = 1;
-      setSpinPhase(1);
-      nearMissFiredRef.current = false;
-      return;
-    }
-    spinPhaseRef.current = 1;
-    setSpinPhase(1);
-    nearMissFiredRef.current = false;
-    const t1 = setTimeout(() => { spinPhaseRef.current = 2; setSpinPhase(2); }, 1500);
-    const t2 = setTimeout(() => { spinPhaseRef.current = 3; setSpinPhase(3); }, 3500);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
-  }, [spinning, prefersReducedMotion]);
-
-  // Near-miss: detect legendary crossing center during Phase 3
-  useEffect(() => {
-    if (!spinning || spinPhase !== 3 || prefersReducedMotion) return;
-    const unsubscribe = y.on("change", (currentY: number) => {
-      if (nearMissFiredRef.current) return;
-      const centerWorldY = -currentY + reelHeight / 2;
-      // Legendary is at index 8 in original items (0-based), check all copies
-      for (let copy = 0; copy < 3; copy++) {
-        const legendaryIdx = copy * items.length + 8;
-        const rowTop = legendaryIdx * rowHeight;
-        const rowCenter = rowTop + rowHeight / 2;
-        if (Math.abs(centerWorldY - rowCenter) < rowHeight * 0.6) {
-          nearMissFiredRef.current = true;
-          setNearMissFlash(true);
-          setTimeout(() => setNearMissFlash(false), 300);
-          break;
-        }
-      }
-    });
-    return () => unsubscribe();
-  }, [spinning, spinPhase, y, items.length, rowHeight, reelHeight, prefersReducedMotion]);
-
-  const spinDuration = spinPhase === 1
-    ? SPIN_PHASES.blitz.duration
-    : spinPhase === 2
-      ? SPIN_PHASES.cruise.duration
-      : SPIN_PHASES.tension.duration;
-
-  return (
-    <div className={`relative ${scaleClass} overflow-hidden rounded-[2.5rem] border-2 bg-surface/40 backdrop-blur-md transition-all duration-700`}
-      style={{
-        height: `${reelHeight}px`,
-        borderColor: landed ? `${landedColor}80` : `${theme.primary}40`,
-        boxShadow: landed
-          ? `0 0 50px ${landedColor}30, inset 0 0 25px ${landedColor}10`
-          : spinning
-            ? `0 0 60px ${accentColor}25, 0 0 120px ${accentColor}10`
-            : `0 0 20px ${theme.primary}10`
-      }}
-    >
-      {isBonus && (
-        <div className="absolute inset-0 z-0 opacity-10 animate-gradient bg-300% bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500" />
-      )}
-      <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" style={{ backgroundImage: `repeating-linear-gradient(0deg, ${accentColor} 0px, transparent 1px, transparent 4px)`, backgroundSize: "100% 4px" }} />
-      <div className="absolute inset-0 z-20 pointer-events-none bg-linear-to-b from-bg via-transparent to-bg" />
-      {/* Center indicator line — flares gold on near-miss */}
-      <motion.div
-        className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[4px] z-30 pointer-events-none"
-        animate={
-          prefersReducedMotion
-            ? undefined
-            : nearMissFlash
-              ? { opacity: 1, scaleX: 1 }
-              : {
-                  opacity: landed ? 1 : [0.4, 0.9, 0.4],
-                  scaleX: landed ? 1 : [0.98, 1, 0.98],
-                  boxShadow: landed
-                    ? `0 0 25px ${landedColor}`
-                    : [`0 0 15px ${theme.primary}`, `0 0 35px ${theme.primary}`, `0 0 15px ${theme.primary}`]
-                }
-        }
-        transition={prefersReducedMotion ? undefined : nearMissFlash ? { duration: 0.15 } : { duration: 2, repeat: Infinity }}
-        style={{
-          backgroundColor: nearMissFlash ? "#FFD700" : (landed ? landedColor : theme.primary),
-          boxShadow: nearMissFlash ? "0 0 40px #FFD700, 0 0 80px #FFD700" : undefined
-        }}
-      />
-      <motion.div
-        initial={{ y: startAtLanded ? landedOffset : 0 }}
-        style={{ y }}
-        animate={
-          landed
-            ? { y: landedOffset }
-            : spinning
-              ? prefersReducedMotion
-                ? { y: landedOffset }
-                : { y: [0, -(items.length * rowHeight)] }
-              : { y: startAtLanded ? landedOffset : 0 }
-        }
-        transition={
-          landed
-            ? startAtLanded
-              ? { duration: 0 }
-              : { duration: SPIN_PHASES.land.duration, ease: SPIN_PHASES.land.ease }
-            : spinning
-              ? prefersReducedMotion
-                ? { duration: 1, ease: "easeOut" }
-                : { duration: spinDuration, repeat: Infinity, ease: "linear" }
-              : undefined
-        }
-        className="flex flex-col relative z-10"
-      >
-        {displayItems.map((item, i) => {
-          const isLandedItem = landed && i === landedRowIndex;
-          return (
-            <div
-              key={i}
-              className="flex items-center gap-4 px-5 sm:px-8 md:px-10 shrink-0"
-              style={{
-                height: `${rowHeight}px`,
-                background: isLandedItem && item.rarity === "legendary"
-                  ? `linear-gradient(90deg, transparent, ${item.color}12, transparent)`
-                  : undefined
-              }}
-            >
-              <motion.div
-                className="w-2.5 h-10 rounded-full shrink-0"
-                animate={
-                  isLandedItem && !prefersReducedMotion
-                    ? { scale: [1, 1.4, 1], boxShadow: `0 0 20px ${item.color}` }
-                    : undefined
-                }
-                style={{ backgroundColor: item.color }}
-              />
-              <span
-                className={`${labelClass} font-black uppercase tracking-widest italic transition-all duration-300`}
-                style={{
-                  color: isLandedItem ? item.color : (landed ? `${item.color}20` : `${item.color}50`),
-                  textShadow: isLandedItem ? `0 0 20px ${item.color}` : "none"
-                }}
-              >
-                {landed ? item.label : "\u2022\u2022\u2022"}
-              </span>
-              {isLandedItem && item.rarity === "legendary" && <span className="text-lg animate-pulse" style={{ color: item.color }}>&#9733;</span>}
-            </div>
-          );
-        })}
-      </motion.div>
-    </div>
-  );
-}
-
-const SyncedReel = memo(Reel);
-
-function OptionCard({ title, desc, icon, action, onClick, tierColor, tutorialActive = false }: { title: string; desc: string; icon: React.ReactNode; action: string; onClick: () => void; highlight?: boolean; tierColor?: string; tutorialActive?: boolean; }) {
+function OptionCard({ title, desc, icon, action, onClick, tierColor, tutorialActive = false, disabled = false }: { title: string; desc: string; icon: React.ReactNode; action: string; onClick: () => void; highlight?: boolean; tierColor?: string; tutorialActive?: boolean; disabled?: boolean; }) {
   return (
     <button
       onClick={onClick}
-      className={`p-3 sm:p-4 md:p-5 rounded-2xl sm:rounded-3xl border-2 text-left transition-all duration-300 cursor-pointer flex flex-col h-full backdrop-blur-sm group hover:scale-[1.03] active:scale-[0.98] ${tutorialActive ? "scale-[1.02] animate-pulse" : ""}`}
+      disabled={disabled}
+      className={`p-3 sm:p-4 md:p-5 rounded-2xl sm:rounded-3xl border-2 text-left transition-all duration-300 flex flex-col h-full backdrop-blur-sm group ${disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:scale-[1.03] active:scale-[0.98]"} ${tutorialActive ? "scale-[1.02] animate-pulse" : ""}`}
       style={
         tutorialActive
           ? { borderColor: "#ff2d95", boxShadow: "0 0 25px rgba(255,45,149,0.4)", backgroundColor: "rgba(255,45,149,0.08)" }
@@ -377,26 +155,39 @@ function ConfettiParticles({ color, count = 40, rarity }: { color: string; count
   const effectiveSpread = config?.spread ?? 400;
   const effectiveDuration = config?.duration ?? 2;
   const sizeClass = config?.size ?? "w-2 h-2";
+  const colorSeed = useMemo(() => color.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0), [color]);
 
-  const particles = useMemo(() => Array.from({ length: effectiveCount }).map((_, i) => ({
-    id: i,
-    x: (Math.random() - 0.5) * effectiveSpread,
-    y: (Math.random() - 0.5) * effectiveSpread,
-    color: Math.random() > 0.5 ? color : "#ffffff",
-    scale: Math.random() * 0.8 + 0.2
-  })), [color, effectiveCount, effectiveSpread]);
+  const particles = useMemo<ConfettiParticle[]>(
+    () =>
+      Array.from({ length: effectiveCount }).map((_, i) => {
+        const base = colorSeed + i * 11.73 + effectiveCount * 0.37;
+        return {
+          id: i,
+          x: (seededUnit(base + 1) - 0.5) * effectiveSpread,
+          y: (seededUnit(base + 2) - 0.5) * effectiveSpread,
+          color: seededUnit(base + 3) > 0.5 ? color : "#ffffff",
+          scale: seededUnit(base + 4) * 0.8 + 0.2,
+          rotate: seededUnit(base + 5) * 720
+        };
+      }),
+    [color, colorSeed, effectiveCount, effectiveSpread]
+  );
 
   // Legendary second wave: particles that drift upward
-  const legendaryWave = useMemo(() => {
+  const legendaryWave = useMemo<ConfettiParticle[]>(() => {
     if (rarity !== "legendary") return [];
-    return Array.from({ length: 40 }).map((_, i) => ({
-      id: i,
-      x: (Math.random() - 0.5) * 500,
-      y: -(Math.random() * 300 + 300),
-      color: Math.random() > 0.3 ? "#FFD700" : "#ffffff",
-      scale: Math.random() * 0.6 + 0.3
-    }));
-  }, [rarity]);
+    return Array.from({ length: 40 }).map((_, i) => {
+      const base = colorSeed + i * 19.41 + 700;
+      return {
+        id: i,
+        x: (seededUnit(base + 1) - 0.5) * 500,
+        y: -((seededUnit(base + 2) * 300) + 300),
+        color: seededUnit(base + 3) > 0.3 ? "#FFD700" : "#ffffff",
+        scale: seededUnit(base + 4) * 0.6 + 0.3,
+        rotate: seededUnit(base + 5) * 540
+      };
+    });
+  }, [colorSeed, rarity]);
 
   return (
     <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible z-0">
@@ -404,7 +195,7 @@ function ConfettiParticles({ color, count = 40, rarity }: { color: string; count
         <motion.div
           key={p.id}
           initial={{ opacity: 1, x: 0, y: 0, scale: 0 }}
-          animate={{ opacity: 0, x: p.x, y: p.y, rotate: Math.random() * 720, scale: p.scale }}
+          animate={{ opacity: 0, x: p.x, y: p.y, rotate: p.rotate, scale: p.scale }}
           transition={{ duration: effectiveDuration, ease: "easeOut" }}
           className={`absolute ${sizeClass} rounded-sm`}
           style={{ backgroundColor: p.color }}
@@ -414,7 +205,7 @@ function ConfettiParticles({ color, count = 40, rarity }: { color: string; count
         <motion.div
           key={`wave-${p.id}`}
           initial={{ opacity: 0, x: 0, y: 0, scale: 0 }}
-          animate={{ opacity: [0, 1, 0], x: p.x, y: p.y, scale: p.scale }}
+          animate={{ opacity: [0, 1, 0], x: p.x, y: p.y, scale: p.scale, rotate: p.rotate }}
           transition={{ duration: 2.5, delay: 0.5, ease: "easeOut" }}
           className="absolute w-2 h-2 rounded-full"
           style={{ backgroundColor: p.color }}
@@ -468,21 +259,22 @@ function VaultOverlay({
   onBonusFreeSpins,
   freeSpins = 0
 }: VaultOverlayProps) {
-  const prefersReducedMotion = useReducedMotion();
-  const [stage, setStage] = useState<Stage>("picking");
+  const [stage, setStage] = useState<Stage>("idle");
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [spinLanded, setSpinLanded] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
+  const [isResolvingAction, setIsResolvingAction] = useState(false);
+  const [claimParticles, setClaimParticles] = useState<ClaimParticle[]>([]);
   const [showBonusExplainer, setShowBonusExplainer] = useState(false);
+  const [bonusTriggered, setBonusTriggered] = useState(false);
+  const timeoutIdsRef = useRef<number[]>([]);
 
   const effectiveOdds = useMemo(() => getPrestigeOdds(tier.rarities, isTutorial ? 0 : overlayPrestigeLevel), [tier, isTutorial, overlayPrestigeLevel]);
   const wonRarity = useMemo(() => pickRarity(effectiveOdds), [effectiveOdds]);
-  const product = useMemo(() => category || pickProduct(), [tier, category]);
+  const product = useMemo(() => category || pickProduct(), [category]);
   const rarityConfig = RARITY_CONFIG[wonRarity as keyof typeof RARITY_CONFIG];
   const resultValue = useMemo(() => pickValue(tier.price, rarityConfig), [tier, rarityConfig]);
-  const reelItems = useMemo(() => generateReelItems(wonRarity as Rarity), [wonRarity]);
-
-  const bonusTriggered = useMemo(() => isTutorial || (Math.random() < (PREMIUM_BONUS_CHANCE[tier.name] ?? 0)), [tier, isTutorial]);
+  const wonFunko = useMemo(() => pickFunko(tier.name as VaultTierName, wonRarity as Rarity), [tier, wonRarity]);
   const [usedFreeSpin, setUsedFreeSpin] = useState(false);
 
   const [landingFlash, setLandingFlash] = useState(false);
@@ -490,20 +282,28 @@ function VaultOverlay({
   const preBalance = purchasedBalance ?? balance;
   const postBalance = usedFreeSpin ? preBalance + resultValue : preBalance - tier.price + resultValue;
 
-  const tutorialBoxIndex = 4;
   const resultTooltip = tutorialStep ? RESULT_TOOLTIP[tutorialStep] : null;
-  const OPENING_STAGE_DURATION = 2400;
-  const SPIN_STAGE_DELAY = OPENING_STAGE_DURATION;
-  const MAIN_SPIN_LAND_DELAY = SPIN_STAGE_DELAY + 5000;
+  const SPIN_LAND_DELAY = 5000;
   const POST_LAND_HOLD_DELAY = 2200;
-  // Landing flash when spin lands
+
+  const scheduleTimeout = useCallback((callback: () => void, delay: number) => {
+    const timeoutId = window.setTimeout(callback, delay);
+    timeoutIdsRef.current.push(timeoutId);
+    return timeoutId;
+  }, []);
+
   useEffect(() => {
-    if (spinLanded && stage === "spinning") {
-      setLandingFlash(true);
-      const t = setTimeout(() => setLandingFlash(false), 500);
-      return () => clearTimeout(t);
-    }
-  }, [spinLanded, stage]);
+    return () => {
+      timeoutIdsRef.current.forEach((id) => window.clearTimeout(id));
+      timeoutIdsRef.current = [];
+    };
+  }, []);
+
+  const handleSpinLand = useCallback(() => {
+    setSpinLanded(true);
+    setLandingFlash(true);
+    scheduleTimeout(() => setLandingFlash(false), 500);
+  }, [scheduleTimeout]);
 
   useEffect(() => {
     if (stage === "result") {
@@ -511,16 +311,18 @@ function VaultOverlay({
     }
   }, [stage, wonRarity, resultValue, tier.name, tier.price, bonusTriggered, usedFreeSpin]);
 
-  const pickBox = () => {
+  const handleSpin = useCallback(() => {
+    const shouldTriggerBonus = isTutorial || (Math.random() < (PREMIUM_BONUS_CHANCE[tier.name] ?? 0));
+    setBonusTriggered(shouldTriggerBonus);
     setSpinLanded(false);
     setUsedFreeSpin(false);
     if (isTutorial) {
       onTutorialPurchase?.(tier.name, tier.price);
       setPurchasedBalance(balance); setPurchaseError(null);
       trackEvent(AnalyticsEvents.VAULT_OPENED, { vault_tier: tier.name, vault_price: tier.price, is_tutorial: true });
-      setStage("revealing"); onTutorialAdvance?.("revealing");
-      setTimeout(() => setStage("spinning"), SPIN_STAGE_DELAY); setTimeout(() => setSpinLanded(true), MAIN_SPIN_LAND_DELAY);
-      setTimeout(() => { setShowBonusExplainer(true); }, MAIN_SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); return;
+      setStage("spinning");
+      scheduleTimeout(() => handleSpinLand(), SPIN_LAND_DELAY);
+      scheduleTimeout(() => { setShowBonusExplainer(true); }, SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); return;
     }
     // Try free spin first
     if (onUseFreeSpinForVault?.(tier.name, tier.price)) {
@@ -528,37 +330,71 @@ function VaultOverlay({
       setPurchasedBalance(balance); setPurchaseError(null);
       trackEvent(AnalyticsEvents.FREE_SPIN_USED, { vault_tier: tier.name, vault_price: tier.price, free_spins_before: freeSpins, free_spins_after: Math.max(freeSpins - 1, 0) });
       trackEvent(AnalyticsEvents.VAULT_OPENED, { vault_tier: tier.name, vault_price: tier.price, free_spin: true });
-      setStage("revealing");
-      setTimeout(() => setStage("spinning"), SPIN_STAGE_DELAY); setTimeout(() => setSpinLanded(true), MAIN_SPIN_LAND_DELAY);
-      if (bonusTriggered) { trackEvent(AnalyticsEvents.BONUS_SPIN_TRIGGERED, { vault_tier: tier.name, vault_price: tier.price, first_rarity: wonRarity }); setTimeout(() => setStage("bonus-spinning"), MAIN_SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); }
-      else { setTimeout(() => setStage("result"), MAIN_SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); }
+      setStage("spinning");
+      scheduleTimeout(() => handleSpinLand(), SPIN_LAND_DELAY);
+      if (shouldTriggerBonus) { trackEvent(AnalyticsEvents.BONUS_SPIN_TRIGGERED, { vault_tier: tier.name, vault_price: tier.price, first_rarity: wonRarity }); scheduleTimeout(() => setStage("bonus-spinning"), SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); }
+      else { scheduleTimeout(() => setStage("result"), SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); }
       return;
     }
     if (!onPurchase(tier.name, tier.price)) { setPurchaseError(`Insufficient credits.`); return; }
     setPurchasedBalance(balance); setPurchaseError(null);
     trackEvent(AnalyticsEvents.VAULT_OPENED, { vault_tier: tier.name, vault_price: tier.price });
-    setStage("revealing");
-    setTimeout(() => setStage("spinning"), SPIN_STAGE_DELAY); setTimeout(() => setSpinLanded(true), MAIN_SPIN_LAND_DELAY);
-    if (bonusTriggered) { trackEvent(AnalyticsEvents.BONUS_SPIN_TRIGGERED, { vault_tier: tier.name, vault_price: tier.price, first_rarity: wonRarity }); setTimeout(() => setStage("bonus-spinning"), MAIN_SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); }
-    else { setTimeout(() => setStage("result"), MAIN_SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); }
-  };
+    setStage("spinning");
+    scheduleTimeout(() => handleSpinLand(), SPIN_LAND_DELAY);
+    if (shouldTriggerBonus) { trackEvent(AnalyticsEvents.BONUS_SPIN_TRIGGERED, { vault_tier: tier.name, vault_price: tier.price, first_rarity: wonRarity }); scheduleTimeout(() => setStage("bonus-spinning"), SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); }
+    else { scheduleTimeout(() => setStage("result"), SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); }
+  }, [SPIN_LAND_DELAY, POST_LAND_HOLD_DELAY, balance, freeSpins, handleSpinLand, isTutorial, onPurchase, onTutorialPurchase, onUseFreeSpinForVault, scheduleTimeout, tier.name, tier.price, wonRarity]);
+
+  // Tutorial: auto-trigger spin after a short delay when step is "spin-reel"
+  useEffect(() => {
+    if (isTutorial && tutorialStep === "spin-reel" && stage === "idle") {
+      const t = setTimeout(() => handleSpin(), 800);
+      return () => clearTimeout(t);
+    }
+  }, [handleSpin, isTutorial, tutorialStep, stage]);
 
   const handleClaimLocal = () => {
+    if (isResolvingAction) return;
     if (isTutorial) { onTutorialSetAction?.("cashed out"); onTutorialAdvance?.("complete"); onClose(); return; }
+    setIsResolvingAction(true);
+    const viewportHeight = typeof window !== "undefined" ? window.innerHeight : 900;
+    setClaimParticles(
+      Array.from({ length: 20 }).map((_, i) => ({
+        id: i,
+        xMid: (Math.random() - 0.5) * 280,
+        xEnd: (Math.random() - 0.5) * 420,
+        yStart: 220 + Math.random() * 120,
+        yMid: 40 + Math.random() * 120,
+        yEnd: -(viewportHeight * (0.55 + Math.random() * 0.25)),
+        size: 8 + Math.floor(Math.random() * 8),
+        duration: 1.25 + Math.random() * 0.35,
+        delay: i * 0.018,
+        rotate: (Math.random() - 0.5) * 420
+      }))
+    );
     trackEvent(AnalyticsEvents.ITEM_ACTION, { action: "cashout", vault_tier: tier.name, rarity: wonRarity, value: resultValue, vault_price: tier.price, free_spin: usedFreeSpin });
-    setIsClaiming(true); setTimeout(() => onClaim(resultValue), 1000);
+    setIsClaiming(true);
+    onClaim(resultValue);
+    scheduleTimeout(() => {
+      setIsClaiming(false);
+      onClose();
+    }, 1800);
   };
 
   const handleStore = () => {
+    if (isResolvingAction) return;
     if (isTutorial) { onTutorialSetAction?.("stored"); onTutorialAdvance?.("complete"); onClose(); return; }
+    setIsResolvingAction(true);
     trackEvent(AnalyticsEvents.ITEM_ACTION, { action: "hold", vault_tier: tier.name, rarity: wonRarity, value: resultValue, vault_price: tier.price, free_spin: usedFreeSpin });
-    onStore(product, tier.name as VaultTierName, wonRarity as Rarity, resultValue);
+    onStore(product, tier.name as VaultTierName, wonRarity as Rarity, resultValue, wonFunko.id, wonFunko.name);
   };
 
   const handleShip = () => {
+    if (isResolvingAction) return;
     if (isTutorial) { onTutorialSetAction?.("shipped"); onTutorialAdvance?.("complete"); onClose(); return; }
+    setIsResolvingAction(true);
     trackEvent(AnalyticsEvents.ITEM_ACTION, { action: "ship", vault_tier: tier.name, rarity: wonRarity, value: resultValue, vault_price: tier.price, free_spin: usedFreeSpin });
-    onShip(product, tier.name as VaultTierName, wonRarity as Rarity, resultValue);
+    onShip(product, tier.name as VaultTierName, wonRarity as Rarity, resultValue, wonFunko.id, wonFunko.name);
   };
 
   const handleNextResultStep = () => {
@@ -581,13 +417,43 @@ function VaultOverlay({
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 overflow-hidden bg-bg/95 backdrop-blur-xl">
-      {isClaiming && (
-        <div className="fixed inset-0 pointer-events-none z-[100] flex items-center justify-center">
-          {Array.from({ length: 20 }).map((_, i) => (
-            <motion.div key={i} className="absolute w-2 h-2 rounded-full bg-vault-gold shadow-[0_0_10px_#ffd700]" initial={{ x: 0, y: 300, opacity: 1, scale: 1 }} animate={{ x: [0, (Math.random() - 0.5) * 400, 0], y: [300, 100, -window.innerHeight], opacity: [1, 1, 0], scale: [1, 1.5, 0.5] }} transition={{ duration: 1, ease: "easeIn", delay: i * 0.02 }} />
-          ))}
-        </div>
-      )}
+      <AnimatePresence>
+        {isClaiming && (
+          <motion.div
+            key="cashout-flight"
+            className="absolute inset-0 pointer-events-none z-[120] flex items-center justify-center overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {claimParticles.map((particle) => (
+              <motion.div
+                key={particle.id}
+                className="absolute rounded-full bg-vault-gold border border-[#fff7c2]/60"
+                style={{
+                  width: particle.size,
+                  height: particle.size,
+                  boxShadow: "0 0 16px rgba(255, 215, 0, 0.8)"
+                }}
+                initial={{ x: 0, y: particle.yStart, opacity: 0, scale: 0.6, rotate: 0 }}
+                animate={{
+                  x: [0, particle.xMid, particle.xEnd],
+                  y: [particle.yStart, particle.yMid, particle.yEnd],
+                  opacity: [0, 1, 0],
+                  scale: [0.6, 1.35, 0.85],
+                  rotate: [0, particle.rotate]
+                }}
+                transition={{
+                  duration: particle.duration,
+                  ease: "easeOut",
+                  delay: particle.delay
+                }}
+              />
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Landing flash overlay */}
       <AnimatePresence>
         {landingFlash && (
@@ -616,8 +482,8 @@ function VaultOverlay({
 
       <div className="h-full max-h-dvh flex items-center justify-center p-2 sm:p-4 py-4 sm:py-6 relative z-10 overflow-y-auto">
         <AnimatePresence mode="wait">
-          {stage === "picking" && (
-            <motion.div key="picking" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }} className="space-y-8 w-full max-w-lg relative">
+          {stage === "idle" && (
+            <motion.div key="idle" initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -20, opacity: 0 }} className="space-y-6 w-full max-w-sm relative px-4">
               {!isTutorial && (
                 <button onClick={onClose} className="absolute -top-2 md:-top-3 right-0 md:-right-2 p-2.5 rounded-xl bg-error/10 border border-error/30 text-error hover:bg-error/20 hover:border-error/50 transition-all cursor-pointer z-20">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6L6 18M6 6l12 12" /></svg>
@@ -634,79 +500,65 @@ function VaultOverlay({
                     <span className="text-xs font-black uppercase tracking-widest text-neon-green">Free Spin!</span>
                   </motion.div>
                 )}
-                <h2 className="text-2xl sm:text-3xl md:text-5xl font-black text-white uppercase tracking-tight">Open the Vault</h2>
-                <p className="text-text-muted max-w-lg mx-auto text-xs sm:text-sm md:text-base">
-                  {isTutorial ? <>Pick a box and reveal what's inside.</> : freeSpins > 0 ? <>Nine chambers. One collectible. <span className="font-bold text-neon-green">Free!</span></> : <>Nine chambers. One collectible. <span className="font-bold" style={{ color: tier.color }}>${tier.price}</span> to open it.</>}
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white uppercase tracking-tight">{tier.name} Vault</h2>
+                <p className="text-text-muted max-w-lg mx-auto text-xs sm:text-sm">
+                  {isTutorial ? <>Tap SPIN to reveal your collectible.</> : freeSpins > 0 ? <>Spin the reel. <span className="font-bold text-neon-green">Free!</span></> : <>Spin the reel. <span className="font-bold" style={{ color: tier.color }}>${tier.price}</span> per spin.</>}
                 </p>
                 {purchaseError && <p className="text-error text-sm font-bold">{purchaseError}</p>}
               </div>
-              <div className="grid grid-cols-3 gap-3 md:gap-4">
-                {Array.from({ length: 9 }).map((_, i) => {
-                  const isTutorialHighlighted = isTutorial && tutorialStep === "pick-box" && i === tutorialBoxIndex;
-                  const isTutorialDimmed = isTutorial && tutorialStep === "pick-box" && i !== tutorialBoxIndex;
-                  return (
-                    <motion.button key={i} whileHover={!isTutorialDimmed ? { scale: 1.05, borderColor: tier.color } : {}} whileTap={!isTutorialDimmed ? { scale: 0.95 } : {}} onClick={() => !isTutorialDimmed && pickBox()}
-                      className={`aspect-square relative rounded-xl border flex items-center justify-center shadow-lg group overflow-hidden transition-all duration-300 ${isTutorialDimmed ? "opacity-20 pointer-events-none" : "cursor-pointer"}`}
-                      style={{ borderColor: isTutorialHighlighted ? tier.color : `${tier.color}40`, backgroundColor: `${tier.color}08` }}>
-                      <div className="scale-[0.45] md:scale-[0.5]"><VaultIcon name={tier.name} color={tier.color} /></div>
-                      {isTutorialHighlighted && <div className="absolute inset-0 rounded-xl border-2 animate-pulse pointer-events-none" style={{ borderColor: tier.color }} />}
-                    </motion.button>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
 
-          {stage === "revealing" && (
-            <motion.div key="revealing" initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.02, filter: "blur(4px)" }} transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }} className="flex flex-col items-center justify-center">
-              <div className="relative mb-10 sm:mb-12 w-[16rem] h-[16rem] sm:w-[20rem] sm:h-[20rem] flex items-center justify-center">
-                <motion.div
-                  className="absolute w-44 h-44 sm:w-56 sm:h-56 rounded-full border"
-                  style={{ borderColor: `${tier.color}45` }}
-                  animate={prefersReducedMotion ? undefined : { scale: [0.95, 1.15, 1], opacity: [0.5, 1, 0.35] }}
-                  transition={prefersReducedMotion ? undefined : { duration: 1.2, repeat: Infinity }}
-                />
-                <motion.div
-                  className="absolute w-36 h-36 sm:w-48 sm:h-48 rounded-full"
-                  style={{ background: `radial-gradient(circle, ${tier.color}45 0%, transparent 72%)` }}
-                  animate={prefersReducedMotion ? undefined : { scale: [0.9, 1.05, 1], opacity: [0.3, 0.75, 0.45] }}
-                  transition={prefersReducedMotion ? undefined : { duration: 1.1, repeat: Infinity }}
-                />
-                <motion.div
-                  animate={prefersReducedMotion ? undefined : { scale: [0.92, 1.08, 1], rotate: [0, -6, 4, 0] }}
-                  transition={prefersReducedMotion ? undefined : { duration: 1.05, repeat: Infinity, ease: "easeInOut" }}
-                  className="relative"
-                  style={{ filter: `drop-shadow(0 0 75px ${tier.color}75)` }}
+              {/* Item Spinner preview (static) */}
+              <ItemSpinner
+                vaultTier={tier.name as VaultTierName}
+                wonFunko={wonFunko}
+                spinning={false}
+                landed={false}
+                accentColor={tier.color}
+              />
+
+              {/* SPIN button */}
+              <div className="flex justify-center" data-tutorial="spin-button">
+                <button
+                  onClick={handleSpin}
+                  className="group/spin relative rounded-2xl border-none p-0 cursor-pointer outline-none"
+                  style={{ background: freeSpins > 0 && !isTutorial ? "rgba(57,255,20,0.25)" : `${tier.color}25` }}
                 >
-                  <div className="w-32 h-32 sm:w-36 sm:h-36 flex items-center justify-center">
-                    <VaultIcon name={tier.name} color={tier.color} />
-                  </div>
-                </motion.div>
+                  <span
+                    className="relative block px-12 sm:px-16 py-3.5 sm:py-4 rounded-2xl text-base sm:text-lg font-black uppercase tracking-[0.2em] translate-y-[-4px] group-active/spin:translate-y-[-2px] transition-transform duration-[250ms] ease-[cubic-bezier(0.3,0.7,0.4,1)] border-b-4"
+                    style={{
+                      backgroundColor: freeSpins > 0 && !isTutorial ? "rgba(57,255,20,0.15)" : `${tier.color}15`,
+                      borderColor: freeSpins > 0 && !isTutorial ? "rgba(57,255,20,0.5)" : `${tier.color}50`,
+                      color: freeSpins > 0 && !isTutorial ? "#39ff14" : tier.color,
+                      boxShadow: `0 0 30px ${freeSpins > 0 && !isTutorial ? "rgba(57,255,20,0.2)" : `${tier.color}20`}`
+                    }}
+                  >
+                    {freeSpins > 0 && !isTutorial ? "FREE SPIN!" : "SPIN"}
+                  </span>
+                </button>
               </div>
-              <motion.div className="text-lg sm:text-xl md:text-2xl font-black uppercase tracking-[0.25em]" style={{ color: tier.color }} animate={{ opacity: [0.65, 1, 0.75] }} transition={{ duration: 1.2, repeat: Infinity }}>
-                Opening...
-              </motion.div>
             </motion.div>
           )}
 
           {stage === "spinning" && (
-            <motion.div key="spinning" initial={{ opacity: 0, y: 18, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -14, scale: 0.97, filter: "blur(4px)" }} transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }} className="flex flex-col items-center justify-center w-full max-w-[96rem] px-2 sm:px-4 lg:px-8">
+            <motion.div key="spinning" initial={{ opacity: 0, y: 18, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -14, scale: 0.97, filter: "blur(4px)" }} transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }} className="flex flex-col items-center justify-center w-full max-w-sm px-4">
               <div className="text-center mb-5 sm:mb-6">
                 <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.28em] text-text-dim mb-2">
-                  Live Rarity Reel
+                  {tier.name} Vault
                 </p>
                 <h3 className="text-base sm:text-lg md:text-xl font-black uppercase tracking-wider text-white">
-                  Locking Your Pull
+                  {spinLanded ? "Locked In!" : "Spinning..."}
                 </h3>
               </div>
-              <SyncedReel
-                items={reelItems}
+              <ItemSpinner
+                vaultTier={tier.name as VaultTierName}
+                wonFunko={wonFunko}
                 spinning={!spinLanded}
                 landed={spinLanded}
                 accentColor={tier.color}
-                prestigeLevel={overlayPrestigeLevel}
               />
-              <div className="mt-5 sm:mt-6 text-[10px] sm:text-xs font-mono text-text-dim uppercase tracking-[0.22em]">Scanning Rarity...</div>
+              <div className="mt-5 sm:mt-6 text-[10px] sm:text-xs font-mono text-text-dim uppercase tracking-[0.22em]">
+                {spinLanded ? wonFunko.name : "Locking your pull..."}
+              </div>
             </motion.div>
           )}
 
@@ -782,19 +634,11 @@ function VaultOverlay({
             >
               <ConfettiParticles color={rarityConfig.color} rarity={isLoss ? undefined : wonRarity} count={isLoss ? 8 : undefined} />
               <div className="z-10 text-center">
-                <span className="inline-block px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 rounded-lg border-2 text-xs sm:text-sm md:text-base font-black uppercase" style={{ borderColor: `${rarityConfig.color}60`, color: rarityConfig.color }}>{product}</span>
+                <span className="inline-block px-4 sm:px-5 md:px-6 py-2 sm:py-2.5 rounded-lg border-2 text-xs sm:text-sm md:text-base font-black uppercase" style={{ borderColor: `${rarityConfig.color}60`, color: rarityConfig.color }}>{wonFunko.name}</span>
               </div>
 
               <div className="relative z-10 flex flex-col items-center">
-                <div
-                  className="relative flex items-center justify-center bg-surface-elevated rounded-3xl w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 border-2"
-                  style={{
-                    borderColor: rarityConfig.color,
-                    boxShadow: RARITY_GLOWS[wonRarity]?.intense
-                  }}
-                >
-                  <VaultIcon name={tier.name} color={rarityConfig.color} />
-                </div>
+                <FunkoImage name={wonFunko.name} rarity={wonRarity as Rarity} size="lg" className="!w-32 !h-32 sm:!w-36 sm:!h-36 md:!w-40 md:!h-40" />
                 <motion.h3
                   className={`mt-4 ${textConfig.titleSize} sm:${textConfig.titleSizeLg} font-black text-white uppercase tracking-tighter`}
                   initial={{ opacity: 0, scale: textConfig.entranceScale }}
@@ -831,9 +675,9 @@ function VaultOverlay({
               </div>
 
               <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 w-full max-w-md sm:max-w-2xl md:max-w-4xl z-10">
-                <OptionCard title="Store" desc="To collection" icon={storeIcon} action="Save" onClick={handleStore} tierColor="#00f0ff" tutorialActive={resultTooltip?.highlight === 0} />
-                <OptionCard title="Ship" desc="Get physical" icon={shipIcon} action="Mail" onClick={handleShip} tierColor={tier.color} tutorialActive={resultTooltip?.highlight === 1} />
-                <OptionCard title="Cashout" desc="To credits" icon={cashoutIcon} action={`$${resultValue}`} onClick={handleClaimLocal} tierColor="#ffd700" tutorialActive={resultTooltip?.highlight === 2} />
+                <OptionCard title="Store" desc="To collection" icon={storeIcon} action="Save" onClick={handleStore} tierColor="#00f0ff" tutorialActive={resultTooltip?.highlight === 0} disabled={isResolvingAction} />
+                <OptionCard title="Ship" desc="Get physical" icon={shipIcon} action="Mail" onClick={handleShip} tierColor={tier.color} tutorialActive={resultTooltip?.highlight === 1} disabled={isResolvingAction} />
+                <OptionCard title="Cashout" desc="To credits" icon={cashoutIcon} action={isClaiming ? "Cashing Out..." : `$${resultValue}`} onClick={handleClaimLocal} tierColor="#ffd700" tutorialActive={resultTooltip?.highlight === 2} disabled={isResolvingAction} />
               </div>
 
               {isTutorial && resultTooltip && (
@@ -874,9 +718,10 @@ export function VaultGrid({
   } = useGame();
   const navigate = useNavigate();
   const [selectedVault, setSelectedVault] = useState<Vault | null>(null);
-  const overlayKeyRef = useRef(0);
+  const [overlayKey, setOverlayKey] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>("Funko Pop!");
   const [comingSoonCategory, setComingSoonCategory] = useState<string | null>(null);
+  const [legendaryHype, setLegendaryHype] = useState<{ funkoName: string; value: number } | null>(null);
 
   useEffect(() => {
     onOverlayChange?.(selectedVault != null);
@@ -888,17 +733,23 @@ export function VaultGrid({
     if (tutorialStep === "open-vault") {
       if (vault.name !== "Diamond") return;
       trackEvent(AnalyticsEvents.VAULT_OVERLAY_OPENED, { vault_tier: vault.name, vault_price: vault.price });
-      overlayKeyRef.current += 1; setSelectedVault(vault); onTutorialAdvance?.("pick-box"); return;
+      setOverlayKey((prev) => prev + 1); setSelectedVault(vault); onTutorialAdvance?.("spin-reel"); return;
     }
     if (balance < vault.price && freeSpins <= 0) return;
     trackEvent(AnalyticsEvents.VAULT_OVERLAY_OPENED, { vault_tier: vault.name, vault_price: vault.price });
-    overlayKeyRef.current += 1; setSelectedVault(vault);
+    setOverlayKey((prev) => prev + 1); setSelectedVault(vault);
   };
 
   const handleCloseOverlay = () => { if (selectedVault) trackEvent(AnalyticsEvents.VAULT_OVERLAY_CLOSED, { vault_tier: selectedVault.name, vault_price: selectedVault.price }); setSelectedVault(null); };
-  const handleClaim = (amount: number) => { claimCreditsFromReveal(amount); setSelectedVault(null); };
-  const handleStore = (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number) => { addItem(product, vaultTier, rarity, value); setSelectedVault(null); };
-  const handleShip = (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number) => { const item = addItem(product, vaultTier, rarity, value); shipItem(item.id); setSelectedVault(null); };
+  const handleClaim = (amount: number) => { claimCreditsFromReveal(amount); };
+  const handleStore = (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number, funkoId?: string, funkoName?: string) => {
+    addItem(product, vaultTier, rarity, value, funkoId, funkoName);
+    setSelectedVault(null);
+    if (rarity === "legendary" && funkoName) {
+      setLegendaryHype({ funkoName, value });
+    }
+  };
+  const handleShip = (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number, funkoId?: string, funkoName?: string) => { const item = addItem(product, vaultTier, rarity, value, funkoId, funkoName); shipItem(item.id); setSelectedVault(null); };
 
   const minPrice = Math.min(...VAULTS.map((v) => v.price));
   const isBroke = balance < minPrice && freeSpins <= 0 && !selectedVault && !isTutorialActive;
@@ -909,7 +760,7 @@ export function VaultGrid({
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="mb-12 text-center">
           <h2 className="text-2xl sm:text-3xl md:text-5xl font-black uppercase tracking-tight text-white mb-4">Open Your <span className="text-accent">Vault</span></h2>
-          <p className="mx-auto max-w-2xl text-text-muted">Pick your tier, choose a box, reveal your collectible.</p>
+          <p className="mx-auto max-w-2xl text-text-muted">Pick your tier, spin the reel, reveal your collectible.</p>
         </div>
         <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-6" data-tutorial="categories">
           {PRODUCT_TYPES.map((cat, idx) => {
@@ -958,6 +809,9 @@ export function VaultGrid({
             </motion.div>
           )}
         </AnimatePresence>
+        <p className="text-center text-[10px] text-text-dim mt-8 font-mono uppercase tracking-wider max-w-lg mx-auto">
+          Demo only — item prices, drop odds, game mechanics, and inventory are subject to change before launch.
+        </p>
         {isBroke && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 text-center w-full max-w-md px-4">
             <div className="bg-surface/80 backdrop-blur-xl border-2 border-error/20 p-12 rounded-3xl shadow-2xl">
@@ -970,7 +824,16 @@ export function VaultGrid({
       </div>
       <AnimatePresence>
         {selectedVault && (
-          <VaultOverlay key={`overlay-${overlayKeyRef.current}`} tier={selectedVault} balance={balance} category={selectedCategory} onClose={handleCloseOverlay} onPurchase={purchaseVault} onClaim={handleClaim} onStore={handleStore} onShip={handleShip} isTutorial={isTutorialActive} tutorialStep={tutorialStep} onTutorialAdvance={onTutorialAdvance} onTutorialPurchase={tutorialOpenVault} onTutorialSetAction={onTutorialSetAction} prestigeLevel={prestigeLevel} onUseFreeSpinForVault={useFreeSpinForVault} onBonusFreeSpins={grantFreeSpins} freeSpins={freeSpins} />
+          <VaultOverlay key={`overlay-${overlayKey}`} tier={selectedVault} balance={balance} category={selectedCategory} onClose={handleCloseOverlay} onPurchase={purchaseVault} onClaim={handleClaim} onStore={handleStore} onShip={handleShip} isTutorial={isTutorialActive} tutorialStep={tutorialStep} onTutorialAdvance={onTutorialAdvance} onTutorialPurchase={tutorialOpenVault} onTutorialSetAction={onTutorialSetAction} prestigeLevel={prestigeLevel} onUseFreeSpinForVault={useFreeSpinForVault} onBonusFreeSpins={grantFreeSpins} freeSpins={freeSpins} />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {legendaryHype && (
+          <LegendaryHypeOverlay
+            funkoName={legendaryHype.funkoName}
+            value={legendaryHype.value}
+            onDismiss={() => setLegendaryHype(null)}
+          />
         )}
       </AnimatePresence>
     </section>

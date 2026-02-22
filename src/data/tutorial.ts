@@ -40,8 +40,7 @@ export const TOOLTIP_STEPS: Record<
 
 // Steps that Tutorial.tsx should NOT render (handled inside VaultOverlay)
 export const OVERLAY_STEPS = new Set<string>([
-  "pick-box",
-  "revealing",
+  "spin-reel",
   "result-store",
   "result-ship",
   "result-cashout",
@@ -71,7 +70,7 @@ export const WALLET_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="wallet-breakdown"]',
     title: "Credit Breakdown",
     description:
-      "Earned (from cashouts/reveals), Incentive (from waitlist + quest + boss fights), Spent (on vaults/shop).",
+      "Earned (from cashouts, quests, and boss rewards), Incentive (promo grants when available), Spent (on vaults and shop purchases).",
     position: "bottom",
   },
   {
@@ -79,7 +78,8 @@ export const WALLET_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     type: "spotlight",
     selector: '[data-tutorial="wallet-actions"]',
     title: "Quick Actions",
-    description: "Add credits, or cash out your credits for cash.",
+    description:
+      "Jump to Add Credits on the landing page, or go to Inventory to cashout held items.",
     position: "bottom",
   },
   {
@@ -205,7 +205,7 @@ export const INVENTORY_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="inventory-ship"]',
     title: "Ship to Home",
     description:
-      "Get the physical item delivered to your door (shipping costs apply).",
+      "Marks the item as shipped in the demo flow.",
     position: "top",
   },
   {

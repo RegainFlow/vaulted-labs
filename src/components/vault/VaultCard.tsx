@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import type { VaultCardProps } from "../../types/vault";
 import { VaultIcon } from "./VaultIcons";
 import {
@@ -9,6 +9,7 @@ import {
   getPrestigeOdds,
 } from "../../data/vaults";
 import { CYBER_TRANSITIONS } from "../../lib/motion-presets";
+import { VaultContentsModal } from "./VaultContentsModal";
 
 const PRESTIGE_COLORS: Record<number, string> = {
   1: "#ff8c00",
@@ -25,6 +26,7 @@ export function VaultCard({
   prestigeLevel = 0,
 }: VaultCardProps & { prestigeLevel?: number }) {
   const [showOdds, setShowOdds] = useState(false);
+  const [showContents, setShowContents] = useState(false);
   const canAfford = !disabled && balance >= vault.price;
   const minPull = Math.max(1, Math.round(vault.price * RARITY_CONFIG.common.minMult - VALUE_RANGE_REDUCTION));
   const maxPull = Math.round(vault.price * RARITY_CONFIG.legendary.maxMult - VALUE_RANGE_REDUCTION);
@@ -36,6 +38,7 @@ export function VaultCard({
   };
 
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
@@ -135,8 +138,8 @@ export function VaultCard({
             </p>
           </div>
 
-          {/* 3D Pushable "Show Odds" button (Josh Comeau pattern) */}
-          <div className="flex justify-center mb-4">
+          {/* Action buttons */}
+          <div className="flex justify-center gap-2 mb-4">
             <button
               onClick={(e) => {
                 e.stopPropagation();
@@ -150,13 +153,25 @@ export function VaultCard({
               }}
             >
               <span
-                className={`relative block px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest translate-y-[-4px] group-active/odds:translate-y-[-2px] transition-transform duration-[250ms] ease-[cubic-bezier(0.3,0.7,0.4,1)] backdrop-blur-md ${
+                className={`relative block px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest translate-y-[-4px] group-active/odds:translate-y-[-2px] transition-transform duration-[250ms] ease-[cubic-bezier(0.3,0.7,0.4,1)] backdrop-blur-md ${
                   showOdds
                     ? "bg-accent/20 border border-accent/40 text-accent"
                     : "bg-white/10 border border-white/20 text-text-muted"
                 }`}
               >
-                {showOdds ? "Hide Odds" : "Show Odds"}
+                {showOdds ? "Hide Odds" : "Odds"}
+              </span>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowContents(true);
+              }}
+              className="group/contents relative rounded-xl border-none p-0 cursor-pointer outline-none"
+              style={{ background: "rgba(0,240,255,0.08)" }}
+            >
+              <span className="relative block px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest translate-y-[-4px] group-active/contents:translate-y-[-2px] transition-transform duration-[250ms] ease-[cubic-bezier(0.3,0.7,0.4,1)] backdrop-blur-md bg-neon-cyan/10 border border-neon-cyan/30 text-neon-cyan">
+                Contents
               </span>
             </button>
           </div>
@@ -252,6 +267,17 @@ export function VaultCard({
         />
       )}
     </motion.div>
+
+    <AnimatePresence>
+      {showContents && (
+        <VaultContentsModal
+          vault={vault}
+          prestigeLevel={prestigeLevel}
+          onClose={() => setShowContents(false)}
+        />
+      )}
+    </AnimatePresence>
+    </>
   );
 }
 

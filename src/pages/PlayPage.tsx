@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navbar } from "../components/shared/Navbar";
 import { VaultGrid } from "../components/vault/VaultGrid";
 import { Tutorial } from "../components/Tutorial";
@@ -9,21 +9,23 @@ import { useTutorial } from "../hooks/useTutorial";
 import { trackEvent, AnalyticsEvents } from "../lib/analytics";
 
 export function PlayPage() {
-  const { balance, inventory, levelInfo, hasSeenTutorial, setHasSeenTutorial, prestigeLevel, freeSpins } =
+  const { balance, inventory, levelInfo, hasSeenTutorial, setHasSeenTutorial, prestigeLevel, freeSpins, cashoutFlashTimestamp, cashoutStreak } =
     useGame();
   const { step, advance, goTo, completedAction, setCompletedAction, reset } =
     useTutorial(hasSeenTutorial);
   const [vaultOpen, setVaultOpen] = useState(false);
+  const tutorialStartedTrackedRef = useRef(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   useEffect(() => {
-    if (step === "welcome") {
+    if (step === "welcome" && !tutorialStartedTrackedRef.current) {
+      tutorialStartedTrackedRef.current = true;
       trackEvent(AnalyticsEvents.TUTORIAL_STARTED);
     }
-  }, []);
+  }, [step]);
 
   const handleTutorialAdvance = () => {
     if (step) {
@@ -50,6 +52,8 @@ export function PlayPage() {
         level={levelInfo.level}
         prestigeLevel={prestigeLevel}
         freeSpins={freeSpins}
+        cashoutFlashTimestamp={cashoutFlashTimestamp}
+        cashoutStreak={cashoutStreak}
       />
       <main>
         <VaultGrid

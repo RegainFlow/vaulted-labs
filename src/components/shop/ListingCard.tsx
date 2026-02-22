@@ -1,8 +1,9 @@
 import { motion } from "motion/react";
 import { RARITY_CONFIG } from "../../data/vaults";
+import { getFunkoById } from "../../data/funkos";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
 import type { MarketplaceListing } from "../../types/marketplace";
-import { VaultIcon } from "../vault/VaultIcons";
+import { FunkoImage } from "../shared/FunkoImage";
 import { CYBER_TRANSITIONS } from "../../lib/motion-presets";
 
 interface ListingCardProps {
@@ -26,6 +27,7 @@ export function ListingCard({ listing, balance, onBuy, isFirst = false }: Listin
   const rarityConfig = RARITY_CONFIG[item.rarity];
   const vaultColor = VAULT_COLORS[item.vaultTier] || "#ffffff";
   const canAfford = balance >= askingPrice;
+  const funko = item.funkoId ? getFunkoById(item.funkoId) : undefined;
 
   return (
     <motion.div
@@ -47,18 +49,10 @@ export function ListingCard({ listing, balance, onBuy, isFirst = false }: Listin
       <div className="p-3 sm:p-4">
         {/* Icon + info */}
         <div className="flex items-center gap-2.5 sm:gap-3 mb-3">
-          <div
-            className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl flex items-center justify-center border shrink-0"
-            style={{
-              borderColor: `${vaultColor}30`,
-              backgroundColor: `${vaultColor}08`
-            }}
-          >
-            <VaultIcon name={item.vaultTier} color={vaultColor} />
-          </div>
+          <FunkoImage name={item.funkoName || item.product} rarity={item.rarity} size="sm" />
           <div className="flex-1 min-w-0">
             <p className="text-xs sm:text-sm font-bold text-white truncate">
-              {item.product}
+              {item.funkoName || item.product}
             </p>
             <p
               className="text-[10px] font-bold uppercase tracking-wider"
@@ -81,7 +75,14 @@ export function ListingCard({ listing, balance, onBuy, isFirst = false }: Listin
           >
             {item.rarity}
           </span>
-          <span className="text-[10px] text-text-dim">@{sellerName}</span>
+          <div className="flex items-center gap-2">
+            {funko && (
+              <span className="text-[9px] font-mono text-text-dim">
+                Mkt ~${funko.baseValue}
+              </span>
+            )}
+            <span className="text-[10px] text-text-dim">@{sellerName}</span>
+          </div>
         </div>
 
         {/* Price + buy */}

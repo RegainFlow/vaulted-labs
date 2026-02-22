@@ -17,11 +17,12 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as
   | string
   | undefined;
-const EARLY_BETA_COMMENTS = [
+const _EARLY_BETA_COMMENTS = [
   "New updated version of Pokemon just a different style with real rewards.",
   "Very interesting concept here I'm excited to see the finished product release in the future.",
   "Gambling that does not feel like gambling.",
 ];
+void _EARLY_BETA_COMMENTS;
 
 export function WaitlistForm({ onJoinSuccess }: WaitlistFormProps) {
   const [email, setEmail] = useState("");
@@ -191,7 +192,9 @@ export function WaitlistForm({ onJoinSuccess }: WaitlistFormProps) {
             </li>
             <li className="flex items-start gap-3">
               <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
-              <span>Direct input on product direction through feedback rounds.</span>
+              <span>
+                Direct input on product direction through feedback rounds.
+              </span>
             </li>
             <li className="flex items-start gap-3">
               <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-accent shrink-0" />
@@ -263,19 +266,6 @@ export function WaitlistForm({ onJoinSuccess }: WaitlistFormProps) {
             .
           </p>
         </form>
-
-        <details className="max-w-md mx-auto text-left rounded-xl border border-white/10 bg-surface/30 px-4 py-3">
-          <summary className="text-[11px] text-text-dim font-mono uppercase tracking-[0.18em] cursor-pointer">
-            Optional: early beta comments
-          </summary>
-          <div className="mt-3 space-y-2">
-            {EARLY_BETA_COMMENTS.map((comment) => (
-              <p key={comment} className="text-xs text-text-muted leading-relaxed">
-                "{comment}"
-              </p>
-            ))}
-          </div>
-        </details>
 
         <AnimatePresence>
           {message && (

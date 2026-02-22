@@ -20,7 +20,9 @@ export const SEED_LISTINGS: MarketplaceListing[] = [
       product: "Funko Pop!",
       vaultTier: "Bronze",
       rarity: "common",
-      value: 12
+      value: 12,
+      funkoId: "pop-rusty-sentinel-001",
+      funkoName: "Rusty Sentinel"
     }),
     sellerName: "VaultHunter_42",
     askingPrice: 10,
@@ -33,7 +35,9 @@ export const SEED_LISTINGS: MarketplaceListing[] = [
       product: "Funko Pop!",
       vaultTier: "Bronze",
       rarity: "common",
-      value: 15
+      value: 15,
+      funkoId: "pop-scrap-bot-002",
+      funkoName: "Scrap Bot"
     }),
     sellerName: "MintCondition",
     askingPrice: 12,
@@ -46,7 +50,9 @@ export const SEED_LISTINGS: MarketplaceListing[] = [
       product: "Funko Pop!",
       vaultTier: "Silver",
       rarity: "common",
-      value: 25
+      value: 25,
+      funkoId: "pop-dust-walker-003",
+      funkoName: "Dust Walker"
     }),
     sellerName: "NeonTrader",
     askingPrice: 22,
@@ -59,7 +65,9 @@ export const SEED_LISTINGS: MarketplaceListing[] = [
       product: "Funko Pop!",
       vaultTier: "Gold",
       rarity: "uncommon",
-      value: 60
+      value: 60,
+      funkoId: "pop-steel-samurai-021",
+      funkoName: "Steel Samurai"
     }),
     sellerName: "CryptoCollector",
     askingPrice: 55,
@@ -72,7 +80,9 @@ export const SEED_LISTINGS: MarketplaceListing[] = [
       product: "Funko Pop!",
       vaultTier: "Platinum",
       rarity: "uncommon",
-      value: 85
+      value: 85,
+      funkoId: "pop-void-scout-024",
+      funkoName: "Void Scout"
     }),
     sellerName: "ShardSeeker",
     askingPrice: 80,
@@ -85,7 +95,9 @@ export const SEED_LISTINGS: MarketplaceListing[] = [
       product: "Funko Pop!",
       vaultTier: "Obsidian",
       rarity: "rare",
-      value: 140
+      value: 140,
+      funkoId: "pop-venom-empress-039",
+      funkoName: "Venom Empress"
     }),
     sellerName: "ObsidianQueen",
     askingPrice: 130,
@@ -98,7 +110,9 @@ export const SEED_LISTINGS: MarketplaceListing[] = [
       product: "Funko Pop!",
       vaultTier: "Diamond",
       rarity: "rare",
-      value: 165
+      value: 165,
+      funkoId: "pop-plasma-oracle-044",
+      funkoName: "Plasma Oracle"
     }),
     sellerName: "DiamondDog_99",
     askingPrice: 155,
@@ -111,7 +125,9 @@ export const SEED_LISTINGS: MarketplaceListing[] = [
       product: "Funko Pop!",
       vaultTier: "Diamond",
       rarity: "legendary",
-      value: 250
+      value: 250,
+      funkoId: "pop-celestial-dragon-047",
+      funkoName: "Celestial Dragon"
     }),
     sellerName: "RareFinder",
     askingPrice: 235,
@@ -127,7 +143,9 @@ export const SEED_AUCTIONS: Auction[] = [
       product: "Funko Pop!",
       vaultTier: "Gold",
       rarity: "rare",
-      value: 95
+      value: 95,
+      funkoId: "pop-hyper-dragon-034",
+      funkoName: "Hyper Dragon"
     }),
     sellerName: "VaultHunter_42",
     startingBid: 40,
@@ -143,7 +161,9 @@ export const SEED_AUCTIONS: Auction[] = [
       product: "Funko Pop!",
       vaultTier: "Platinum",
       rarity: "uncommon",
-      value: 75
+      value: 75,
+      funkoId: "pop-void-scout-024",
+      funkoName: "Void Scout"
     }),
     sellerName: "ShardSeeker",
     startingBid: 30,
@@ -159,7 +179,9 @@ export const SEED_AUCTIONS: Auction[] = [
       product: "Funko Pop!",
       vaultTier: "Diamond",
       rarity: "legendary",
-      value: 280
+      value: 280,
+      funkoId: "pop-celestial-dragon-047",
+      funkoName: "Celestial Dragon"
     }),
     sellerName: "DiamondDog_99",
     startingBid: 100,
@@ -175,7 +197,9 @@ export const SEED_AUCTIONS: Auction[] = [
       product: "Funko Pop!",
       vaultTier: "Obsidian",
       rarity: "rare",
-      value: 150
+      value: 150,
+      funkoId: "pop-glitch-reaper-037",
+      funkoName: "Glitch Reaper"
     }),
     sellerName: "ObsidianQueen",
     startingBid: 60,
@@ -191,7 +215,9 @@ export const SEED_AUCTIONS: Auction[] = [
       product: "Funko Pop!",
       vaultTier: "Silver",
       rarity: "uncommon",
-      value: 45
+      value: 45,
+      funkoId: "pop-frost-warden-017",
+      funkoName: "Frost Warden"
     }),
     sellerName: "RareFinder",
     startingBid: 20,

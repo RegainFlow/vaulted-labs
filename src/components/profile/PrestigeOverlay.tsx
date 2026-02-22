@@ -12,6 +12,11 @@ interface PrestigeOverlayProps {
   onClose: () => void;
 }
 
+const seededUnit = (seed: number) => {
+  const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
+  return x - Math.floor(x);
+};
+
 export function PrestigeOverlay({ prestigeLevel, onClose }: PrestigeOverlayProps) {
   const prefersReducedMotion = useReducedMotion();
   const [phase, setPhase] = useState<"ignition" | "expansion" | "manifestation" | "text">("ignition");
@@ -30,13 +35,14 @@ export function PrestigeOverlay({ prestigeLevel, onClose }: PrestigeOverlayProps
     () =>
       Array.from({ length: 150 }).map((_, i) => ({
         id: i,
-        angle: Math.random() * Math.PI * 2,
-        radius: 100 + Math.random() * 600,
-        color: Math.random() > 0.5 ? colors.primary : colors.secondary,
-        scale: Math.random() * 0.8 + 0.2,
-        speed: 0.5 + Math.random() * 1.5
+        angle: seededUnit(prestigeLevel * 1000 + i * 17 + 1) * Math.PI * 2,
+        radius: 100 + seededUnit(prestigeLevel * 1000 + i * 17 + 2) * 600,
+        color: seededUnit(prestigeLevel * 1000 + i * 17 + 3) > 0.5 ? colors.primary : colors.secondary,
+        scale: seededUnit(prestigeLevel * 1000 + i * 17 + 4) * 0.8 + 0.2,
+        speed: 0.5 + seededUnit(prestigeLevel * 1000 + i * 17 + 5) * 1.5,
+        delay: seededUnit(prestigeLevel * 1000 + i * 17 + 6) * 2
       })),
-    [colors]
+    [colors, prestigeLevel]
   );
 
   return (
@@ -100,7 +106,7 @@ export function PrestigeOverlay({ prestigeLevel, onClose }: PrestigeOverlayProps
               transition={{ 
                 duration: prefersReducedMotion ? 1.2 : 2 / p.speed,
                 ease: "easeOut",
-                delay: Math.random() * 2
+                delay: p.delay
               }}
             />
           ))}

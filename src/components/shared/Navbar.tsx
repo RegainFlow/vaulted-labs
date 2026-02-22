@@ -1,7 +1,13 @@
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { Link, useLocation } from "react-router-dom";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
 import type { NavbarProps } from "../../types/landing";
+
+function getStreakColor(streak: number): string {
+  if (streak >= 8) return "#39ff14";
+  if (streak >= 5) return "#00f0ff";
+  return "#ffd700";
+}
 
 export function Navbar({
   showHUD = false,
@@ -9,7 +15,9 @@ export function Navbar({
   inventoryCount = 0,
   level,
   prestigeLevel = 0,
-  freeSpins = 0
+  freeSpins = 0,
+  cashoutFlashTimestamp = 0,
+  cashoutStreak = 0
 }: NavbarProps) {
   const location = useLocation();
 
@@ -120,7 +128,10 @@ export function Navbar({
                     <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider leading-none">
                       Credits
                     </span>
-                    <span className="text-sm font-mono font-bold text-vault-gold animate-hud-shimmer">
+                    <span
+                      key={cashoutFlashTimestamp}
+                      className={`text-sm font-mono font-bold text-vault-gold ${cashoutFlashTimestamp ? "animate-balance-flash" : "animate-hud-shimmer"}`}
+                    >
                       ${balance.toLocaleString()}
                     </span>
                   </div>
@@ -179,7 +190,7 @@ export function Navbar({
                   <Link
                     to="/profile"
                     aria-label="View profile"
-                    className={`flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-white/5 ${freeSpins > 0 ? "" : "rounded-r-xl"} ${isActive("/profile") ? "bg-white/5" : ""}`}
+                    className={`flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-white/5 ${freeSpins > 0 || cashoutStreak >= 3 ? "" : "rounded-r-xl"} ${isActive("/profile") ? "bg-white/5" : ""}`}
                   >
                     <svg
                       width="16"
@@ -221,7 +232,7 @@ export function Navbar({
                   <Link
                     to="/play"
                     aria-label="Use free spins"
-                    className={`flex items-center gap-2.5 px-4 py-2.5 border-l border-white/10 transition-colors hover:bg-white/5 rounded-r-xl ${isActive("/play") ? "bg-white/5" : ""}`}
+                    className={`flex items-center gap-2.5 px-4 py-2.5 border-l border-white/10 transition-colors hover:bg-white/5 ${cashoutStreak >= 3 ? "" : "rounded-r-xl"} ${isActive("/play") ? "bg-white/5" : ""}`}
                   >
                     <svg
                       width="16"
@@ -251,6 +262,34 @@ export function Navbar({
                     </div>
                   </Link>
                 )}
+
+                {/* Win Streak Badge */}
+                <AnimatePresence>
+                  {cashoutStreak >= 3 && (
+                    <motion.div
+                      key="streak-desktop"
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      exit={{ scale: 0, opacity: 0 }}
+                      transition={{ type: "spring", damping: 12, stiffness: 300 }}
+                      className="flex items-center gap-1.5 px-3 py-2.5 border-l border-white/10 rounded-r-xl"
+                    >
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
+                        <path
+                          d="M12 2c.5 3.5 2 5 4 7 1.5 1.5 2 4 2 5.5 0 4-3 6-6 6s-6-2-6-6c0-1.5.5-4 2-5.5 2-2 3.5-3.5 4-7z"
+                          fill={getStreakColor(cashoutStreak)}
+                          opacity="0.9"
+                        />
+                      </svg>
+                      <span
+                        className="text-xs font-mono font-black"
+                        style={{ color: getStreakColor(cashoutStreak) }}
+                      >
+                        {cashoutStreak}x
+                      </span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           </>
@@ -340,7 +379,10 @@ export function Navbar({
                   strokeLinecap="round"
                 />
               </svg>
-              <span className="text-[10px] font-mono font-bold text-vault-gold">
+              <span
+                key={cashoutFlashTimestamp}
+                className={`text-[10px] font-mono font-bold text-vault-gold ${cashoutFlashTimestamp ? "animate-balance-flash" : ""}`}
+              >
                 ${balance.toLocaleString()}
               </span>
             </Link>
@@ -390,7 +432,7 @@ export function Navbar({
               <Link
                 to="/profile"
                 aria-label="View profile"
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 ${freeSpins > 0 ? "border-r border-white/10" : ""} transition-colors ${isActive("/profile") ? "bg-white/5" : ""}`}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 ${freeSpins > 0 || cashoutStreak >= 3 ? "border-r border-white/10" : ""} transition-colors ${isActive("/profile") ? "bg-white/5" : ""}`}
               >
                 <svg
                   width="12"
@@ -425,7 +467,7 @@ export function Navbar({
               <Link
                 to="/play"
                 aria-label="Use free spins"
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 transition-colors ${isActive("/play") ? "bg-white/5" : ""}`}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2 ${cashoutStreak >= 3 ? "border-r border-white/10" : ""} transition-colors ${isActive("/play") ? "bg-white/5" : ""}`}
               >
                 <svg
                   width="12"
@@ -447,6 +489,34 @@ export function Navbar({
                 </span>
               </Link>
             )}
+
+            {/* Win Streak Badge — Mobile */}
+            <AnimatePresence>
+              {cashoutStreak >= 3 && (
+                <motion.div
+                  key="streak-mobile"
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  transition={{ type: "spring", damping: 12, stiffness: 300 }}
+                  className="flex-1 flex items-center justify-center gap-1 py-2"
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" className="shrink-0">
+                    <path
+                      d="M12 2c.5 3.5 2 5 4 7 1.5 1.5 2 4 2 5.5 0 4-3 6-6 6s-6-2-6-6c0-1.5.5-4 2-5.5 2-2 3.5-3.5 4-7z"
+                      fill={getStreakColor(cashoutStreak)}
+                      opacity="0.9"
+                    />
+                  </svg>
+                  <span
+                    className="text-[10px] font-mono font-bold"
+                    style={{ color: getStreakColor(cashoutStreak) }}
+                  >
+                    {cashoutStreak}x
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </div>
       )}

@@ -27,25 +27,34 @@ function MiniAppPreview() {
   >("home");
 
   useEffect(() => {
+    let isMounted = true;
+    const wait = (ms: number) =>
+      new Promise<void>((resolve) => setTimeout(resolve, ms));
+
     const sequence = async () => {
-      while (true) {
+      while (isMounted) {
         setScreen("home");
         await wait(2500);
+        if (!isMounted) return;
         setScreen("vault");
         await wait(1500);
+        if (!isMounted) return;
         setScreen("grid");
         await wait(1500);
+        if (!isMounted) return;
         setScreen("reveal");
         await wait(2000);
+        if (!isMounted) return;
         setScreen("result");
         await wait(3500);
       }
     };
     sequence();
-  }, []);
 
-  const wait = (ms: number) =>
-    new Promise((resolve) => setTimeout(resolve, ms));
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-[#050505] text-white font-sans overflow-hidden relative">

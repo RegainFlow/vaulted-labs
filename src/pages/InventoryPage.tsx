@@ -8,7 +8,7 @@ import { useGame } from "../context/GameContext";
 import { INVENTORY_TUTORIAL_STEPS } from "../data/tutorial";
 
 export function InventoryPage() {
-  const { balance, inventory, levelInfo, prestigeLevel, freeSpins, hasSeenInventoryTutorial, setHasSeenInventoryTutorial, seedDemoItem, removeDemoItem } = useGame();
+  const { balance, inventory, levelInfo, prestigeLevel, freeSpins, cashoutFlashTimestamp, cashoutStreak, hasSeenInventoryTutorial, setHasSeenInventoryTutorial, seedDemoItem, removeDemoItem } = useGame();
   const [tutorialActive, setTutorialActive] = useState(false);
 
   useEffect(() => {
@@ -33,6 +33,8 @@ export function InventoryPage() {
         level={levelInfo.level}
         prestigeLevel={prestigeLevel}
         freeSpins={freeSpins}
+        cashoutFlashTimestamp={cashoutFlashTimestamp}
+        cashoutStreak={cashoutStreak}
       />
       <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-28 md:pt-28 pb-8 sm:pb-12">
         <div className="max-w-6xl mx-auto">

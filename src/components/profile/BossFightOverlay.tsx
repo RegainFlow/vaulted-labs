@@ -53,6 +53,20 @@ interface ReelItem {
   label: string;
 }
 
+interface BurstParticle {
+  id: number;
+  x: number;
+  y: number;
+  color: string;
+  scale: number;
+  rotate: number;
+}
+
+const seededUnit = (seed: number) => {
+  const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
+  return x - Math.floor(x);
+};
+
 interface BossFightOverlayProps {
   boss: BossFight;
   prestigeLevel: number;
@@ -148,6 +162,7 @@ export function BossFightOverlay({ boss, prestigeLevel, onWin, onClose, hasSeenB
   const [bossLanded, setBossLanded] = useState(false);
   const [playerQuality, setPlayerQuality] = useState<AttackQuality | null>(null);
   const [bossQuality, setBossQuality] = useState<AttackQuality | null>(null);
+  const [playerActionTaken, setPlayerActionTaken] = useState(false);
   const [summary, setSummary] = useState<ExchangeSummary | null>(null);
   const [windowPulseKey, setWindowPulseKey] = useState(0);
   const [won, setWon] = useState<boolean | null>(null);
@@ -189,6 +204,7 @@ export function BossFightOverlay({ boss, prestigeLevel, onWin, onClose, hasSeenB
 
     playerActionRef.current = false;
     playerQualityRef.current = "miss";
+    setPlayerActionTaken(false);
     setPlayerQuality(null);
     setBossQuality(null);
     setSummary(null);
@@ -283,10 +299,13 @@ export function BossFightOverlay({ boss, prestigeLevel, onWin, onClose, hasSeenB
   }, [bossHp]);
 
   useEffect(() => {
-    setPlayerHp(PLAYER_MAX_HP);
-    setBossHp(bossMaxHp);
-    playerHpRef.current = PLAYER_MAX_HP;
-    bossHpRef.current = bossMaxHp;
+    const resetTimer = window.setTimeout(() => {
+      setPlayerHp(PLAYER_MAX_HP);
+      setBossHp(bossMaxHp);
+      playerHpRef.current = PLAYER_MAX_HP;
+      bossHpRef.current = bossMaxHp;
+    }, 0);
+    return () => window.clearTimeout(resetTimer);
   }, [bossMaxHp, retryKey]);
 
   useEffect(() => {
@@ -315,8 +334,11 @@ export function BossFightOverlay({ boss, prestigeLevel, onWin, onClose, hasSeenB
 
   useEffect(() => {
     if (phase !== "battle" || tutorialPreviewMode) return undefined;
-    beginExchange();
-    return () => clearTimers();
+    const startTimer = window.setTimeout(() => beginExchange(), 0);
+    return () => {
+      window.clearTimeout(startTimer);
+      clearTimers();
+    };
   }, [beginExchange, clearTimers, exchangeKey, phase, tutorialPreviewMode]);
 
   useEffect(() => () => clearTimers(), [clearTimers]);
@@ -324,6 +346,7 @@ export function BossFightOverlay({ boss, prestigeLevel, onWin, onClose, hasSeenB
   const handleAttackNow = useCallback(() => {
     if (phase !== "battle" || attackPhase !== "atk-window" || playerActionRef.current) return;
     playerActionRef.current = true;
+    setPlayerActionTaken(true);
     const elapsed = performance.now() - windowStartRef.current;
     const quality = resolvePlayerQuality(elapsed, ATK_WINDOW_DURATION_MS);
     playerQualityRef.current = quality;
@@ -352,6 +375,7 @@ export function BossFightOverlay({ boss, prestigeLevel, onWin, onClose, hasSeenB
     setWon(null);
     setPlayerLanded(false);
     setBossLanded(false);
+    setPlayerActionTaken(false);
     setPlayerQuality(null);
     setBossQuality(null);
     setRetryKey((value) => value + 1);
@@ -360,16 +384,16 @@ export function BossFightOverlay({ boss, prestigeLevel, onWin, onClose, hasSeenB
   const playerHpPercent = Math.max(0, (playerHp / PLAYER_MAX_HP) * 100);
   const bossHpPercent = Math.max(0, (bossHp / bossMaxHp) * 100);
   const windowOpen = phase === "battle" && attackPhase === "atk-window";
-  const canAttack = windowOpen && !playerActionRef.current;
+  const canAttack = windowOpen && !playerActionTaken;
 
   const attackButtonLabel = useMemo(() => {
-    if (windowOpen && !playerActionRef.current) return "ATK NOW!";
+    if (windowOpen && !playerActionTaken) return "ATK NOW!";
     if (windowOpen && playerQuality) return qualityText(playerQuality).toUpperCase();
     if (attackPhase === "charge") return "Charging";
     if (attackPhase === "resolve") return "Impact";
     if (attackPhase === "cooldown") return "Recalibrating";
     return "Standby";
-  }, [attackPhase, playerQuality, windowOpen]);
+  }, [attackPhase, playerActionTaken, playerQuality, windowOpen]);
 
   return (
     <motion.div
@@ -684,13 +708,17 @@ function Reel({
   const [spinPhase, setSpinPhase] = useState(1);
   useEffect(() => {
     if (!spinning || prefersReducedMotion) {
-      setSpinPhase(1);
-      return;
+      const resetTimer = window.setTimeout(() => setSpinPhase(1), 0);
+      return () => window.clearTimeout(resetTimer);
     }
-    setSpinPhase(1);
-    const t1 = setTimeout(() => setSpinPhase(2), 800);
-    const t2 = setTimeout(() => setSpinPhase(3), 1800);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    const resetTimer = window.setTimeout(() => setSpinPhase(1), 0);
+    const t1 = window.setTimeout(() => setSpinPhase(2), 800);
+    const t2 = window.setTimeout(() => setSpinPhase(3), 1800);
+    return () => {
+      window.clearTimeout(resetTimer);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
   }, [spinning, prefersReducedMotion]);
 
   const spinDuration = spinPhase === 1 ? 0.18 : spinPhase === 2 ? 0.3 : 0.48;
@@ -794,16 +822,21 @@ function Reel({
 const SyncedBossReel = memo(Reel);
 
 function ConfettiBurst({ color }: { color: string }) {
-  const particles = useMemo(
+  const colorSeed = useMemo(() => color.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0), [color]);
+  const particles = useMemo<BurstParticle[]>(
     () =>
-      Array.from({ length: 60 }).map((_, i) => ({
-        id: i,
-        x: (Math.random() - 0.5) * 600,
-        y: (Math.random() - 0.5) * 600,
-        color: Math.random() > 0.5 ? color : "#ffffff",
-        scale: Math.random() * 0.8 + 0.2
-      })),
-    [color]
+      Array.from({ length: 60 }).map((_, i) => {
+        const base = colorSeed + i * 19.79;
+        return {
+          id: i,
+          x: (seededUnit(base + 1) - 0.5) * 600,
+          y: (seededUnit(base + 2) - 0.5) * 600,
+          color: seededUnit(base + 3) > 0.5 ? color : "#ffffff",
+          scale: seededUnit(base + 4) * 0.8 + 0.2,
+          rotate: seededUnit(base + 5) * 720
+        };
+      }),
+    [color, colorSeed]
   );
 
   return (
@@ -816,7 +849,7 @@ function ConfettiBurst({ color }: { color: string }) {
             opacity: 0,
             x: particle.x,
             y: particle.y,
-            rotate: Math.random() * 720,
+            rotate: particle.rotate,
             scale: particle.scale
           }}
           transition={{ duration: 2, ease: "easeOut" }}

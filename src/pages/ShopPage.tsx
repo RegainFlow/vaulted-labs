@@ -8,7 +8,7 @@ import { useGame } from "../context/GameContext";
 import { SHOP_TUTORIAL_STEPS } from "../data/tutorial";
 
 export function ShopPage() {
-  const { balance, inventory, levelInfo, prestigeLevel, freeSpins, hasSeenShopTutorial, setHasSeenShopTutorial } = useGame();
+  const { balance, inventory, levelInfo, prestigeLevel, freeSpins, cashoutFlashTimestamp, cashoutStreak, hasSeenShopTutorial, setHasSeenShopTutorial } = useGame();
   const [tutorialActive, setTutorialActive] = useState(false);
   const [tutorialStepIndex, setTutorialStepIndex] = useState(0);
 
@@ -43,6 +43,8 @@ export function ShopPage() {
         level={levelInfo.level}
         prestigeLevel={prestigeLevel}
         freeSpins={freeSpins}
+        cashoutFlashTimestamp={cashoutFlashTimestamp}
+        cashoutStreak={cashoutStreak}
       />
       <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-28 md:pt-28 pb-8 sm:pb-12">
         <div className="max-w-6xl mx-auto">

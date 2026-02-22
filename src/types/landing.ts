@@ -44,4 +44,6 @@ export interface NavbarProps {
   level?: number;
   prestigeLevel?: number;
   freeSpins?: number;
+  cashoutFlashTimestamp?: number;
+  cashoutStreak?: number;
 }

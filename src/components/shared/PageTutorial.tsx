@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import type { PageTutorialProps, TargetRect } from "../../types/tutorial";
 
@@ -69,8 +69,26 @@ export function PageTutorial({
 }: PageTutorialProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
+  const clickTimestamps = useRef<number[]>([]);
 
   const currentStep = steps[currentIndex];
+
+  // Auto-dismiss on rapid clicking (>3 clicks in 1 second)
+  useEffect(() => {
+    if (!isActive) return;
+    const handleClick = () => {
+      const now = Date.now();
+      clickTimestamps.current.push(now);
+      clickTimestamps.current = clickTimestamps.current.filter((t) => now - t < 1000);
+      if (clickTimestamps.current.length > 3) {
+        setCurrentIndex(0);
+        onStepChange?.(0);
+        onComplete();
+      }
+    };
+    window.addEventListener("click", handleClick);
+    return () => window.removeEventListener("click", handleClick);
+  }, [isActive, onComplete, onStepChange]);
 
   const updateRect = useCallback(() => {
     if (!currentStep || currentStep.type !== "spotlight" || !currentStep.selector) {
@@ -82,14 +100,18 @@ export function PageTutorial({
   }, [currentStep]);
 
   useEffect(() => {
-    if (!isActive) {
-      setCurrentIndex(0);
-      return;
-    }
-    updateRect();
+    if (isActive) return;
+    const resetTimer = window.setTimeout(() => setCurrentIndex(0), 0);
+    return () => window.clearTimeout(resetTimer);
+  }, [isActive]);
+
+  useEffect(() => {
+    if (!isActive) return;
+    const initialMeasureTimer = window.setTimeout(updateRect, 0);
     window.addEventListener("resize", updateRect);
     window.addEventListener("scroll", updateRect, true);
     return () => {
+      window.clearTimeout(initialMeasureTimer);
       window.removeEventListener("resize", updateRect);
       window.removeEventListener("scroll", updateRect, true);
     };

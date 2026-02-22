@@ -24,6 +24,20 @@ interface SpinnerResult {
   index: number;
 }
 
+interface BurstParticle {
+  id: number;
+  x: number;
+  y: number;
+  color: string;
+  scale: number;
+  rotate: number;
+}
+
+const seededUnit = (seed: number) => {
+  const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
+  return x - Math.floor(x);
+};
+
 interface VaultLockSpinnerProps {
   strip: VaultLockSlot[];
   isActive: boolean;
@@ -48,15 +62,6 @@ function VaultLockSpinnerInner({
   const displayStrip = [...strip, ...strip, ...strip];
   const landedIndex = lockedResult ? strip.length + lockedResult.index : 0;
   const landedOffset = reelHeight / 2 - (landedIndex + 0.5) * slotHeight;
-  const [lockFlash, setLockFlash] = useState(false);
-
-  useEffect(() => {
-    if (isLocked && lockedResult) {
-      setLockFlash(true);
-      const t = setTimeout(() => setLockFlash(false), 500);
-      return () => clearTimeout(t);
-    }
-  }, [isLocked, lockedResult]);
 
   const borderColor = isLocked && lockedResult
     ? `${lockedResult.color}90`
@@ -108,9 +113,9 @@ function VaultLockSpinnerInner({
 
       {/* Lock flash */}
       <AnimatePresence>
-        {lockFlash && lockedResult && (
+        {isLocked && lockedResult && (
           <motion.div
-            key="lock-flash"
+            key={`lock-flash-${lockedResult.tier}-${lockedResult.index}`}
             className="absolute inset-0 z-40 pointer-events-none rounded-2xl"
             initial={{ opacity: 0.6 }}
             animate={{ opacity: 0 }}
@@ -244,6 +249,14 @@ export function VaultLockBonusStage({
     timersRef.current.push(timer);
   }, []);
 
+  const getMatchCount = useCallback(() => {
+    const tiers = lockedResults.filter(Boolean).map((r) => r!.tier);
+    if (tiers.length < 3) return 0;
+    if (tiers[0] === tiers[1] && tiers[1] === tiers[2]) return 3;
+    if (tiers[0] === tiers[1] || tiers[1] === tiers[2] || tiers[0] === tiers[2]) return 2;
+    return 1;
+  }, [lockedResults]);
+
   // Auto-advance for non-interactive phases
   useEffect(() => {
     if (phase === "announce") {
@@ -285,7 +298,7 @@ export function VaultLockBonusStage({
       }, 400);
     }
     return () => clearTimers();
-  }, [phase]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [clearTimers, getMatchCount, landings, lockedResults, onComplete, phase, schedule]);
 
   useEffect(() => () => clearTimers(), [clearTimers]);
 
@@ -301,14 +314,6 @@ export function VaultLockBonusStage({
       setPhase("lock-3");
     }
   }, [phase, landings]);
-
-  const getMatchCount = () => {
-    const tiers = lockedResults.filter(Boolean).map((r) => r!.tier);
-    if (tiers.length < 3) return 0;
-    if (tiers[0] === tiers[1] && tiers[1] === tiers[2]) return 3;
-    if (tiers[0] === tiers[1] || tiers[1] === tiers[2] || tiers[0] === tiers[2]) return 2;
-    return 1;
-  };
 
   const isSpinPhase = phase === "spin-1" || phase === "spin-2" || phase === "spin-3";
   const showSpinners = phase !== "announce";
@@ -508,16 +513,21 @@ export function VaultLockBonusStage({
 }
 
 function JackpotConfetti({ color }: { color: string }) {
-  const particles = useMemo(
+  const colorSeed = useMemo(() => color.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0), [color]);
+  const particles = useMemo<BurstParticle[]>(
     () =>
-      Array.from({ length: 80 }).map((_, i) => ({
-        id: i,
-        x: (Math.random() - 0.5) * 600,
-        y: (Math.random() - 0.5) * 600,
-        color: Math.random() > 0.4 ? color : Math.random() > 0.5 ? "#ffffff" : "#ffd700",
-        scale: Math.random() * 0.8 + 0.2
-      })),
-    [color]
+      Array.from({ length: 80 }).map((_, i) => {
+        const base = colorSeed + i * 23.51;
+        return {
+          id: i,
+          x: (seededUnit(base + 1) - 0.5) * 600,
+          y: (seededUnit(base + 2) - 0.5) * 600,
+          color: seededUnit(base + 3) > 0.4 ? color : seededUnit(base + 4) > 0.5 ? "#ffffff" : "#ffd700",
+          scale: seededUnit(base + 5) * 0.8 + 0.2,
+          rotate: seededUnit(base + 6) * 720
+        };
+      }),
+    [color, colorSeed]
   );
 
   return (
@@ -530,7 +540,7 @@ function JackpotConfetti({ color }: { color: string }) {
             opacity: 0,
             x: p.x,
             y: p.y,
-            rotate: Math.random() * 720,
+            rotate: p.rotate,
             scale: p.scale
           }}
           transition={{ duration: 2.5, ease: "easeOut" }}
