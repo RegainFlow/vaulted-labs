@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Footer } from "../components/shared/Footer";
 import { Navbar } from "../components/shared/Navbar";
 
 interface LegalSection {
@@ -156,7 +155,6 @@ export function PrivacyPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </>
   );
 }

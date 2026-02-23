@@ -1,525 +1,304 @@
-import { motion, AnimatePresence } from "motion/react";
-import { Link, useLocation } from "react-router-dom";
+import { motion } from "motion/react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
 import type { NavbarProps } from "../../types/landing";
-
-function getStreakColor(streak: number): string {
-  if (streak >= 8) return "#39ff14";
-  if (streak >= 5) return "#00f0ff";
-  return "#ffd700";
-}
 
 export function Navbar({
   showHUD = false,
   balance = 0,
-  inventoryCount = 0,
   level,
   prestigeLevel = 0,
   freeSpins = 0,
   cashoutFlashTimestamp = 0,
-  cashoutStreak = 0
+  bossEnergy = 0,
+  maxBossEnergy = 5,
+  shards = 0,
+  hideDock = false
 }: NavbarProps) {
   const location = useLocation();
-
-  const scrollToWaitlist = () => {
-    trackEvent(AnalyticsEvents.CTA_CLICK, {
-      cta_name: "join_waitlist",
-      location: "navbar"
-    });
-    document
-      .getElementById("waitlist-form")
-      ?.scrollIntoView({ behavior: "smooth" });
-  };
+  const navigate = useNavigate();
 
   const isActive = (path: string) => location.pathname === path;
-
-  const navLinkClass = (path: string) =>
-    `group relative px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl text-[10px] md:text-xs font-black uppercase tracking-wider sm:tracking-widest transition-all duration-300 cursor-pointer ${
-      isActive(path)
-        ? "text-accent bg-accent/10 border border-accent/30"
-        : "text-white bg-surface-elevated border border-white/15 hover:border-accent/50 hover:shadow-[0_0_20px_rgba(255,45,149,0.15)]"
-    }`;
 
   const handleNavClick = (label: string) => {
     trackEvent(AnalyticsEvents.CTA_CLICK, {
       cta_name: label,
       location: "navbar"
     });
-    if (label === "Play") {
+
+    if (label === "Open") {
       trackEvent(AnalyticsEvents.PLAY_CLICK);
     }
   };
 
-  return (
-    <motion.nav
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-bg/90 border-b border-white/5"
-    >
-      {/* Main bar */}
-      <div className="flex h-14 md:h-20 items-center justify-between px-4 md:px-6 relative">
-        {/* Left: Wordmark */}
-        <div className="shrink-0">
-          <Link to="/" className="flex items-center gap-2">
-            <span className="text-lg sm:text-xl md:text-2xl font-black tracking-tighter text-white uppercase italic">
-              Vaulted<span className="text-accent text-glow-magenta">Labs</span>
-            </span>
-          </Link>
-        </div>
+  const scrollToWaitlist = () => {
+    trackEvent(AnalyticsEvents.CTA_CLICK, {
+      cta_name: "join_waitlist",
+      location: "navbar"
+    });
 
-        {/* Center: Nav links — always visible on HUD pages */}
-        {showHUD && (
-          <div className="flex items-center gap-2 sm:gap-2.5 relative z-10">
-            <Link
-              to="/play"
-              onClick={() => handleNavClick("Play")}
-              className={navLinkClass("/play")}
-            >
-              Play
-            </Link>
-            <Link
-              to="/shop"
-              onClick={() => handleNavClick("Shop")}
-              className={navLinkClass("/shop")}
-            >
-              Shop
+    const waitlist = document.getElementById("waitlist-form");
+    if (waitlist) {
+      waitlist.scrollIntoView({ behavior: "smooth", block: "center" });
+      return;
+    }
+
+    navigate("/", { state: { scrollToWaitlist: true, sourcePath: location.pathname } });
+  };
+
+  const dockLinkClass = (path: string) =>
+    `flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg border transition-all ${
+      isActive(path)
+        ? "bg-accent/15 border-accent/40 text-accent"
+        : "bg-transparent border-transparent text-text-muted hover:text-white"
+    }`;
+
+  return (
+    <>
+      <motion.nav
+        initial={{ y: -100 }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-bg/90 border-b border-white/5"
+      >
+        <div
+          className={`flex h-14 md:h-20 items-center px-4 md:px-6 relative ${
+            showHUD ? "justify-center md:justify-between" : "justify-between"
+          }`}
+        >
+          <div
+            className={
+              showHUD ? "w-full md:w-auto flex justify-center md:block" : "shrink-0"
+            }
+          >
+            <Link to="/" className="flex items-center gap-2">
+              <span className="text-xl sm:text-2xl md:text-2xl font-black tracking-tighter text-white uppercase italic">
+                Vaulted
+                <span className="text-accent text-glow-magenta">Labs</span>
+              </span>
             </Link>
           </div>
-        )}
 
-        {/* Right side */}
-        {showHUD ? (
-          <>
-            {/* Desktop: HUD — clickable links */}
+          {showHUD ? (
             <div
-              className="relative shrink-0 hidden md:block"
+              className="hidden md:flex items-center gap-2 rounded-xl border border-white/10 bg-surface/70 px-2 py-1.5"
               data-tutorial="hud-desktop"
             >
-              <div className="relative flex items-center bg-surface/80 backdrop-blur-xl rounded-xl border border-white/10">
-                {/* Credits → Wallet */}
-                <Link
-                  to="/wallet"
-                  aria-label="View wallet"
-                  className={`flex items-center gap-2.5 px-4 py-2.5 border-r border-white/10 transition-colors hover:bg-white/5 rounded-l-xl ${isActive("/wallet") ? "bg-white/5" : ""}`}
+              <Link
+                to="/wallet"
+                aria-label="View wallet"
+                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors ${
+                  isActive("/wallet") ? "bg-white/10" : "hover:bg-white/5"
+                }`}
+              >
+                <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim">
+                  Credits
+                </span>
+                <span
+                  key={cashoutFlashTimestamp}
+                  className={`text-[11px] font-mono font-bold text-vault-gold ${cashoutFlashTimestamp ? "animate-balance-flash" : ""}`}
                 >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    className="text-vault-gold shrink-0"
-                  >
-                    <circle
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    />
-                    <path
-                      d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5s-2 .5-2 1.5 1 1.5 2 2 2 1 2 2-1 1.5-2 1.5-2-.5-2.5-1.5M12 7v1m0 8v1"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider leading-none">
-                      Credits
-                    </span>
-                    <span
-                      key={cashoutFlashTimestamp}
-                      className={`text-sm font-mono font-bold text-vault-gold ${cashoutFlashTimestamp ? "animate-balance-flash" : "animate-hud-shimmer"}`}
-                    >
-                      ${balance.toLocaleString()}
-                    </span>
-                  </div>
-                </Link>
+                  ${balance.toLocaleString()}
+                </span>
+              </Link>
 
-                {/* Loot → Inventory */}
-                <Link
-                  to="/inventory"
-                  aria-label="View inventory"
-                  className={`flex items-center gap-2.5 px-4 py-2.5 border-r border-white/10 transition-colors hover:bg-white/5 ${isActive("/inventory") ? "bg-white/5" : ""}`}
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    className="text-neon-cyan shrink-0"
-                  >
-                    <path
-                      d="M21 8V21H3V8"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M23 3H1V8H23V3Z"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                    <path
-                      d="M10 12H14"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  </svg>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider leading-none">
-                      Loot
-                    </span>
-                    <span
-                      className="text-sm font-mono font-bold text-neon-cyan animate-hud-shimmer"
-                      style={{ animationDelay: "0.5s" }}
-                    >
-                      {inventoryCount}
-                    </span>
-                  </div>
-                </Link>
+              <Link
+                to="/arena"
+                aria-label="View arena"
+                className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors ${
+                  isActive("/arena") ? "bg-white/10" : "hover:bg-white/5"
+                }`}
+              >
+                <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim">
+                  Energy
+                </span>
+                <span className="text-[11px] font-mono font-bold text-neon-green">
+                  {bossEnergy}/{maxBossEnergy}
+                </span>
+              </Link>
 
-                {/* Level → Profile */}
-                {level !== undefined && (
-                  <Link
-                    to="/profile"
-                    aria-label="View profile"
-                    className={`flex items-center gap-2.5 px-4 py-2.5 transition-colors hover:bg-white/5 ${freeSpins > 0 || cashoutStreak >= 3 ? "" : "rounded-r-xl"} ${isActive("/profile") ? "bg-white/5" : ""}`}
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      className="text-accent shrink-0"
-                    >
-                      <polygon
-                        points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider leading-none">
-                        Level
-                      </span>
-                      <span
-                        className="text-sm font-mono font-bold text-accent animate-hud-shimmer flex items-center gap-1"
-                        style={{ animationDelay: "1s" }}
-                      >
-                        {level}
-                        {prestigeLevel > 0 && (
-                          <span className="flex gap-0.5">
-                            {Array.from({ length: prestigeLevel }).map((_, i) => (
-                              <span key={i} className="text-vault-gold text-[10px]">&#9733;</span>
-                            ))}
-                          </span>
-                        )}
-                      </span>
-                    </div>
-                  </Link>
-                )}
-
-                {freeSpins > 0 && (
-                  <Link
-                    to="/play"
-                    aria-label="Use free spins"
-                    className={`flex items-center gap-2.5 px-4 py-2.5 border-l border-white/10 transition-colors hover:bg-white/5 ${cashoutStreak >= 3 ? "" : "rounded-r-xl"} ${isActive("/play") ? "bg-white/5" : ""}`}
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      className="text-neon-green shrink-0"
-                    >
-                      <path
-                        d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      />
-                    </svg>
-                    <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-text-dim uppercase tracking-wider leading-none">
-                        Spins
-                      </span>
-                      <span
-                        className="text-sm font-mono font-bold text-neon-green animate-hud-shimmer"
-                        style={{ animationDelay: "1.5s" }}
-                      >
-                        {freeSpins}
-                      </span>
-                    </div>
-                  </Link>
-                )}
-
-                {/* Win Streak Badge */}
-                <AnimatePresence>
-                  {cashoutStreak >= 3 && (
-                    <motion.div
-                      key="streak-desktop"
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0, opacity: 0 }}
-                      transition={{ type: "spring", damping: 12, stiffness: 300 }}
-                      className="flex items-center gap-1.5 px-3 py-2.5 border-l border-white/10 rounded-r-xl"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                        <path
-                          d="M12 2c.5 3.5 2 5 4 7 1.5 1.5 2 4 2 5.5 0 4-3 6-6 6s-6-2-6-6c0-1.5.5-4 2-5.5 2-2 3.5-3.5 4-7z"
-                          fill={getStreakColor(cashoutStreak)}
-                          opacity="0.9"
-                        />
-                      </svg>
-                      <span
-                        className="text-xs font-mono font-black"
-                        style={{ color: getStreakColor(cashoutStreak) }}
-                      >
-                        {cashoutStreak}x
-                      </span>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+              <div className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim">
+                  Shards
+                </span>
+                <span className="text-[11px] font-mono font-bold text-rarity-rare">
+                  {shards}
+                </span>
               </div>
-            </div>
-          </>
-        ) : (
-          /* Landing page — Play + Shop + Join on the right */
-          <div className="flex items-center gap-2 sm:gap-2.5 md:gap-3 relative z-10">
-            <Link
-              to="/play"
-              onClick={() => handleNavClick("Play")}
-              className={navLinkClass("/play")}
-            >
-              Play
-            </Link>
-            <Link
-              to="/shop"
-              onClick={() => handleNavClick("Shop")}
-              className={navLinkClass("/shop")}
-            >
-              Shop
-            </Link>
 
-            {/* Mobile Join CTA */}
+              {level !== undefined && (
+                <Link
+                  to="/arena"
+                  aria-label="View rank"
+                  className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors ${
+                    isActive("/arena") ? "bg-white/10" : "hover:bg-white/5"
+                  }`}
+                >
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim">
+                    Level
+                  </span>
+                  <span className="text-[11px] font-mono font-bold text-accent flex items-center gap-1">
+                    {level}
+                    {prestigeLevel > 0 && (
+                      <span className="flex gap-0.5">
+                        {Array.from({ length: prestigeLevel }).map((_, index) => (
+                          <span key={index} className="text-vault-gold text-[9px]">
+                            &#9733;
+                          </span>
+                        ))}
+                      </span>
+                    )}
+                  </span>
+                </Link>
+              )}
+
+              {freeSpins > 0 && (
+                <Link
+                  to="/open"
+                  aria-label="Use free spins"
+                  className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-colors ${
+                    isActive("/open") ? "bg-white/10" : "hover:bg-white/5"
+                  }`}
+                >
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim">
+                    Spins
+                  </span>
+                  <span className="text-[11px] font-mono font-bold text-vault-gold">
+                    {freeSpins}
+                  </span>
+                </Link>
+              )}
+            </div>
+          ) : (
             <button
               onClick={scrollToWaitlist}
-              className="md:hidden relative overflow-hidden rounded-lg bg-accent/10 border border-accent/30 text-accent px-3 py-1.5 font-black uppercase tracking-widest text-[10px] transition-all hover:bg-accent hover:text-white cursor-pointer"
+              className="relative overflow-hidden rounded-lg bg-accent/10 border border-accent/30 text-accent px-4 py-2 font-black uppercase tracking-widest text-[10px] transition-all hover:bg-accent hover:text-white cursor-pointer"
             >
               Join
             </button>
+          )}
+        </div>
 
-            {/* Desktop Join CTA */}
-            <button
-              onClick={scrollToWaitlist}
-              className="hidden md:flex items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-widest text-accent bg-surface/80 backdrop-blur-xl rounded-xl border border-white/10 hover:bg-accent/10 transition-all cursor-pointer"
-            >
-              <svg
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="shrink-0"
+        {showHUD && (
+          <div
+            className="md:hidden flex items-center justify-center gap-1 px-3 pb-2"
+            data-tutorial="hud"
+          >
+            <div className="grid grid-cols-4 gap-1.5 w-full rounded-lg border border-white/10 bg-surface/65 p-1.5">
+              <Link
+                to="/wallet"
+                aria-label="View wallet"
+                className={`rounded-md px-2 py-1.5 text-center transition-colors ${
+                  isActive("/wallet") ? "bg-white/10" : "hover:bg-white/5"
+                }`}
               >
-                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-                <polyline points="10 17 15 12 10 7" />
-                <line x1="15" y1="12" x2="3" y2="12" />
-              </svg>
-              <span>Join</span>
-            </button>
+                <p className="text-[8px] font-bold uppercase tracking-wider text-text-dim">
+                  Credits
+                </p>
+                <p
+                  key={cashoutFlashTimestamp}
+                  className={`text-[10px] font-mono font-bold text-vault-gold ${cashoutFlashTimestamp ? "animate-balance-flash" : ""}`}
+                >
+                  ${balance.toLocaleString()}
+                </p>
+              </Link>
+
+              <Link
+                to="/arena"
+                aria-label="View arena energy"
+                className={`rounded-md px-2 py-1.5 text-center transition-colors ${
+                  isActive("/arena") ? "bg-white/10" : "hover:bg-white/5"
+                }`}
+              >
+                <p className="text-[8px] font-bold uppercase tracking-wider text-text-dim">
+                  Energy
+                </p>
+                <p className="text-[10px] font-mono font-bold text-neon-green">
+                  {bossEnergy}
+                </p>
+              </Link>
+
+              <div className="rounded-md px-2 py-1.5 text-center">
+                <p className="text-[8px] font-bold uppercase tracking-wider text-text-dim">
+                  Shards
+                </p>
+                <p className="text-[10px] font-mono font-bold text-rarity-rare">
+                  {shards}
+                </p>
+              </div>
+
+              <Link
+                to="/arena"
+                aria-label="View level"
+                className={`rounded-md px-2 py-1.5 text-center transition-colors ${
+                  isActive("/arena") ? "bg-white/10" : "hover:bg-white/5"
+                }`}
+              >
+                <p className="text-[8px] font-bold uppercase tracking-wider text-text-dim">
+                  Level
+                </p>
+                <p className="text-[10px] font-mono font-bold text-accent">
+                  {level ?? 0}
+                </p>
+              </Link>
+            </div>
           </div>
         )}
-      </div>
+      </motion.nav>
 
-      {/* Mobile HUD — below nav bar, clickable */}
-      {showHUD && (
+      {showHUD && !hideDock && (
         <div
-          className="md:hidden flex items-center justify-center gap-1 px-3 pb-2"
-          data-tutorial="hud"
+          className="fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-24px)] max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl z-[45]"
+          data-tutorial="dashboard-nav-mobile"
         >
-          <div className="flex items-center bg-surface/60 backdrop-blur-xl rounded-lg border border-white/10 w-full">
-            {/* Credits → Wallet */}
+          <div className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-surface/90 backdrop-blur-xl p-1.5 shadow-[0_0_24px_rgba(0,0,0,0.45)]">
             <Link
-              to="/wallet"
-              aria-label="View wallet"
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 border-r border-white/10 transition-colors ${isActive("/wallet") ? "bg-white/5" : ""}`}
+              to="/open"
+              onClick={() => handleNavClick("Open")}
+              className={dockLinkClass("/open")}
             >
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                className="text-vault-gold shrink-0"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-                <path
-                  d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5s-2 .5-2 1.5 1 1.5 2 2 2 1 2 2-1 1.5-2 1.5-2-.5-2.5-1.5M12 7v1m0 8v1"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
+                <path d="M4 7h16v10H4z" stroke="currentColor" strokeWidth="1.8" />
+                <path d="M9 11h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
               </svg>
-              <span
-                key={cashoutFlashTimestamp}
-                className={`text-[10px] font-mono font-bold text-vault-gold ${cashoutFlashTimestamp ? "animate-balance-flash" : ""}`}
-              >
-                ${balance.toLocaleString()}
+              <span className="text-[9px] font-black uppercase tracking-wider">Open</span>
+            </Link>
+
+            <Link
+              to="/collection"
+              onClick={() => handleNavClick("Collection")}
+              className={dockLinkClass("/collection")}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
+                <rect x="3" y="3" width="7" height="7" stroke="currentColor" strokeWidth="1.6" />
+                <rect x="14" y="3" width="7" height="7" stroke="currentColor" strokeWidth="1.6" />
+                <rect x="3" y="14" width="7" height="7" stroke="currentColor" strokeWidth="1.6" />
+                <rect x="14" y="14" width="7" height="7" stroke="currentColor" strokeWidth="1.6" />
+              </svg>
+              <span className="text-[9px] font-black uppercase tracking-wider">
+                Collection
               </span>
             </Link>
 
-            {/* Loot → Inventory */}
             <Link
-              to="/inventory"
-              aria-label="View inventory"
-              className={`flex-1 flex items-center justify-center gap-1.5 py-2 border-r border-white/10 transition-colors ${isActive("/inventory") ? "bg-white/5" : ""}`}
+              to="/arena"
+              onClick={() => handleNavClick("Arena")}
+              className={dockLinkClass("/arena")}
             >
-              <svg
-                width="12"
-                height="12"
-                viewBox="0 0 24 24"
-                fill="none"
-                className="text-neon-cyan shrink-0"
-              >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
                 <path
-                  d="M21 8V21H3V8"
+                  d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
                   stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M23 3H1V8H23V3Z"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M10 12H14"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
+                  strokeWidth="1.8"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
-              <span className="text-[10px] font-mono font-bold text-neon-cyan">
-                {inventoryCount}
-              </span>
+              <span className="text-[9px] font-black uppercase tracking-wider">Arena</span>
             </Link>
-
-            {/* Level → Profile */}
-            {level !== undefined && (
-              <Link
-                to="/profile"
-                aria-label="View profile"
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 ${freeSpins > 0 || cashoutStreak >= 3 ? "border-r border-white/10" : ""} transition-colors ${isActive("/profile") ? "bg-white/5" : ""}`}
-              >
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="text-accent shrink-0"
-                >
-                  <polygon
-                    points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <span className="text-[10px] font-mono font-bold text-accent flex items-center gap-0.5">
-                  Lv.{level}
-                  {prestigeLevel > 0 && (
-                    <span className="flex gap-0.5">
-                      {Array.from({ length: prestigeLevel }).map((_, i) => (
-                        <span key={i} className="text-vault-gold text-[8px]">&#9733;</span>
-                      ))}
-                    </span>
-                  )}
-                </span>
-              </Link>
-            )}
-
-            {/* Free Spins → Play */}
-            {freeSpins > 0 && (
-              <Link
-                to="/play"
-                aria-label="Use free spins"
-                className={`flex-1 flex items-center justify-center gap-1.5 py-2 ${cashoutStreak >= 3 ? "border-r border-white/10" : ""} transition-colors ${isActive("/play") ? "bg-white/5" : ""}`}
-              >
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="text-neon-green shrink-0"
-                >
-                  <path
-                    d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <span className="text-[10px] font-mono font-bold text-neon-green">
-                  {freeSpins}
-                </span>
-              </Link>
-            )}
-
-            {/* Win Streak Badge — Mobile */}
-            <AnimatePresence>
-              {cashoutStreak >= 3 && (
-                <motion.div
-                  key="streak-mobile"
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0, opacity: 0 }}
-                  transition={{ type: "spring", damping: 12, stiffness: 300 }}
-                  className="flex-1 flex items-center justify-center gap-1 py-2"
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" className="shrink-0">
-                    <path
-                      d="M12 2c.5 3.5 2 5 4 7 1.5 1.5 2 4 2 5.5 0 4-3 6-6 6s-6-2-6-6c0-1.5.5-4 2-5.5 2-2 3.5-3.5 4-7z"
-                      fill={getStreakColor(cashoutStreak)}
-                      opacity="0.9"
-                    />
-                  </svg>
-                  <span
-                    className="text-[10px] font-mono font-bold"
-                    style={{ color: getStreakColor(cashoutStreak) }}
-                  >
-                    {cashoutStreak}x
-                  </span>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
         </div>
       )}
-    </motion.nav>
+    </>
   );
 }

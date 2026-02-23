@@ -5,25 +5,17 @@ import { WalletHeader } from "../components/wallet/WalletHeader";
 import { TransactionList } from "../components/wallet/TransactionList";
 import { PageTutorial } from "../components/shared/PageTutorial";
 import { TutorialHelpButton } from "../components/shared/TutorialHelpButton";
-import { Footer } from "../components/shared/Footer";
 import { useGame } from "../context/GameContext";
 import { WALLET_TUTORIAL_STEPS } from "../data/tutorial";
 
 export function WalletPage() {
-  const { balance, inventory, levelInfo, prestigeLevel, freeSpins, cashoutFlashTimestamp, cashoutStreak, hasSeenWalletTutorial, setHasSeenWalletTutorial } = useGame();
+  const { balance, inventory, levelInfo, prestigeLevel, freeSpins, cashoutFlashTimestamp, cashoutStreak, bossEnergy, maxBossEnergy, shards, setHasSeenWalletTutorial } = useGame();
   const navigate = useNavigate();
   const [tutorialActive, setTutorialActive] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
-
-  useEffect(() => {
-    if (!hasSeenWalletTutorial) {
-      const timer = setTimeout(() => setTutorialActive(true), 600);
-      return () => clearTimeout(timer);
-    }
-  }, [hasSeenWalletTutorial]);
 
   return (
     <>
@@ -37,8 +29,11 @@ export function WalletPage() {
         freeSpins={freeSpins}
         cashoutFlashTimestamp={cashoutFlashTimestamp}
         cashoutStreak={cashoutStreak}
+        bossEnergy={bossEnergy}
+        maxBossEnergy={maxBossEnergy}
+        shards={shards}
       />
-      <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-28 md:pt-28 pb-8 sm:pb-12">
+      <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-32 md:pt-28 pb-28 sm:pb-28 md:pb-24">
         <div className="max-w-6xl mx-auto">
           <div className="mb-6 sm:mb-8 text-center">
             <h1 className="text-xl sm:text-3xl md:text-5xl font-black uppercase tracking-tight text-white mb-1 sm:mb-2">
@@ -63,12 +58,16 @@ export function WalletPage() {
               </button>
               <button
                 onClick={() => {
-                  navigate("/inventory");
-                  window.scrollTo(0, 0);
+                  navigate("/");
+                  setTimeout(() => {
+                    document
+                      .getElementById("waitlist-form")
+                      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }, 300);
                 }}
                 className="inline-block px-6 py-2.5 bg-neon-green text-bg text-xs font-black uppercase tracking-widest rounded-xl border-b-[3px] border-[#2bcc10] shadow-[0_4px_12px_rgba(57,255,20,0.3)] hover:shadow-[0_4px_16px_rgba(57,255,20,0.4)] active:border-b-[1px] transition-all duration-100 cursor-pointer"
               >
-                Cashout Items
+                Cashout Credits
               </button>
             </div>
           </div>
@@ -76,7 +75,6 @@ export function WalletPage() {
           <TransactionList />
         </div>
       </main>
-      <Footer />
       <PageTutorial
         pageKey="wallet"
         steps={WALLET_TUTORIAL_STEPS}
@@ -86,7 +84,7 @@ export function WalletPage() {
           setHasSeenWalletTutorial(true);
         }}
       />
-      {hasSeenWalletTutorial && !tutorialActive && (
+      {!tutorialActive && (
         <TutorialHelpButton onClick={() => setTutorialActive(true)} />
       )}
     </>

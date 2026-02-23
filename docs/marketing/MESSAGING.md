@@ -6,7 +6,7 @@ Mystery box sites hide their odds and sell you disappointment — VaultedLabs sh
 
 ## Offer
 
-**Free credits on signup** — $25 to $200 depending on when you join (Founder tier: $200, Early Access: $100, Beta: $50, Early Bird: $25). 450 total spots. Plus a fully playable demo at `/play` — no account, no deposit, no commitment.
+**Free credits on signup** — $25 to $200 depending on when you join (Founder tier: $200, Early Access: $100, Beta: $50, Early Bird: $25). 450 total spots. Plus a fully playable demo at `/open` — no account, no deposit, no commitment.
 
 ---
 

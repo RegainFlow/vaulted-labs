@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef, memo } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import type { VaultLockBonusStageProps, VaultLockPhase, VaultLockSlot } from "../../types/bonus";
 import type { VaultTierName } from "../../types/vault";
-import { FREE_SPIN_REWARDS } from "../../types/bonus";
+import { SHARD_REWARDS } from "../../types/bonus";
 import {
   generateVaultLockStrip,
   pickVaultLockLanding
@@ -289,12 +289,12 @@ export function VaultLockBonusStage({
     } else if (phase === "done") {
       schedule(() => {
         const matchCount = getMatchCount();
-        let freeSpins = 0;
+        let shardsWon = 0;
         if (matchCount === 3) {
           const matchedTier = lockedResults[0]!.tier;
-          freeSpins = FREE_SPIN_REWARDS[matchedTier];
+          shardsWon = SHARD_REWARDS[matchedTier];
         }
-        onComplete(freeSpins);
+        onComplete(shardsWon);
       }, 400);
     }
     return () => clearTimers();
@@ -397,7 +397,7 @@ export function VaultLockBonusStage({
               Vault Lock
             </p>
             <h3 className="text-base sm:text-lg md:text-xl font-black uppercase tracking-wider text-white">
-              Match 3 to Win Free Spins
+              Match 3 to Win Shards
             </h3>
           </motion.div>
 
@@ -476,9 +476,9 @@ export function VaultLockBonusStage({
                     </motion.h3>
                     <p className="text-lg sm:text-xl font-black text-white mt-3">
                       <span style={{ color: lockedResults[0]!.color }}>
-                        +{FREE_SPIN_REWARDS[lockedResults[0]!.tier]}
+                        +{SHARD_REWARDS[lockedResults[0]!.tier]}
                       </span>{" "}
-                      Free Spin{FREE_SPIN_REWARDS[lockedResults[0]!.tier] > 1 ? "s" : ""}!
+                      Shard{SHARD_REWARDS[lockedResults[0]!.tier] > 1 ? "s" : ""}!
                     </p>
                     <p className="text-[10px] text-text-dim uppercase tracking-[0.3em] mt-1">
                       3x {lockedResults[0]!.tier} Match

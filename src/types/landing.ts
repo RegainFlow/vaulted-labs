@@ -46,4 +46,8 @@ export interface NavbarProps {
   freeSpins?: number;
   cashoutFlashTimestamp?: number;
   cashoutStreak?: number;
+  bossEnergy?: number;
+  maxBossEnergy?: number;
+  shards?: number;
+  hideDock?: boolean;
 }

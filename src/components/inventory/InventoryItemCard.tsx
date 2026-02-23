@@ -30,7 +30,7 @@ export function InventoryItemCard({
       style={{
         borderColor: isInactive ? "rgba(255,255,255,0.05)" : `${vaultColor}30`
       }}
-      {...(isFirst ? { "data-tutorial": "inventory-item" } : {})}
+      {...(isFirst ? { "data-tutorial": "collection-item" } : {})}
     >
       {/* Status badge */}
       {item.status !== "held" && (
@@ -104,7 +104,10 @@ export function InventoryItemCard({
 
         {/* Actions */}
         {item.status === "held" && (
-          <div className="grid grid-cols-3 gap-2">
+          <div
+            className="grid grid-cols-3 gap-2"
+            {...(isFirst ? { "data-tutorial": "collection-actions" } : {})}
+          >
             <button
               onClick={() => onShip(item.id)}
               className="px-2 py-2 rounded-lg text-[9px] font-bold uppercase tracking-wider bg-neon-cyan/10 border border-neon-cyan/30 text-neon-cyan hover:bg-neon-cyan/20 transition-colors cursor-pointer"

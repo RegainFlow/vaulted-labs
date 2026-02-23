@@ -52,9 +52,9 @@ const vaultSteps: Step[] = [
 const platformSteps: Step[] = [
   {
     number: "04",
-    title: "Trade on the Shop",
+    title: "Build Your Collection",
     description:
-      "List your items for sale, buy collectibles from other players, or bid on auctions. Build the collection you actually want.",
+      "Store your collectibles, browse the marketplace for trades, or bid on auctions. Your items, your strategy.",
     illustration: <ShopIllustration />,
     image: "4_trade_shop.jpg",
     iconColor: "text-accent",
@@ -62,9 +62,9 @@ const platformSteps: Step[] = [
   },
   {
     number: "05",
-    title: "Level Up & Earn Rewards",
+    title: "Enter the Arena",
     description:
-      "Earn XP with every vault and purchase. Complete quests, defeat bosses for exclusive rewards, and climb the ranks.",
+      "Equip your collectibles, battle bosses for shards, forge new items, and complete quests. Every fight strengthens your collection.",
     illustration: <LevelUpIllustration />,
     image: "5_level_up.jpg",
     iconColor: "text-neon-cyan",
@@ -74,7 +74,7 @@ const platformSteps: Step[] = [
     number: "06",
     title: "Credits Fuel Everything",
     description:
-      "Earn credits from cashouts, boss fights, quests, and rewards. Spend them on vaults and marketplace items. The loop never stops.",
+      "Earn credits from cashouts and rewards. Spend them on vaults, marketplace items, and more. The loop never stops.",
     illustration: <CoinsIllustration />,
     image: "6_credits.jpg",
     iconColor: "text-vault-gold",

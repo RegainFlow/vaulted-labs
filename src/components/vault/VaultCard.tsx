@@ -30,7 +30,7 @@ export function VaultCard({
   const canAfford = !disabled && balance >= vault.price;
   const minPull = Math.max(1, Math.round(vault.price * RARITY_CONFIG.common.minMult - VALUE_RANGE_REDUCTION));
   const maxPull = Math.round(vault.price * RARITY_CONFIG.legendary.maxMult - VALUE_RANGE_REDUCTION);
-  const bonusChance = PREMIUM_BONUS_CHANCE[vault.name];
+  const bonusChance = PREMIUM_BONUS_CHANCE[vault.name] ?? 0;
 
   const handleSelect = () => {
     if (!canAfford) return;
@@ -77,7 +77,7 @@ export function VaultCard({
           </div>
 
           {/* Bonus Spin Badge */}
-          {bonusChance && (
+          {bonusChance > 0 && (
             <motion.div
               animate={{
                 scale: [1, 1.05, 1],
@@ -145,6 +145,9 @@ export function VaultCard({
                 e.stopPropagation();
                 setShowOdds(!showOdds);
               }}
+              {...(vault.name === "Diamond"
+                ? { "data-tutorial": "vault-odds" }
+                : {})}
               className="group/odds relative rounded-xl border-none p-0 cursor-pointer outline-none"
               style={{
                 background: showOdds
@@ -167,6 +170,9 @@ export function VaultCard({
                 e.stopPropagation();
                 setShowContents(true);
               }}
+              {...(vault.name === "Diamond"
+                ? { "data-tutorial": "vault-contents" }
+                : {})}
               className="group/contents relative rounded-xl border-none p-0 cursor-pointer outline-none"
               style={{ background: "rgba(0,240,255,0.08)" }}
             >

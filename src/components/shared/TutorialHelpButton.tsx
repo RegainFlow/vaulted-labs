@@ -11,7 +11,7 @@ export function TutorialHelpButton({ onClick }: TutorialHelpButtonProps) {
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: 0.5 }}
       onClick={onClick}
-      className="fixed bottom-6 right-6 z-[100] w-10 h-10 rounded-full bg-surface-elevated border border-accent/30 text-accent flex items-center justify-center shadow-[0_0_20px_rgba(255,45,149,0.15)] hover:bg-accent/10 hover:border-accent/50 transition-all cursor-pointer"
+      className="fixed bottom-24 md:bottom-6 right-6 z-[100] w-10 h-10 rounded-full bg-surface-elevated border border-accent/30 text-accent flex items-center justify-center shadow-[0_0_20px_rgba(255,45,149,0.15)] hover:bg-accent/10 hover:border-accent/50 transition-all cursor-pointer"
       aria-label="Replay tutorial"
     >
       <span className="text-lg font-black leading-none">?</span>

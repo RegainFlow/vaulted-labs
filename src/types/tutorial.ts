@@ -2,6 +2,8 @@ export type TutorialStep =
   | "welcome"
   | "hud"
   | "categories"
+  | "odds"
+  | "contents"
   | "open-vault"
   | "spin-reel"
   | "result-store"

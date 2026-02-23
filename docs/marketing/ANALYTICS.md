@@ -40,8 +40,8 @@ Source of truth for event names: `src/lib/analytics.ts`.
 
 ```
 Step 1: $pageview  (page_path = "/")
-Step 2: cta_click  (cta_name = "play_now")
-Step 3: $pageview  (page_path = "/play")
+Step 2: cta_click  (cta_name = "open_now")
+Step 3: $pageview  (page_path = "/open")
 Step 4: vault_opened
 ```
 

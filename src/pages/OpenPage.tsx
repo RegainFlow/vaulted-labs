@@ -3,14 +3,16 @@ import { Navbar } from "../components/shared/Navbar";
 import { VaultGrid } from "../components/vault/VaultGrid";
 import { Tutorial } from "../components/Tutorial";
 import { TutorialHelpButton } from "../components/shared/TutorialHelpButton";
-import { Footer } from "../components/shared/Footer";
 import { useGame } from "../context/GameContext";
 import { useTutorial } from "../hooks/useTutorial";
 import { trackEvent, AnalyticsEvents } from "../lib/analytics";
 
-export function PlayPage() {
-  const { balance, inventory, levelInfo, hasSeenTutorial, setHasSeenTutorial, prestigeLevel, freeSpins, cashoutFlashTimestamp, cashoutStreak } =
-    useGame();
+export function OpenPage() {
+  const {
+    balance, inventory, levelInfo, hasSeenTutorial, setHasSeenTutorial,
+    prestigeLevel, freeSpins, cashoutFlashTimestamp, cashoutStreak,
+    bossEnergy, maxBossEnergy, shards
+  } = useGame();
   const { step, advance, goTo, completedAction, setCompletedAction, reset } =
     useTutorial(hasSeenTutorial);
   const [vaultOpen, setVaultOpen] = useState(false);
@@ -54,6 +56,10 @@ export function PlayPage() {
         freeSpins={freeSpins}
         cashoutFlashTimestamp={cashoutFlashTimestamp}
         cashoutStreak={cashoutStreak}
+        bossEnergy={bossEnergy}
+        maxBossEnergy={maxBossEnergy}
+        shards={shards}
+        hideDock={vaultOpen}
       />
       <main>
         <VaultGrid
@@ -63,7 +69,6 @@ export function PlayPage() {
           onOverlayChange={setVaultOpen}
         />
       </main>
-      <Footer />
       <Tutorial
         step={step}
         onAdvance={handleTutorialAdvance}

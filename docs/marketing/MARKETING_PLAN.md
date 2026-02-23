@@ -2,7 +2,7 @@
 
 **Goal**: 450 waitlist signups in 14 days (~32/day velocity).
 **Budget**: $0 (organic only).
-**Primary proof asset**: Playable demo at `/play`.
+**Primary proof asset**: Playable demo at `/open`.
 
 ---
 

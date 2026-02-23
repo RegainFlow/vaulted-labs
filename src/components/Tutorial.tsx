@@ -1,12 +1,26 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+﻿import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import type { TutorialProps, TargetRect } from "../types/tutorial";
 import { OVERLAY_STEPS, TOOLTIP_STEPS } from "../data/tutorial";
 
 const PADDING = 8;
+const TUTORIAL_SEQUENCE = [
+  "welcome",
+  "hud",
+  "categories",
+  "odds",
+  "contents",
+  "open-vault",
+  "complete"
+] as const;
+const TOTAL_STEPS = TUTORIAL_SEQUENCE.length;
 
-const STEP_INDEX: Record<string, number> = { welcome: 1, hud: 2, categories: 3, "open-vault": 4, complete: 5 };
-const TOTAL_STEPS = 5;
+function getStepIndex(step: string): number {
+  const index = TUTORIAL_SEQUENCE.indexOf(
+    step as (typeof TUTORIAL_SEQUENCE)[number]
+  );
+  return index >= 0 ? index + 1 : 1;
+}
 
 function getTargetRect(selector: string): TargetRect | null {
   const el = document.querySelector(selector);
@@ -28,8 +42,7 @@ function getTooltipPosition(
   const isMobile = window.innerWidth < 640;
   const tooltipMaxWidth = isMobile ? 280 : 340;
 
-  // On mobile for top-of-screen elements (hud, categories), position tooltip
-  // in the middle of the screen so the highlighted element is clearly visible above
+  // Keep the spotlight visible on small screens for top bar targets.
   if (isMobile && (step === "hud" || step === "categories")) {
     return {
       top: Math.max(rect.top + rect.height + 40, window.innerHeight * 0.4),
@@ -38,7 +51,10 @@ function getTooltipPosition(
   }
 
   if (position === "bottom" || isMobile) {
-    const top = Math.max(8, Math.min(rect.top + rect.height + 12, window.innerHeight - 200));
+    const top = Math.max(
+      8,
+      Math.min(rect.top + rect.height + 12, window.innerHeight - 200)
+    );
     return {
       top,
       left: isMobile
@@ -46,6 +62,7 @@ function getTooltipPosition(
         : Math.max(12, Math.min(rect.left, window.innerWidth - tooltipMaxWidth))
     };
   }
+
   return {
     bottom: Math.max(8, window.innerHeight - rect.top + 12),
     left: Math.max(12, Math.min(rect.left, window.innerWidth - tooltipMaxWidth))
@@ -62,17 +79,19 @@ export function Tutorial({
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const clickTimestamps = useRef<number[]>([]);
 
-  // Auto-dismiss on rapid clicking (>3 clicks in 1 second)
   useEffect(() => {
     if (!step || !onSkip) return;
     const handleClick = () => {
       const now = Date.now();
       clickTimestamps.current.push(now);
-      clickTimestamps.current = clickTimestamps.current.filter((t) => now - t < 1000);
+      clickTimestamps.current = clickTimestamps.current.filter(
+        (timestamp) => now - timestamp < 1000
+      );
       if (clickTimestamps.current.length > 3) {
         onSkip();
       }
     };
+
     window.addEventListener("click", handleClick);
     return () => window.removeEventListener("click", handleClick);
   }, [step, onSkip]);
@@ -81,22 +100,19 @@ export function Tutorial({
     if (!step) return;
 
     if (step === "open-vault") {
-      const rect = getTargetRect('[data-tutorial="vault-diamond"]');
-      setTargetRect(rect);
+      setTargetRect(getTargetRect('[data-tutorial="vault-diamond"]'));
       return;
     }
 
     const config = TOOLTIP_STEPS[step];
-    if (config) {
-      const selector =
-        typeof config.selector === "function"
-          ? config.selector()
-          : config.selector;
-      const rect = getTargetRect(selector);
-      setTargetRect(rect);
-    } else {
+    if (!config) {
       setTargetRect(null);
+      return;
     }
+
+    const selector =
+      typeof config.selector === "function" ? config.selector() : config.selector;
+    setTargetRect(getTargetRect(selector));
   }, [step]);
 
   useEffect(() => {
@@ -110,17 +126,28 @@ export function Tutorial({
     };
   }, [updateRect]);
 
-  // Scroll Diamond card into view when reaching open-vault step
   useEffect(() => {
-    if (step === "open-vault") {
-      const el = document.querySelector('[data-tutorial="vault-diamond"]');
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth", block: "center" });
-        // Re-measure rect after scroll settles
-        setTimeout(updateRect, 400);
-        setTimeout(updateRect, 800);
-      }
-    }
+    if (step !== "open-vault") return;
+    const el = document.querySelector('[data-tutorial="vault-diamond"]');
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(updateRect, 400);
+    setTimeout(updateRect, 800);
+  }, [step, updateRect]);
+
+  useEffect(() => {
+    if (!step || step === "open-vault") return;
+    const config = TOOLTIP_STEPS[step];
+    if (!config) return;
+
+    const selector =
+      typeof config.selector === "function" ? config.selector() : config.selector;
+    const el = document.querySelector(selector);
+    if (!el) return;
+
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(updateRect, 400);
   }, [step, updateRect]);
 
   if (!step) return null;
@@ -129,7 +156,6 @@ export function Tutorial({
   const svgWidth = typeof window !== "undefined" ? window.innerWidth : 1920;
   const svgHeight = typeof window !== "undefined" ? window.innerHeight : 1080;
 
-  // Welcome overlay
   if (step === "welcome") {
     return (
       <AnimatePresence>
@@ -161,20 +187,21 @@ export function Tutorial({
                 <line x1="12" y1="22.08" x2="12" y2="12" />
               </svg>
             </div>
-            <span className="text-[9px] font-mono text-text-dim">{STEP_INDEX[step]} / {TOTAL_STEPS}</span>
+            <span className="text-[9px] font-mono text-text-dim">
+              {getStepIndex(step)} / {TOTAL_STEPS}
+            </span>
             <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight mb-3 mt-1">
               Welcome to VaultedLabs!
             </h2>
             <p className="text-text-muted text-sm leading-relaxed mb-8">
-              Let's open your first vault. You'll spin the reel, reveal a
-              collectible, and decide what to do with it. Everything you earn is
-              yours to keep.
+              Let&apos;s open your first vault. We will cover your dashboard,
+              odds, contents, spin flow, and post-reveal actions.
             </p>
             <button
               onClick={onAdvance}
               className="px-8 py-3 bg-accent text-white text-sm font-black uppercase tracking-widest rounded-xl border-b-[4px] border-[#a01d5e] shadow-[0_6px_16px_rgba(255,45,149,0.3)] hover:shadow-[0_4px_12px_rgba(255,45,149,0.4)] active:border-b-[2px] transition-all duration-100 cursor-pointer"
             >
-              Let's Go
+              Let&apos;s Go
             </button>
             {onSkip && (
               <button
@@ -190,7 +217,6 @@ export function Tutorial({
     );
   }
 
-  /* ── Complete overlay ── */
   if (step === "complete") {
     const actionText = completedAction || "stored";
     return (
@@ -221,19 +247,18 @@ export function Tutorial({
                 <polyline points="20 6 9 17 4 12" />
               </svg>
             </div>
-            <span className="text-[9px] font-mono text-text-dim">{STEP_INDEX[step]} / {TOTAL_STEPS}</span>
+            <span className="text-[9px] font-mono text-text-dim">
+              {getStepIndex(step)} / {TOTAL_STEPS}
+            </span>
             <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight mb-3 mt-1">
-              You're All Set!
+              You&apos;re All Set!
             </h2>
             <p className="text-text-muted text-sm leading-relaxed mb-2">
-              Your item has been{" "}
-              <span className="text-white font-bold">{actionText}</span>.
+              Your item has been <span className="text-white font-bold">{actionText}</span>.
             </p>
             <p className="text-text-muted text-sm leading-relaxed mb-8">
-              You earned{" "}
-              <span className="text-neon-green font-bold">90 XP</span> from your
-              first vault. Now go explore — open more vaults, build your
-              collection, and level up.
+              You earned <span className="text-neon-green font-bold">90 XP</span>
+              from your first vault. Now go explore and keep progressing.
             </p>
             <button
               onClick={onComplete}
@@ -247,7 +272,6 @@ export function Tutorial({
     );
   }
 
-  /* ── Tooltip steps: hud, categories ── */
   const tooltipConfig = TOOLTIP_STEPS[step];
   if (tooltipConfig && targetRect) {
     const tooltipStyle = getTooltipPosition(
@@ -255,6 +279,7 @@ export function Tutorial({
       tooltipConfig.position,
       step
     );
+
     return (
       <AnimatePresence>
         <motion.div
@@ -272,13 +297,7 @@ export function Tutorial({
           >
             <defs>
               <mask id="tutorial-mask">
-                <rect
-                  x="0"
-                  y="0"
-                  width={svgWidth}
-                  height={svgHeight}
-                  fill="white"
-                />
+                <rect x="0" y="0" width={svgWidth} height={svgHeight} fill="white" />
                 <rect
                   x={targetRect.left}
                   y={targetRect.top}
@@ -324,7 +343,9 @@ export function Tutorial({
               <p className="text-sm sm:text-base font-black text-white uppercase tracking-tight">
                 {tooltipConfig.title}
               </p>
-              <span className="text-[9px] font-mono text-text-dim">{STEP_INDEX[step]} / {TOTAL_STEPS}</span>
+              <span className="text-[9px] font-mono text-text-dim">
+                {getStepIndex(step)} / {TOTAL_STEPS}
+              </span>
             </div>
             <p className="text-xs sm:text-sm text-text-muted leading-relaxed mb-3 sm:mb-4">
               {tooltipConfig.description}
@@ -351,7 +372,6 @@ export function Tutorial({
     );
   }
 
-  /* ── open-vault step: SVG mask cutout on Bronze card ── */
   if (step === "open-vault" && targetRect) {
     const tooltipStyle = getTooltipPosition(targetRect, "bottom");
     return (
@@ -366,13 +386,7 @@ export function Tutorial({
           <svg width={svgWidth} height={svgHeight} className="absolute inset-0">
             <defs>
               <mask id="tutorial-mask-vault">
-                <rect
-                  x="0"
-                  y="0"
-                  width={svgWidth}
-                  height={svgHeight}
-                  fill="white"
-                />
+                <rect x="0" y="0" width={svgWidth} height={svgHeight} fill="white" />
                 <rect
                   x={targetRect.left}
                   y={targetRect.top}
@@ -416,10 +430,12 @@ export function Tutorial({
               <p className="text-sm sm:text-base font-black text-white uppercase tracking-tight">
                 Open a Vault
               </p>
-              <span className="text-[9px] font-mono text-text-dim">{STEP_INDEX[step]} / {TOTAL_STEPS}</span>
+              <span className="text-[9px] font-mono text-text-dim">
+                {getStepIndex(step)} / {TOTAL_STEPS}
+              </span>
             </div>
             <p className="text-xs sm:text-sm text-text-muted leading-relaxed mb-3">
-              Tap the Diamond vault to open it.
+              Open a vault to continue.
             </p>
             {onSkip && (
               <button
