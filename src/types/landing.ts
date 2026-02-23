@@ -50,4 +50,5 @@ export interface NavbarProps {
   maxBossEnergy?: number;
   shards?: number;
   hideDock?: boolean;
+  tutorialActive?: boolean;
 }

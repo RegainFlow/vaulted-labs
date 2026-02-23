@@ -402,7 +402,10 @@ export function VaultLockBonusStage({
           </motion.div>
 
           {/* 3 spinners side by side */}
-          <div className="relative flex items-center justify-center gap-3 sm:gap-4 md:gap-6">
+          <div
+            data-tutorial="bonus-round"
+            className="relative flex items-center justify-center gap-3 sm:gap-4 md:gap-6"
+          >
             {strips.map((strip, i) => (
               <VaultLockSpinner
                 key={i}

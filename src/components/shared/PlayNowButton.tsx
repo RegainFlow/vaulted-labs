@@ -6,7 +6,7 @@ interface PlayNowButtonProps {
   location?: string;
 }
 
-export function PlayNowButton({ to = "/open", location }: PlayNowButtonProps) {
+export function PlayNowButton({ to = "/vaults", location }: PlayNowButtonProps) {
   const handleClick = () => {
     trackEvent(AnalyticsEvents.CTA_CLICK, { cta_name: "open_now", location });
     trackEvent(AnalyticsEvents.PLAY_CLICK);

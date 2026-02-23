@@ -23,10 +23,10 @@ type ArenaSection = "battles" | "forge" | "quests";
 
 export function ArenaPage() {
   const {
-    balance, inventory, levelInfo, prestigeLevel, freeSpins,
+    balance, inventory, xp, levelInfo, prestigeLevel, freeSpins,
     cashoutFlashTimestamp, cashoutStreak, bossEnergy, maxBossEnergy, shards,
     defeatedBosses, spendBossEnergy, completeBattle,
-    canPrestige, prestige, addXP, resetDemo, setHasSeenArenaTutorial
+    canPrestige, prestige, resetDemo, setHasSeenArenaTutorial
   } = useGame();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<ArenaSection>("battles");
@@ -87,7 +87,7 @@ export function ArenaPage() {
         showHUD
         balance={balance}
         inventoryCount={inventory.length}
-        xp={levelInfo.currentXP}
+        xp={xp}
         level={levelInfo.level}
         prestigeLevel={prestigeLevel}
         freeSpins={freeSpins}
@@ -97,6 +97,7 @@ export function ArenaPage() {
         maxBossEnergy={maxBossEnergy}
         shards={shards}
         hideDock={hideDock}
+        tutorialActive={tutorialActive}
       />
       <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-32 md:pt-28 pb-28 sm:pb-28 md:pb-24">
         <div className="max-w-6xl mx-auto">
@@ -156,15 +157,6 @@ export function ArenaPage() {
 
             <div className="pt-6 border-t border-white/5 text-center">
               <div className="flex items-center justify-center gap-3 flex-wrap">
-                <button
-                  onClick={() => addXP(6000)}
-                  className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest bg-neon-cyan/10 border border-neon-cyan/30 text-neon-cyan hover:bg-neon-cyan/20 hover:border-neon-cyan/50 transition-all cursor-pointer inline-flex items-center gap-2"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                  </svg>
-                  Grant 6000 XP
-                </button>
                 <button
                   onClick={() => { resetDemo(); navigate("/"); window.scrollTo(0, 0); }}
                   className="px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-widest bg-error/10 border border-error/30 text-error hover:bg-error/20 hover:border-error/50 transition-all cursor-pointer inline-flex items-center gap-2"

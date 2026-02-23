@@ -9,7 +9,7 @@ import { trackEvent, AnalyticsEvents } from "../lib/analytics";
 
 export function OpenPage() {
   const {
-    balance, inventory, levelInfo, hasSeenTutorial, setHasSeenTutorial,
+    balance, inventory, xp, levelInfo, hasSeenTutorial, setHasSeenTutorial,
     prestigeLevel, freeSpins, cashoutFlashTimestamp, cashoutStreak,
     bossEnergy, maxBossEnergy, shards
   } = useGame();
@@ -50,7 +50,7 @@ export function OpenPage() {
         showHUD
         balance={balance}
         inventoryCount={inventory.length}
-        xp={levelInfo.currentXP}
+        xp={xp}
         level={levelInfo.level}
         prestigeLevel={prestigeLevel}
         freeSpins={freeSpins}
@@ -60,6 +60,7 @@ export function OpenPage() {
         maxBossEnergy={maxBossEnergy}
         shards={shards}
         hideDock={vaultOpen}
+        tutorialActive={step != null}
       />
       <main>
         <VaultGrid

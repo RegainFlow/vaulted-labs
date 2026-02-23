@@ -29,63 +29,108 @@ export const ROUTE_SEO: Record<string, RouteSeoConfig> = {
     twitterImage: "/og-image.png",
     robots: "index,follow"
   },
-  "/play": {
-    title: "Play Vault Opens | VaultedLabs",
+  "/vaults": {
+    title: "Vaults | Open & Reveal | VaultedLabs",
     description:
       "Try the interactive vault opening demo. Reveal outcomes, compare rarity tiers, and choose hold, ship, or cashout.",
-    canonicalPath: "/play",
-    ogTitle: "Play Vault Opens | VaultedLabs",
+    canonicalPath: "/vaults",
+    ogTitle: "Vaults | Open & Reveal | VaultedLabs",
     ogDescription:
       "Try the interactive demo and reveal collectible outcomes by vault tier.",
     ogImage: "/og-image.png",
-    twitterTitle: "Play Vault Opens | VaultedLabs",
+    twitterTitle: "Vaults | Open & Reveal | VaultedLabs",
     twitterDescription:
       "Try the interactive vault opening demo and reveal collectible outcomes.",
     twitterImage: "/og-image.png",
     robots: "index,follow"
   },
-  "/shop": {
-    title: "Shop Marketplace & Auctions | VaultedLabs",
+  "/locker/inventory": {
+    title: "Locker Inventory | VaultedLabs",
     description:
-      "Browse marketplace listings and live auction bids with credits in the VaultedLabs shop experience.",
-    canonicalPath: "/shop",
-    ogTitle: "Shop Marketplace & Auctions | VaultedLabs",
+      "Manage held collectibles and choose to cashout, ship, or list items from your Locker.",
+    canonicalPath: "/locker/inventory",
+    ogTitle: "Locker Inventory | VaultedLabs",
     ogDescription:
-      "Browse listings, place bids, and explore the VaultedLabs shop experience.",
+      "Manage your held collectibles in the Locker inventory.",
     ogImage: "/og-image.png",
-    twitterTitle: "VaultedLabs Shop",
+    twitterTitle: "VaultedLabs Locker Inventory",
     twitterDescription:
-      "Browse marketplace listings and auctions in the VaultedLabs shop.",
+      "Manage your held collectibles in the Locker inventory.",
     twitterImage: "/og-image.png",
     robots: "index,follow"
   },
-  "/inventory": {
-    title: "Inventory Management | VaultedLabs",
+  "/locker/market": {
+    title: "Locker Market & Auctions | VaultedLabs",
     description:
-      "Manage your collected items and choose to hold, ship, or cashout outcomes in VaultedLabs.",
-    canonicalPath: "/inventory",
-    ogTitle: "Inventory Management | VaultedLabs",
+      "Browse listings and auctions inside Locker Market with one streamlined flow.",
+    canonicalPath: "/locker/market",
+    ogTitle: "Locker Market & Auctions | VaultedLabs",
     ogDescription:
-      "Manage collected outcomes and choose hold, ship, or cashout actions.",
+      "Buy listings and place bids in Locker Market.",
     ogImage: "/og-image.png",
-    twitterTitle: "VaultedLabs Inventory",
+    twitterTitle: "VaultedLabs Locker Market",
     twitterDescription:
-      "Manage collected outcomes and item actions in your inventory.",
+      "Buy listings and place bids in Locker Market.",
     twitterImage: "/og-image.png",
     robots: "index,follow"
   },
-  "/profile": {
-    title: "Profile, Quests & Progression | VaultedLabs",
+  "/locker/arena": {
+    title: "Locker Arena Home | VaultedLabs",
     description:
-      "Track level progression, quests, and profile milestones in VaultedLabs.",
-    canonicalPath: "/profile",
-    ogTitle: "Profile, Quests & Progression | VaultedLabs",
+      "Choose Battles, Forge, or Quests from Arena Home as systems unlock by XP.",
+    canonicalPath: "/locker/arena",
+    ogTitle: "Locker Arena Home | VaultedLabs",
     ogDescription:
-      "Track progression, quest status, and profile milestones.",
+      "Choose Battles, Forge, or Quests from Arena Home.",
     ogImage: "/og-image.png",
-    twitterTitle: "VaultedLabs Profile",
+    twitterTitle: "VaultedLabs Arena Home",
     twitterDescription:
-      "Track progression, quests, and milestones in VaultedLabs.",
+      "Choose Battles, Forge, or Quests from Arena Home.",
+    twitterImage: "/og-image.png",
+    robots: "index,follow"
+  },
+  "/arena/battles": {
+    title: "Arena Battles | VaultedLabs",
+    description:
+      "Challenge bosses in Arena Battles and push progression with squad combat.",
+    canonicalPath: "/arena/battles",
+    ogTitle: "Arena Battles | VaultedLabs",
+    ogDescription:
+      "Challenge bosses in Arena Battles and push progression.",
+    ogImage: "/og-image.png",
+    twitterTitle: "Arena Battles | VaultedLabs",
+    twitterDescription:
+      "Challenge bosses in Arena Battles and push progression.",
+    twitterImage: "/og-image.png",
+    robots: "index,follow"
+  },
+  "/arena/forge": {
+    title: "Arena Forge | VaultedLabs",
+    description:
+      "Use Forge to combine collectibles and hunt stronger outcomes.",
+    canonicalPath: "/arena/forge",
+    ogTitle: "Arena Forge | VaultedLabs",
+    ogDescription:
+      "Combine collectibles in Forge for stronger outcomes.",
+    ogImage: "/og-image.png",
+    twitterTitle: "Arena Forge | VaultedLabs",
+    twitterDescription:
+      "Combine collectibles in Forge for stronger outcomes.",
+    twitterImage: "/og-image.png",
+    robots: "index,follow"
+  },
+  "/arena/quests": {
+    title: "Arena Quests | VaultedLabs",
+    description:
+      "Track and complete quests to keep XP progression moving.",
+    canonicalPath: "/arena/quests",
+    ogTitle: "Arena Quests | VaultedLabs",
+    ogDescription:
+      "Track and complete quests to keep progression moving.",
+    ogImage: "/og-image.png",
+    twitterTitle: "Arena Quests | VaultedLabs",
+    twitterDescription:
+      "Track and complete quests to keep progression moving.",
     twitterImage: "/og-image.png",
     robots: "index,follow"
   },

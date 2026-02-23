@@ -26,7 +26,18 @@ export const AnalyticsEvents = {
   BATTLE_COMPLETED: "battle_completed",
   FORGE_COMPLETED: "forge_completed",
   SHARDS_CONVERTED: "shards_converted",
-  SQUAD_SELECTED: "squad_selected"
+  SQUAD_SELECTED: "squad_selected",
+  TUTORIAL_SHOWN: "tutorial_shown",
+  TUTORIAL_SKIPPED: "tutorial_skipped",
+  VAULT_OPEN_STARTED: "vault_open_started",
+  SPIN_STARTED: "spin_started",
+  REVEAL_SHOWN: "reveal_shown",
+  ACTION_CASHOUT: "action_cashout",
+  ACTION_EQUIP: "action_equip",
+  ACTION_SHIP: "action_ship",
+  FEATURE_LOCKED_CLICKED: "feature_locked_clicked",
+  XP_AWARDED: "xp_awarded",
+  XP_THRESHOLD_REACHED: "xp_threshold_reached"
 } as const;
 
 type AnalyticsEventName = (typeof AnalyticsEvents)[keyof typeof AnalyticsEvents];

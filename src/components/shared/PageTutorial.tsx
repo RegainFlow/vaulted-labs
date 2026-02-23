@@ -1,67 +1,54 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import type { CSSProperties } from "react";
 import type { PageTutorialProps, TargetRect } from "../../types/tutorial";
+import {
+  getSafeViewportInsets,
+  getSpotlightRect,
+  getTooltipPlacement,
+  scrollTargetIntoView,
+  waitForTarget
+} from "../../lib/tutorial-viewport";
 
 const PADDING = 8;
+const TOOLTIP_MIN_HEIGHT = 170;
+const TARGET_RETRY_DELAY_MS = 220;
+const TARGET_MAX_ATTEMPTS = 6;
 
-function getTargetRect(selector: string): TargetRect | null {
-  const el = document.querySelector(selector);
-  if (!el) return null;
-  const rect = el.getBoundingClientRect();
-  return {
-    top: rect.top - PADDING,
-    left: rect.left - PADDING,
-    width: rect.width + PADDING * 2,
-    height: rect.height + PADDING * 2
-  };
+function clamp(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(value, max));
 }
 
-function getTooltipPosition(
-  rect: TargetRect,
-  position: "top" | "bottom" = "bottom"
-): React.CSSProperties {
-  const isMobile = window.innerWidth < 640;
-  const tooltipMaxWidth = isMobile ? 280 : 340;
+function getTutorialInsets() {
+  return getSafeViewportInsets({
+    hasTopNav: true,
+    hasBottomDock: true,
+    isMobile: window.innerWidth < 640
+  });
+}
 
-  const leftPos = isMobile
-    ? Math.max(8, (window.innerWidth - tooltipMaxWidth) / 2)
-    : Math.max(12, Math.min(rect.left, window.innerWidth - tooltipMaxWidth));
+function getFallbackTooltipStyle(
+  tooltipHeight: number,
+  insets: ReturnType<typeof getTutorialInsets>
+): CSSProperties {
+  const margin = 8;
+  const width = Math.min(window.innerWidth - margin * 2, window.innerWidth < 640 ? 300 : 360);
+  const left = clamp(
+    (window.innerWidth - width) / 2,
+    insets.left + margin,
+    window.innerWidth - insets.right - width - margin
+  );
+  const top = clamp(
+    window.innerHeight * 0.5 - tooltipHeight / 2,
+    insets.top + margin,
+    window.innerHeight - insets.bottom - tooltipHeight - margin
+  );
 
-  if (position === "bottom" || isMobile) {
-    const top = rect.top + rect.height + 12;
-    // If tooltip would go below viewport, position above instead
-    if (top + 160 > window.innerHeight) {
-      const aboveTop = rect.top - 12 - 160;
-      if (aboveTop >= 8) {
-        return { top: aboveTop, left: leftPos };
-      }
-      const bottom = window.innerHeight - rect.top + 12;
-      return {
-        bottom: Math.max(8, Math.min(bottom, window.innerHeight - 20)),
-        left: leftPos
-      };
-    }
-    return {
-      top: Math.max(8, Math.min(top, window.innerHeight - 200)),
-      left: leftPos
-    };
-  }
-  // Position top: place tooltip above the element
-  const aboveTop = rect.top - 12 - 160;
-  if (aboveTop >= 8) {
-    return {
-      top: aboveTop,
-      left: Math.max(12, Math.min(rect.left, window.innerWidth - tooltipMaxWidth))
-    };
-  }
-  const bottom = window.innerHeight - rect.top + 12;
-  return {
-    bottom: Math.max(8, Math.min(bottom, window.innerHeight - 20)),
-    left: Math.max(12, Math.min(rect.left, window.innerWidth - tooltipMaxWidth))
-  };
+  return { top, left, maxWidth: width };
 }
 
 export function PageTutorial({
+  pageKey,
   steps,
   isActive,
   onComplete,
@@ -69,68 +56,136 @@ export function PageTutorial({
 }: PageTutorialProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
+  const [targetMissing, setTargetMissing] = useState(false);
+  const [tooltipHeight, setTooltipHeight] = useState(TOOLTIP_MIN_HEIGHT);
   const clickTimestamps = useRef<number[]>([]);
-
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const targetRef = useRef<Element | null>(null);
   const currentStep = steps[currentIndex];
 
-  // Auto-dismiss on rapid clicking (>3 clicks in 1 second)
+  useEffect(() => {
+    if (!isActive) return;
+
+    const resetId = window.setTimeout(() => {
+      setCurrentIndex(0);
+      setTargetRect(null);
+      setTargetMissing(false);
+      onStepChange?.(0);
+    }, 0);
+
+    return () => window.clearTimeout(resetId);
+  }, [isActive, onStepChange]);
+
+  useEffect(() => {
+    if (!isActive) return;
+    document.body.classList.add("tutorial-active");
+    return () => {
+      document.body.classList.remove("tutorial-active");
+    };
+  }, [isActive]);
+
   useEffect(() => {
     if (!isActive) return;
     const handleClick = () => {
       const now = Date.now();
       clickTimestamps.current.push(now);
-      clickTimestamps.current = clickTimestamps.current.filter((t) => now - t < 1000);
+      clickTimestamps.current = clickTimestamps.current.filter((timestamp) => now - timestamp < 1000);
       if (clickTimestamps.current.length > 3) {
         setCurrentIndex(0);
         onStepChange?.(0);
         onComplete();
       }
     };
+
     window.addEventListener("click", handleClick);
     return () => window.removeEventListener("click", handleClick);
   }, [isActive, onComplete, onStepChange]);
 
-  const updateRect = useCallback(() => {
-    if (!currentStep || currentStep.type !== "spotlight" || !currentStep.selector) {
-      setTargetRect(null);
-      return;
-    }
-    const rect = getTargetRect(currentStep.selector);
-    setTargetRect(rect);
-  }, [currentStep]);
+  const syncSpotlightRect = useCallback(() => {
+    if (!targetRef.current) return;
+    const insets = getTutorialInsets();
+    setTargetRect(getSpotlightRect(targetRef.current, PADDING, insets));
+  }, []);
 
   useEffect(() => {
-    if (isActive) return;
-    const resetTimer = window.setTimeout(() => setCurrentIndex(0), 0);
-    return () => window.clearTimeout(resetTimer);
-  }, [isActive]);
+    if (!isActive || !currentStep || currentStep.type !== "spotlight" || !currentStep.selector) {
+      targetRef.current = null;
+      return;
+    }
+
+    let cancelled = false;
+    let retryTimeoutId: number | null = null;
+    let retries = 0;
+
+    const resolveTarget = async () => {
+      if (cancelled) return;
+
+      const target = await waitForTarget(currentStep.selector ?? "", {
+        timeoutMs: 1200,
+        intervalMs: 120
+      });
+
+      if (cancelled) return;
+
+      if (target) {
+        targetRef.current = target;
+        const insets = getTutorialInsets();
+        scrollTargetIntoView(target, {
+          topInset: insets.top,
+          bottomInset: insets.bottom,
+          behavior: "smooth"
+        });
+        setTargetRect(getSpotlightRect(target, PADDING, insets));
+        setTargetMissing(false);
+        return;
+      }
+
+      if (retries < TARGET_MAX_ATTEMPTS) {
+        retries += 1;
+        retryTimeoutId = window.setTimeout(resolveTarget, TARGET_RETRY_DELAY_MS);
+        return;
+      }
+
+      targetRef.current = null;
+      setTargetRect(null);
+      setTargetMissing(true);
+    };
+
+    resolveTarget();
+
+    window.addEventListener("resize", syncSpotlightRect);
+    window.addEventListener("scroll", syncSpotlightRect, true);
+
+    return () => {
+      cancelled = true;
+      if (retryTimeoutId != null) {
+        window.clearTimeout(retryTimeoutId);
+      }
+      window.removeEventListener("resize", syncSpotlightRect);
+      window.removeEventListener("scroll", syncSpotlightRect, true);
+    };
+  }, [isActive, currentStep, syncSpotlightRect]);
 
   useEffect(() => {
     if (!isActive) return;
-    const initialMeasureTimer = window.setTimeout(updateRect, 0);
-    window.addEventListener("resize", updateRect);
-    window.addEventListener("scroll", updateRect, true);
-    return () => {
-      window.clearTimeout(initialMeasureTimer);
-      window.removeEventListener("resize", updateRect);
-      window.removeEventListener("scroll", updateRect, true);
+    if (!tooltipRef.current) return;
+
+    const measure = () => {
+      if (!tooltipRef.current) return;
+      const measured = Math.ceil(tooltipRef.current.getBoundingClientRect().height);
+      if (measured > 0) {
+        setTooltipHeight(measured);
+      }
     };
-  }, [isActive, updateRect]);
 
-  // Scroll spotlight elements into view
-  useEffect(() => {
-    if (!isActive || !currentStep || currentStep.type !== "spotlight" || !currentStep.selector) return;
-    const el = document.querySelector(currentStep.selector);
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      setTimeout(updateRect, 400);
-    }
-  }, [isActive, currentIndex, currentStep, updateRect]);
-
-  if (!isActive || !currentStep) return null;
+    const rafId = window.requestAnimationFrame(measure);
+    return () => window.cancelAnimationFrame(rafId);
+  }, [isActive, currentIndex, targetRect, targetMissing]);
 
   const handleSkip = () => {
     setCurrentIndex(0);
+    setTargetRect(null);
+    setTargetMissing(false);
     onStepChange?.(0);
     onComplete();
   };
@@ -139,25 +194,48 @@ export function PageTutorial({
     if (currentIndex < steps.length - 1) {
       const next = currentIndex + 1;
       setCurrentIndex(next);
+      setTargetRect(null);
+      setTargetMissing(false);
       onStepChange?.(next);
-    } else {
-      setCurrentIndex(0);
-      onStepChange?.(0);
-      onComplete();
+      return;
     }
+    setCurrentIndex(0);
+    setTargetRect(null);
+    setTargetMissing(false);
+    onStepChange?.(0);
+    onComplete();
   };
 
-  const svgWidth = typeof window !== "undefined" ? window.innerWidth : 1920;
-  const svgHeight = typeof window !== "undefined" ? window.innerHeight : 1080;
+  const getTooltipStyle = useCallback((): CSSProperties => {
+    const insets = getTutorialInsets();
+    if (!targetRect) {
+      return getFallbackTooltipStyle(tooltipHeight, insets);
+    }
 
+    return getTooltipPlacement(targetRect, {
+      preferredPosition: currentStep?.position ?? "bottom",
+      insets,
+      maxWidth: window.innerWidth < 640 ? 300 : 360,
+      tooltipHeightGuess: tooltipHeight
+    });
+  }, [currentStep?.position, targetRect, tooltipHeight]);
+
+  if (!isActive || !currentStep) return null;
+
+  const svgWidth = window.innerWidth;
+  const svgHeight = window.innerHeight;
   const stepIndicator = `${currentIndex + 1} / ${steps.length}`;
+  const insets = getTutorialInsets();
+  const maxTooltipHeight = Math.max(
+    TOOLTIP_MIN_HEIGHT,
+    window.innerHeight - insets.top - insets.bottom - 16
+  );
 
-  // Welcome overlay
   if (currentStep.type === "welcome") {
     return (
       <AnimatePresence>
         <motion.div
-          key="page-tutorial-welcome"
+          key={`page-tutorial-welcome-${pageKey}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -192,12 +270,14 @@ export function PageTutorial({
               {currentStep.description}
             </p>
             <button
+              type="button"
               onClick={handleNext}
               className="px-8 py-3 bg-accent text-white text-sm font-black uppercase tracking-widest rounded-xl border-b-[4px] border-[#a01d5e] shadow-[0_6px_16px_rgba(255,45,149,0.3)] hover:shadow-[0_4px_12px_rgba(255,45,149,0.4)] active:border-b-[2px] transition-all duration-100 cursor-pointer"
             >
-              Let's Go
+              Let&apos;s Go
             </button>
             <button
+              type="button"
               onClick={handleSkip}
               className="mt-4 block mx-auto text-[10px] text-text-dim hover:text-text-muted uppercase tracking-widest transition-colors cursor-pointer"
             >
@@ -209,12 +289,11 @@ export function PageTutorial({
     );
   }
 
-  // Complete overlay
   if (currentStep.type === "complete") {
     return (
       <AnimatePresence>
         <motion.div
-          key="page-tutorial-complete"
+          key={`page-tutorial-complete-${pageKey}`}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -246,6 +325,7 @@ export function PageTutorial({
               {currentStep.description}
             </p>
             <button
+              type="button"
               onClick={handleNext}
               className="px-8 py-3 bg-neon-green/90 text-bg text-sm font-black uppercase tracking-widest rounded-xl border-b-[4px] border-[#2ab80f] shadow-[0_6px_16px_rgba(57,255,20,0.2)] hover:shadow-[0_4px_12px_rgba(57,255,20,0.3)] active:border-b-[2px] transition-all duration-100 cursor-pointer"
             >
@@ -257,31 +337,28 @@ export function PageTutorial({
     );
   }
 
-  // Spotlight step
-  if (currentStep.type === "spotlight" && targetRect) {
-    const tooltipStyle = getTooltipPosition(
-      targetRect,
-      currentStep.position || "bottom"
-    );
+  const tooltipStyle = getTooltipStyle();
+  const maskId = `page-tutorial-mask-${pageKey}-${currentStep.id}`;
 
-    return (
-      <AnimatePresence>
-        <motion.div
-          key={`page-tutorial-${currentStep.id}`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[200]"
+  return (
+    <AnimatePresence>
+      <motion.div
+        key={`page-tutorial-${pageKey}-${currentStep.id}`}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-[200]"
+      >
+        <svg
+          width={svgWidth}
+          height={svgHeight}
+          className="absolute inset-0"
+          style={{ pointerEvents: "none" }}
         >
-          <svg
-            width={svgWidth}
-            height={svgHeight}
-            className="absolute inset-0"
-            style={{ pointerEvents: "none" }}
-          >
-            <defs>
-              <mask id={`page-tutorial-mask-${currentStep.id}`}>
-                <rect x="0" y="0" width={svgWidth} height={svgHeight} fill="white" />
+          <defs>
+            <mask id={maskId}>
+              <rect x="0" y="0" width={svgWidth} height={svgHeight} fill="white" />
+              {targetRect && (
                 <rect
                   x={targetRect.left}
                   y={targetRect.top}
@@ -290,19 +367,21 @@ export function PageTutorial({
                   rx="12"
                   fill="black"
                 />
-              </mask>
-            </defs>
-            <rect
-              x="0"
-              y="0"
-              width={svgWidth}
-              height={svgHeight}
-              fill="rgba(0,0,0,0.8)"
-              mask={`url(#page-tutorial-mask-${currentStep.id})`}
-              style={{ pointerEvents: "all" }}
-            />
-          </svg>
+              )}
+            </mask>
+          </defs>
+          <rect
+            x="0"
+            y="0"
+            width={svgWidth}
+            height={svgHeight}
+            fill="rgba(0,0,0,0.8)"
+            mask={`url(#${maskId})`}
+            style={{ pointerEvents: "all" }}
+          />
+        </svg>
 
+        {targetRect && (
           <div
             className="absolute rounded-xl border-2 border-accent pointer-events-none animate-pulse"
             style={{
@@ -313,85 +392,54 @@ export function PageTutorial({
               boxShadow: "0 0 30px rgba(255,45,149,0.4), inset 0 0 20px rgba(255,45,149,0.15)"
             }}
           />
+        )}
 
-          <motion.div
-            key={currentStep.id}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.2 }}
-            className="absolute bg-surface-elevated border border-accent/40 rounded-xl p-4 sm:p-5 w-[calc(100%-16px)] sm:w-auto max-w-[280px] sm:max-w-sm shadow-[0_0_30px_rgba(255,45,149,0.25)] z-[201]"
-            style={tooltipStyle}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-sm sm:text-base font-black text-white uppercase tracking-tight">
-                {currentStep.title}
-              </p>
-              <span className="text-[9px] font-mono text-text-dim">
-                {stepIndicator}
-              </span>
-            </div>
-            <p className="text-xs sm:text-sm text-text-muted leading-relaxed mb-3 sm:mb-4">
-              {currentStep.description}
-            </p>
-            <div className="flex items-center justify-between">
-              <button
-                onClick={handleSkip}
-                className="text-[10px] text-text-dim hover:text-text-muted uppercase tracking-widest transition-colors cursor-pointer"
-              >
-                Skip
-              </button>
-              <button
-                onClick={handleNext}
-                className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer shadow-[0_0_15px_rgba(255,45,149,0.3)]"
-              >
-                {currentIndex < steps.length - 1 ? "Next" : "Done"}
-              </button>
-            </div>
-          </motion.div>
-        </motion.div>
-      </AnimatePresence>
-    );
-  }
-
-  // Spotlight step but no target found — skip to next
-  if (currentStep.type === "spotlight" && !targetRect) {
-    // Wait a moment for the element to render, then try again or skip
-    return (
-      <motion.div
-        key="page-tutorial-loading"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="fixed inset-0 z-[200] flex items-center justify-center bg-black/85 backdrop-blur-sm px-4"
-      >
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="bg-surface-elevated border border-accent/30 rounded-xl p-6 max-w-sm w-full text-center"
+          ref={tooltipRef}
+          key={`${currentStep.id}-tooltip`}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="absolute bg-surface-elevated border border-accent/40 rounded-xl p-4 sm:p-5 w-[calc(100%-16px)] sm:w-auto max-w-[300px] sm:max-w-sm shadow-[0_0_30px_rgba(255,45,149,0.25)] z-[201] overflow-y-auto"
+          style={{
+            ...tooltipStyle,
+            maxHeight: maxTooltipHeight
+          }}
         >
-          <p className="text-sm font-black text-white uppercase tracking-tight mb-2">
-            {currentStep.title}
-          </p>
-          <p className="text-xs text-text-muted leading-relaxed mb-4">
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-sm sm:text-base font-black text-white uppercase tracking-tight">
+              {currentStep.title}
+            </p>
+            <span className="text-[9px] font-mono text-text-dim">
+              {stepIndicator}
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-text-muted leading-relaxed mb-3 sm:mb-4">
             {currentStep.description}
           </p>
+          {targetMissing && (
+            <p className="text-[10px] text-text-dim uppercase tracking-wider mb-3">
+              Target not found. Tap next to continue.
+            </p>
+          )}
           <div className="flex items-center justify-between">
             <button
+              type="button"
               onClick={handleSkip}
               className="text-[10px] text-text-dim hover:text-text-muted uppercase tracking-widest transition-colors cursor-pointer"
             >
               Skip
             </button>
             <button
+              type="button"
               onClick={handleNext}
-              className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer"
+              className="px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer shadow-[0_0_15px_rgba(255,45,149,0.3)]"
             >
-              Next
+              {currentIndex < steps.length - 1 ? "Next" : "Done"}
             </button>
           </div>
         </motion.div>
       </motion.div>
-    );
-  }
-
-  return null;
+    </AnimatePresence>
+  );
 }

@@ -2,9 +2,11 @@ import { useEffect } from "react";
 import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { GameProvider } from "./context/GameContext";
 import { LandingPage } from "./pages/LandingPage";
-import { OpenPage } from "./pages/OpenPage";
-import { CollectionPage } from "./pages/CollectionPage";
-import { ArenaPage } from "./pages/ArenaPage";
+import { VaultsPage } from "./pages/VaultsPage";
+import { LockerPage } from "./pages/LockerPage";
+import { ArenaBattlesPage } from "./pages/ArenaBattlesPage";
+import { ArenaForgePage } from "./pages/ArenaForgePage";
+import { ArenaQuestsPage } from "./pages/ArenaQuestsPage";
 import { WalletPage } from "./pages/WalletPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { TermsPage } from "./pages/TermsPage";
@@ -25,17 +27,24 @@ function App() {
       <GameProvider>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/open" element={<OpenPage />} />
-          <Route path="/collection" element={<CollectionPage />} />
-          <Route path="/arena" element={<ArenaPage />} />
+          <Route path="/vaults" element={<VaultsPage />} />
           <Route path="/wallet" element={<WalletPage />} />
+          <Route path="/locker" element={<Navigate to="/locker/inventory" replace />} />
+          <Route path="/locker/:section" element={<LockerPage />} />
+          <Route path="/arena/battles" element={<ArenaBattlesPage />} />
+          <Route path="/arena/forge" element={<ArenaForgePage />} />
+          <Route path="/arena/quests" element={<ArenaQuestsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
           {/* Redirects from old routes */}
-          <Route path="/play" element={<Navigate to="/open" replace />} />
-          <Route path="/shop" element={<Navigate to="/collection" replace />} />
-          <Route path="/inventory" element={<Navigate to="/collection" replace />} />
-          <Route path="/profile" element={<Navigate to="/arena" replace />} />
+          <Route path="/open" element={<Navigate to="/vaults" replace />} />
+          <Route path="/play" element={<Navigate to="/vaults" replace />} />
+          <Route path="/collection" element={<Navigate to="/locker/inventory" replace />} />
+          <Route path="/shop" element={<Navigate to="/locker/market" replace />} />
+          <Route path="/market" element={<Navigate to="/locker/market" replace />} />
+          <Route path="/inventory" element={<Navigate to="/locker/inventory" replace />} />
+          <Route path="/profile" element={<Navigate to="/locker/arena" replace />} />
+          <Route path="/arena" element={<Navigate to="/locker/arena" replace />} />
         </Routes>
         <QuestToastNotification />
       </GameProvider>

@@ -13,7 +13,7 @@ type CollectionTab = "my-collection" | "market" | "auctions";
 
 export function CollectionPage() {
   const {
-    balance, inventory, levelInfo, prestigeLevel, freeSpins,
+    balance, inventory, xp, levelInfo, prestigeLevel, freeSpins,
     cashoutFlashTimestamp, cashoutStreak, bossEnergy, maxBossEnergy, shards,
     setHasSeenCollectionTutorial,
     seedDemoItem, removeDemoItem
@@ -61,7 +61,7 @@ export function CollectionPage() {
         showHUD
         balance={balance}
         inventoryCount={inventory.length}
-        xp={levelInfo.currentXP}
+        xp={xp}
         level={levelInfo.level}
         prestigeLevel={prestigeLevel}
         freeSpins={freeSpins}
@@ -70,6 +70,7 @@ export function CollectionPage() {
         bossEnergy={bossEnergy}
         maxBossEnergy={maxBossEnergy}
         shards={shards}
+        tutorialActive={tutorialActive}
       />
       <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-32 md:pt-28 pb-28 sm:pb-28 md:pb-24">
         <div className="max-w-6xl mx-auto">

@@ -5,7 +5,7 @@ const FEATURES = [
   {
     title: "Collection",
     description: "Manage collectibles, ship or cashout items, and prep your squad.",
-    href: "/collection",
+    href: "/locker/inventory",
     color: "#00f0ff",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -19,7 +19,7 @@ const FEATURES = [
   {
     title: "Arena",
     description: "Fight bosses with your squad and convert wins into shards and XP.",
-    href: "/arena",
+    href: "/locker/arena",
     color: "#ff2d95",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -31,7 +31,7 @@ const FEATURES = [
   {
     title: "Rank Up",
     description: "Level through XP, unlock tougher encounters, and prestige for better odds.",
-    href: "/arena",
+    href: "/locker/arena",
     color: "#ffd700",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -42,7 +42,7 @@ const FEATURES = [
   {
     title: "Forge + Quests",
     description: "Forge stronger items and clear quests to accelerate long-term progression.",
-    href: "/arena",
+    href: "/locker/arena",
     color: "#39ff14",
     icon: (
       <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">

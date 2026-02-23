@@ -287,6 +287,70 @@ export const COLLECTION_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
   }
 ];
 
+export const LOCKER_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
+  {
+    id: "locker-welcome",
+    type: "welcome",
+    title: "Your Locker",
+    description:
+      "Use Locker tabs to manage inventory, market actions, and arena systems."
+  },
+  {
+    id: "locker-tabs",
+    type: "spotlight",
+    selector: '[data-tutorial="locker-tabs"]',
+    title: "Locker Tabs",
+    description: "Inventory is your base, then move into Market and Arena.",
+    position: "bottom"
+  },
+  {
+    id: "locker-inventory",
+    type: "spotlight",
+    selector: '[data-tutorial="locker-inventory"]',
+    title: "Inventory",
+    description: "Filter and manage collectibles you opened and saved.",
+    position: "top"
+  },
+  {
+    id: "locker-market-tab",
+    type: "spotlight",
+    selector: '[data-tutorial="locker-tab-market"]',
+    title: "Market Tab",
+    description: "Switch here to buy now listings and auctions.",
+    position: "bottom"
+  },
+  {
+    id: "locker-market",
+    type: "spotlight",
+    selector: '[data-tutorial="locker-market"]',
+    title: "Market View",
+    description: "Browse marketplace and auctions in one combined view.",
+    position: "top"
+  },
+  {
+    id: "locker-arena-tab",
+    type: "spotlight",
+    selector: '[data-tutorial="locker-tab-arena"]',
+    title: "Arena Tab",
+    description: "Go here to launch Battles, Forge, or Quests.",
+    position: "bottom"
+  },
+  {
+    id: "locker-arena",
+    type: "spotlight",
+    selector: '[data-tutorial="locker-arena"]',
+    title: "Arena Home",
+    description: "Pick the arena system you want to run next.",
+    position: "top"
+  },
+  {
+    id: "locker-complete",
+    type: "complete",
+    title: "Locker Ready!",
+    description: "You now know where to manage, trade, and battle."
+  }
+];
+
 export const BOSS_FIGHT_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
   {
     id: "boss-welcome",

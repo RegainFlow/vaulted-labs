@@ -56,7 +56,7 @@ export function InventoryGrid() {
           </div>
           <p className="text-text-muted text-sm font-bold mb-1">No items yet</p>
           <p className="text-text-dim text-xs">
-            Open vaults on the Play page to start collecting.
+            Open vaults on the Vaults page to start collecting.
           </p>
         </motion.div>
       ) : (

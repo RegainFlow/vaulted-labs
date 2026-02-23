@@ -49,7 +49,9 @@ export function VaultCard({
       className={`group relative h-full ${!canAfford ? "cursor-not-allowed" : "cursor-pointer"}`}
       {...(vault.name === "Diamond"
         ? { "data-tutorial": "vault-diamond" }
-        : {})}
+        : vault.name === "Bronze"
+          ? { "data-tutorial": "vault-bronze" }
+          : {})}
     >
       {/* Main Vault Structure */}
       <div

@@ -1,5 +1,5 @@
 ﻿import { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
   VAULTS,
@@ -17,6 +17,18 @@ import { VaultCard } from "./VaultCard";
 import { SegmentedTabs } from "../shared/SegmentedTabs";
 import { useGame } from "../../context/GameContext";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
+import {
+  OPEN_TUTORIAL_BONUS_SHOWN_EVENT,
+  OPEN_TUTORIAL_REVEAL_READY_EVENT,
+  OPEN_TUTORIAL_SPIN_STARTED_EVENT
+} from "../../lib/tutorial-events";
+import {
+  FEATURE_UNLOCK_LABEL,
+  FEATURE_UNLOCK_XP,
+  getRemainingXP,
+  isFeatureUnlocked,
+  type UnlockFeatureKey
+} from "../../lib/unlocks";
 import type {
   Rarity,
   Vault,
@@ -36,6 +48,7 @@ import {
 /* â”€â”€â”€ Constants & Types â”€â”€â”€ */
 
 type Stage = "idle" | "spinning" | "bonus-spinning" | "result";
+const ACTION_XP_REWARD = 10;
 
 interface VaultOverlayProps {
   tier: Vault;
@@ -44,7 +57,7 @@ interface VaultOverlayProps {
   onClose: () => void;
   onPurchase: (vaultName: string, price: number) => boolean;
   onClaim: (amount: number) => void;
-  onStore: (
+  onEquip: (
     product: string,
     vaultTier: VaultTierName,
     rarity: Rarity,
@@ -93,33 +106,19 @@ interface ConfettiParticle {
   rotate: number;
 }
 
+interface SpinOutcome {
+  rarity: Rarity;
+  product: string;
+  value: number;
+  funko: ReturnType<typeof pickFunko>;
+}
+
 const seededUnit = (seed: number) => {
   const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
   return x - Math.floor(x);
 };
 
-const RESULT_TOOLTIP: Record<
-  string,
-  { title: string; desc: string; highlight: number }
-> = {
-  "result-store": {
-    title: "Store to Vault",
-    desc: "Keep this collectible safe in your digital vault. Build your collection and watch its value grow.",
-    highlight: 0
-  },
-  "result-ship": {
-    title: "Ship to Home",
-    desc: "Want the real thing? We'll ship the physical item straight to your door â€” worldwide.",
-    highlight: 1
-  },
-  "result-cashout": {
-    title: "Choose Your Action",
-    desc: "You are in control now. Keep, ship, or cashout this result.",
-    highlight: -1
-  }
-};
-
-function OptionCard({ title, desc, icon, action, onClick, tierColor, tutorialActive = false, disabled = false }: { title: string; desc: string; icon: React.ReactNode; action: string; onClick: () => void; highlight?: boolean; tierColor?: string; tutorialActive?: boolean; disabled?: boolean; }) {
+function OptionCard({ title, desc, icon, action, onClick, tierColor, tutorialActive = false, disabled = false }: { title: string; desc: string; icon: React.ReactNode; action: string; onClick: () => void; tierColor?: string; tutorialActive?: boolean; disabled?: boolean; }) {
   return (
     <button
       onClick={onClick}
@@ -248,7 +247,7 @@ function VaultOverlay({
   onClose,
   onPurchase,
   onClaim,
-  onStore,
+  onEquip,
   onShip,
   isTutorial = false,
   tutorialStep,
@@ -265,16 +264,27 @@ function VaultOverlay({
   const [spinLanded, setSpinLanded] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
   const [isResolvingAction, setIsResolvingAction] = useState(false);
+  const [cashoutComplete, setCashoutComplete] = useState(false);
   const [claimParticles, setClaimParticles] = useState<ClaimParticle[]>([]);
   const [bonusTriggered, setBonusTriggered] = useState(false);
   const timeoutIdsRef = useRef<number[]>([]);
 
   const effectiveOdds = useMemo(() => getPrestigeOdds(tier.rarities, isTutorial ? 0 : overlayPrestigeLevel), [tier, isTutorial, overlayPrestigeLevel]);
-  const wonRarity = useMemo(() => pickRarity(effectiveOdds), [effectiveOdds]);
-  const product = useMemo(() => category || pickProduct(), [category]);
+  const rollOutcome = useCallback((): SpinOutcome => {
+    const rarity = pickRarity(effectiveOdds) as Rarity;
+    return {
+      rarity,
+      product: category || pickProduct(),
+      value: pickValue(tier.price, RARITY_CONFIG[rarity as keyof typeof RARITY_CONFIG]),
+      funko: pickFunko(tier.name as VaultTierName, rarity)
+    };
+  }, [category, effectiveOdds, tier.name, tier.price]);
+  const [outcome, setOutcome] = useState<SpinOutcome>(() => rollOutcome());
+  const wonRarity = outcome.rarity;
+  const product = outcome.product;
+  const resultValue = outcome.value;
+  const wonFunko = outcome.funko;
   const rarityConfig = RARITY_CONFIG[wonRarity as keyof typeof RARITY_CONFIG];
-  const resultValue = useMemo(() => pickValue(tier.price, rarityConfig), [tier, rarityConfig]);
-  const wonFunko = useMemo(() => pickFunko(tier.name as VaultTierName, wonRarity as Rarity), [tier, wonRarity]);
   const [usedFreeSpin, setUsedFreeSpin] = useState(false);
 
   const [landingFlash, setLandingFlash] = useState(false);
@@ -282,7 +292,6 @@ function VaultOverlay({
   const preBalance = purchasedBalance ?? balance;
   const postBalance = usedFreeSpin ? preBalance + resultValue : preBalance - tier.price + resultValue;
 
-  const resultTooltip = tutorialStep ? RESULT_TOOLTIP[tutorialStep] : null;
   const SPIN_LAND_DELAY = 5000;
   const POST_LAND_HOLD_DELAY = 2200;
 
@@ -306,16 +315,42 @@ function VaultOverlay({
   }, [scheduleTimeout]);
 
   useEffect(() => {
+    if (stage === "bonus-spinning") {
+      window.dispatchEvent(new CustomEvent(OPEN_TUTORIAL_BONUS_SHOWN_EVENT));
+    }
     if (stage === "result") {
       trackEvent(AnalyticsEvents.VAULT_RESULT, { vault_tier: tier.name, rarity: wonRarity, value: resultValue, vault_price: tier.price, bonus_triggered: bonusTriggered, free_spin: usedFreeSpin });
+      trackEvent(AnalyticsEvents.REVEAL_SHOWN, { vault_tier: tier.name, rarity: wonRarity, value: resultValue, vault_price: tier.price });
+      window.dispatchEvent(new CustomEvent(OPEN_TUTORIAL_REVEAL_READY_EVENT));
     }
   }, [stage, wonRarity, resultValue, tier.name, tier.price, bonusTriggered, usedFreeSpin]);
 
+  const resetForNextSpin = useCallback(() => {
+    setStage("idle");
+    setSpinLanded(false);
+    setIsClaiming(false);
+    setIsResolvingAction(false);
+    setCashoutComplete(false);
+    setClaimParticles([]);
+    setPurchaseError(null);
+    setPurchasedBalance(null);
+    setBonusTriggered(false);
+    setUsedFreeSpin(false);
+  }, []);
+
   const handleSpin = useCallback(() => {
+    const nextOutcome = rollOutcome();
+    const nextWonRarity = nextOutcome.rarity;
     const shouldTriggerBonus = !isTutorial && (Math.random() < (PREMIUM_BONUS_CHANCE[tier.name] ?? 0));
+    trackEvent(AnalyticsEvents.SPIN_STARTED, { vault_tier: tier.name, vault_price: tier.price, free_spins_available: freeSpins });
+    window.dispatchEvent(new CustomEvent(OPEN_TUTORIAL_SPIN_STARTED_EVENT));
+    setOutcome(nextOutcome);
     setBonusTriggered(shouldTriggerBonus);
     setSpinLanded(false);
     setUsedFreeSpin(false);
+    setIsResolvingAction(false);
+    setCashoutComplete(false);
+    setClaimParticles([]);
     if (isTutorial) {
       onTutorialPurchase?.(tier.name, tier.price);
       setPurchasedBalance(balance); setPurchaseError(null);
@@ -324,7 +359,7 @@ function VaultOverlay({
       scheduleTimeout(() => handleSpinLand(), SPIN_LAND_DELAY);
       scheduleTimeout(() => {
         setStage("result");
-        onTutorialAdvance?.("result-store");
+        onTutorialAdvance?.("result-cashout");
       }, SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY);
       return;
     }
@@ -336,7 +371,7 @@ function VaultOverlay({
       trackEvent(AnalyticsEvents.VAULT_OPENED, { vault_tier: tier.name, vault_price: tier.price, free_spin: true });
       setStage("spinning");
       scheduleTimeout(() => handleSpinLand(), SPIN_LAND_DELAY);
-      if (shouldTriggerBonus) { trackEvent(AnalyticsEvents.BONUS_SPIN_TRIGGERED, { vault_tier: tier.name, vault_price: tier.price, first_rarity: wonRarity }); scheduleTimeout(() => setStage("bonus-spinning"), SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); }
+      if (shouldTriggerBonus) { trackEvent(AnalyticsEvents.BONUS_SPIN_TRIGGERED, { vault_tier: tier.name, vault_price: tier.price, first_rarity: nextWonRarity }); scheduleTimeout(() => setStage("bonus-spinning"), SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); }
       else { scheduleTimeout(() => setStage("result"), SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); }
       return;
     }
@@ -345,12 +380,12 @@ function VaultOverlay({
     trackEvent(AnalyticsEvents.VAULT_OPENED, { vault_tier: tier.name, vault_price: tier.price });
     setStage("spinning");
     scheduleTimeout(() => handleSpinLand(), SPIN_LAND_DELAY);
-    if (shouldTriggerBonus) { trackEvent(AnalyticsEvents.BONUS_SPIN_TRIGGERED, { vault_tier: tier.name, vault_price: tier.price, first_rarity: wonRarity }); scheduleTimeout(() => setStage("bonus-spinning"), SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); }
+    if (shouldTriggerBonus) { trackEvent(AnalyticsEvents.BONUS_SPIN_TRIGGERED, { vault_tier: tier.name, vault_price: tier.price, first_rarity: nextWonRarity }); scheduleTimeout(() => setStage("bonus-spinning"), SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); }
     else { scheduleTimeout(() => setStage("result"), SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY); }
-  }, [SPIN_LAND_DELAY, POST_LAND_HOLD_DELAY, balance, freeSpins, handleSpinLand, isTutorial, onPurchase, onTutorialAdvance, onTutorialPurchase, onUseFreeSpinForVault, scheduleTimeout, tier.name, tier.price, wonRarity]);
+  }, [SPIN_LAND_DELAY, POST_LAND_HOLD_DELAY, balance, freeSpins, handleSpinLand, isTutorial, onPurchase, onTutorialAdvance, onTutorialPurchase, onUseFreeSpinForVault, rollOutcome, scheduleTimeout, tier.name, tier.price]);
 
   const handleClaimLocal = () => {
-    if (isResolvingAction) return;
+    if (isResolvingAction || cashoutComplete) return;
     if (isTutorial) { onTutorialSetAction?.("cashed out"); onTutorialAdvance?.("complete"); onClose(); return; }
     setIsResolvingAction(true);
     const viewportHeight = typeof window !== "undefined" ? window.innerHeight : 900;
@@ -369,20 +404,23 @@ function VaultOverlay({
       }))
     );
     trackEvent(AnalyticsEvents.ITEM_ACTION, { action: "cashout", vault_tier: tier.name, rarity: wonRarity, value: resultValue, vault_price: tier.price, free_spin: usedFreeSpin });
+    trackEvent(AnalyticsEvents.ACTION_CASHOUT, { vault_tier: tier.name, rarity: wonRarity, value: resultValue, vault_price: tier.price, free_spin: usedFreeSpin });
     setIsClaiming(true);
     onClaim(resultValue);
     scheduleTimeout(() => {
       setIsClaiming(false);
-      onClose();
-    }, 1800);
+      setCashoutComplete(true);
+      setIsResolvingAction(false);
+    }, 1250);
   };
 
-  const handleStore = () => {
+  const handleEquip = () => {
     if (isResolvingAction) return;
-    if (isTutorial) { onTutorialSetAction?.("stored"); onTutorialAdvance?.("complete"); onClose(); return; }
+    if (isTutorial) { onTutorialSetAction?.("equipped"); onTutorialAdvance?.("complete"); onClose(); return; }
     setIsResolvingAction(true);
-    trackEvent(AnalyticsEvents.ITEM_ACTION, { action: "hold", vault_tier: tier.name, rarity: wonRarity, value: resultValue, vault_price: tier.price, free_spin: usedFreeSpin });
-    onStore(product, tier.name as VaultTierName, wonRarity as Rarity, resultValue, wonFunko.id, wonFunko.name);
+    trackEvent(AnalyticsEvents.ITEM_ACTION, { action: "equip", vault_tier: tier.name, rarity: wonRarity, value: resultValue, vault_price: tier.price, free_spin: usedFreeSpin });
+    trackEvent(AnalyticsEvents.ACTION_EQUIP, { vault_tier: tier.name, rarity: wonRarity, value: resultValue, vault_price: tier.price, free_spin: usedFreeSpin });
+    onEquip(product, tier.name as VaultTierName, wonRarity as Rarity, resultValue, wonFunko.id, wonFunko.name);
   };
 
   const handleShip = () => {
@@ -390,26 +428,32 @@ function VaultOverlay({
     if (isTutorial) { onTutorialSetAction?.("shipped"); onTutorialAdvance?.("complete"); onClose(); return; }
     setIsResolvingAction(true);
     trackEvent(AnalyticsEvents.ITEM_ACTION, { action: "ship", vault_tier: tier.name, rarity: wonRarity, value: resultValue, vault_price: tier.price, free_spin: usedFreeSpin });
+    trackEvent(AnalyticsEvents.ACTION_SHIP, { vault_tier: tier.name, rarity: wonRarity, value: resultValue, vault_price: tier.price, free_spin: usedFreeSpin });
     onShip(product, tier.name as VaultTierName, wonRarity as Rarity, resultValue, wonFunko.id, wonFunko.name);
-  };
-
-  const handleNextResultStep = () => {
-    if (tutorialStep === "result-store") onTutorialAdvance?.("result-ship");
-    else if (tutorialStep === "result-ship") onTutorialAdvance?.("result-cashout");
   };
 
   const handleBonusComplete = useCallback((shardsAwarded: number) => {
     trackEvent(AnalyticsEvents.VAULT_LOCK_COMPLETE, { vault_tier: tier.name, shards_awarded: shardsAwarded, awarded: shardsAwarded > 0 });
     if (shardsAwarded > 0) onBonusShards?.(shardsAwarded);
     setStage("result");
-    if (isTutorial) onTutorialAdvance?.("result-store");
+    if (isTutorial) onTutorialAdvance?.("result-cashout");
   }, [isTutorial, onTutorialAdvance, onBonusShards, tier.name]);
+
+  const handleSpinAgain = () => {
+    if (freeSpins <= 0 && balance < tier.price) {
+      setPurchaseError("Insufficient credits.");
+      return;
+    }
+    resetForNextSpin();
+    scheduleTimeout(() => handleSpin(), 50);
+  };
 
   const storeIcon = (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-neon-cyan"><path d="M21 8V21H3V8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M23 3H1V8H23V3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /><path d="M10 12H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>);
   const shipIcon = (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="3" width="15" height="13" /><polygon points="16 8 20 8 23 11 23 16 16 16 16 8" /><circle cx="5.5" cy="18.5" r="2.5" /><circle cx="18.5" cy="18.5" r="2.5" /></svg>);
   const cashoutIcon = (<svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-vault-gold"><circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" /><path d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5s-2 .5-2 1.5 1 1.5 2 2 2 1 2 2-1 1.5-2 1.5-2-.5-2.5-1.5M12 7v1m0 8v1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>);
 
   const isLoss = !usedFreeSpin && resultValue < tier.price;
+  const canSpinAgain = freeSpins > 0 || balance >= tier.price;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 overflow-hidden bg-bg/95 backdrop-blur-xl">
@@ -639,21 +683,70 @@ function VaultOverlay({
                 <div className="border-t border-white/10 mt-1 pt-2 flex justify-between font-bold"><span className="text-text-muted">Balance</span><span className="text-white">${postBalance.toFixed(2)}</span></div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-4 w-full max-w-md sm:max-w-2xl md:max-w-4xl z-10">
-                <OptionCard title="Keep" desc="To collection" icon={storeIcon} action="Save" onClick={handleStore} tierColor="#00f0ff" tutorialActive={resultTooltip?.highlight === 0} disabled={isResolvingAction} />
-                <OptionCard title="Ship" desc="Get physical" icon={shipIcon} action="Mail" onClick={handleShip} tierColor={tier.color} tutorialActive={resultTooltip?.highlight === 1} disabled={isResolvingAction} />
-                <OptionCard title="Cashout" desc="To credits" icon={cashoutIcon} action={isClaiming ? "Cashing Out..." : `$${resultValue}`} onClick={handleClaimLocal} tierColor="#ffd700" tutorialActive={resultTooltip?.highlight === 2} disabled={isResolvingAction} />
-              </div>
-              <p className="z-10 text-[10px] sm:text-xs text-text-dim text-center mt-2">
-                Items saved to collection can be <Link to="/arena" className="text-accent hover:text-accent-hover underline underline-offset-2">used in the Arena</Link>.
-              </p>
-
-              {isTutorial && resultTooltip && tutorialStep !== "result-cashout" && (
-                <div className="z-10 bg-surface-elevated border border-accent/30 rounded-xl p-4 max-w-sm shadow-xl">
-                  <p className="text-sm font-black text-white uppercase mb-1">{resultTooltip.title}</p>
-                  <p className="text-xs text-text-muted mb-3">{resultTooltip.desc}</p>
-                  <button onClick={handleNextResultStep} className="px-4 py-2 rounded-lg text-[10px] font-black uppercase bg-accent text-white cursor-pointer">Next</button>
+              {!cashoutComplete && (
+                <div data-tutorial="reveal-actions" className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4 w-full max-w-md sm:max-w-2xl md:max-w-4xl z-10">
+                  <OptionCard
+                    title="Cashout"
+                    desc="Convert this result into credits."
+                    icon={cashoutIcon}
+                    action={isClaiming ? "Claiming..." : `$${resultValue}`}
+                    onClick={handleClaimLocal}
+                    tierColor="#ffd700"
+                    disabled={isResolvingAction}
+                  />
+                  <OptionCard
+                    title="Equip"
+                    desc="Save and equip this collectible."
+                    icon={storeIcon}
+                    action="Save + Equip"
+                    onClick={handleEquip}
+                    tierColor="#00f0ff"
+                    disabled={isResolvingAction}
+                  />
+                  <OptionCard
+                    title="Ship"
+                    desc="Ship the physical collectible."
+                    icon={shipIcon}
+                    action="Start Shipping"
+                    onClick={handleShip}
+                    tierColor={tier.color}
+                    disabled={isResolvingAction}
+                  />
                 </div>
+              )}
+
+              {cashoutComplete && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="z-10 w-full max-w-md rounded-2xl border border-vault-gold/35 bg-vault-gold/10 p-4 sm:p-5 text-center"
+                >
+                  <p className="text-sm sm:text-base font-black uppercase tracking-wide text-white">
+                    Cashout complete
+                  </p>
+                  <p className="text-xs sm:text-sm text-text-muted mt-2">
+                    Credits added and +{ACTION_XP_REWARD} XP awarded.
+                  </p>
+                  <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <button
+                      onClick={onClose}
+                      className="px-4 py-2.5 rounded-xl bg-surface border border-white/20 text-white text-[10px] font-black uppercase tracking-widest hover:border-white/35 transition-colors cursor-pointer"
+                    >
+                      Open Another
+                    </button>
+                    <button
+                      onClick={handleSpinAgain}
+                      disabled={!canSpinAgain}
+                      className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${
+                        canSpinAgain
+                          ? "bg-accent text-white hover:bg-accent-hover cursor-pointer"
+                          : "bg-surface border border-white/20 text-text-dim cursor-not-allowed"
+                      }`}
+                    >
+                      Spin Again
+                    </button>
+                  </div>
+                </motion.div>
               )}
             </motion.div>
             );
@@ -672,13 +765,17 @@ export function VaultGrid({
   onTutorialSetAction,
   onOverlayChange
 }: VaultGridProps & { onOverlayChange?: (isOpen: boolean) => void }) {
+  const primaryCategoryKey = `${PRODUCT_TYPES[0]}-0`;
   const {
     balance,
+    xp,
     purchaseVault,
     tutorialOpenVault,
     claimCreditsFromReveal,
     addItem,
+    addAndEquipItem,
     shipItem,
+    awardXP,
     prestigeLevel,
     freeSpins,
     grantBonusShards,
@@ -687,42 +784,73 @@ export function VaultGrid({
   const navigate = useNavigate();
   const [selectedVault, setSelectedVault] = useState<Vault | null>(null);
   const [overlayKey, setOverlayKey] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(PRODUCT_TYPES[0]);
-  const [comingSoonCategory, setComingSoonCategory] = useState<string | null>(null);
+  const [activeCategoryKey, setActiveCategoryKey] = useState(primaryCategoryKey);
   const [legendaryHype, setLegendaryHype] = useState<{ funkoName: string; value: number } | null>(null);
+  const [equipLockedNotice, setEquipLockedNotice] = useState<string | null>(null);
+  const [unlockNoticeFeatures, setUnlockNoticeFeatures] = useState<UnlockFeatureKey[] | null>(null);
 
   useEffect(() => {
     onOverlayChange?.(selectedVault != null);
   }, [selectedVault, onOverlayChange]);
 
   const isTutorialActive = tutorialStep != null;
+  const isPrimaryCategory = activeCategoryKey === primaryCategoryKey;
+  const selectedCategory = isPrimaryCategory ? PRODUCT_TYPES[0] : null;
 
   const handleSelect = (vault: Vault) => {
     if (tutorialStep === "open-vault") {
       if (vault.name !== "Diamond") return;
+      trackEvent(AnalyticsEvents.VAULT_OPEN_STARTED, { vault_tier: vault.name, vault_price: vault.price, source: "tutorial" });
       trackEvent(AnalyticsEvents.VAULT_OVERLAY_OPENED, { vault_tier: vault.name, vault_price: vault.price });
       setOverlayKey((prev) => prev + 1); setSelectedVault(vault); onTutorialAdvance?.("spin-reel"); return;
     }
     if (balance < vault.price && freeSpins <= 0) return;
+    trackEvent(AnalyticsEvents.VAULT_OPEN_STARTED, { vault_tier: vault.name, vault_price: vault.price });
     trackEvent(AnalyticsEvents.VAULT_OVERLAY_OPENED, { vault_tier: vault.name, vault_price: vault.price });
     setOverlayKey((prev) => prev + 1); setSelectedVault(vault);
   };
 
   const handleCloseOverlay = () => { if (selectedVault) trackEvent(AnalyticsEvents.VAULT_OVERLAY_CLOSED, { vault_tier: selectedVault.name, vault_price: selectedVault.price }); setSelectedVault(null); };
-  const handleClaim = (amount: number) => { claimCreditsFromReveal(amount); };
-  const handleStore = (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number, funkoId?: string, funkoName?: string) => {
-    addItem(product, vaultTier, rarity, value, funkoId, funkoName);
+  const handleClaim = (amount: number) => {
+    claimCreditsFromReveal(amount);
+    awardXP(ACTION_XP_REWARD, "vault_cashout");
+  };
+  const handleEquip = (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number, funkoId?: string, funkoName?: string) => {
+    addAndEquipItem(product, vaultTier, rarity, value, funkoId, funkoName);
+    awardXP(ACTION_XP_REWARD, "vault_equip");
     setSelectedVault(null);
-    if (rarity === "legendary" && funkoName) {
-      setLegendaryHype({ funkoName, value });
+
+    const xpAfterReward = xp + ACTION_XP_REWARD;
+    const newlyUnlocked = (Object.keys(FEATURE_UNLOCK_XP) as UnlockFeatureKey[]).filter(
+      (featureKey) =>
+        xp < FEATURE_UNLOCK_XP[featureKey] &&
+        xpAfterReward >= FEATURE_UNLOCK_XP[featureKey]
+    );
+
+    if (newlyUnlocked.length > 0) {
+      setUnlockNoticeFeatures(newlyUnlocked);
+      return;
+    }
+
+    if (!isFeatureUnlocked("arena", xpAfterReward)) {
+      const remainingXP = getRemainingXP("arena", xpAfterReward);
+      setEquipLockedNotice(`Saved to Locker. Earn ${remainingXP} XP to unlock Arena.`);
     }
   };
-  const handleShip = (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number, funkoId?: string, funkoName?: string) => { const item = addItem(product, vaultTier, rarity, value, funkoId, funkoName); shipItem(item.id); setSelectedVault(null); };
+  const handleShip = (product: string, vaultTier: VaultTierName, rarity: Rarity, value: number, funkoId?: string, funkoName?: string) => {
+    const item = addItem(product, vaultTier, rarity, value, funkoId, funkoName);
+    shipItem(item.id);
+    awardXP(ACTION_XP_REWARD, "vault_ship");
+    setSelectedVault(null);
+  };
 
   const minPrice = Math.min(...VAULTS.map((v) => v.price));
-  const isBroke = balance < minPrice && freeSpins <= 0 && !selectedVault && !isTutorialActive;
-  const primaryCategoryKey = `${PRODUCT_TYPES[0]}-0`;
-  const activeCategoryKey = comingSoonCategory ?? primaryCategoryKey;
+  const isBroke =
+    isPrimaryCategory &&
+    balance < minPrice &&
+    freeSpins <= 0 &&
+    !selectedVault &&
+    !isTutorialActive;
   const categoryTabs = PRODUCT_TYPES.map((category, idx) => {
     const tabKey = `${category}-${idx}`;
     const isPrimary = idx === 0;
@@ -735,8 +863,19 @@ export function VaultGrid({
     };
   });
 
+  const unlockDestination = useMemo(() => {
+    const features = unlockNoticeFeatures ?? [];
+    if (features.includes("arena") || features.includes("battles")) {
+      return { path: "/locker/arena", label: "Go to Arena" };
+    }
+    if (features.includes("market")) {
+      return { path: "/locker/market", label: "Go to Market" };
+    }
+    return { path: "/locker/inventory", label: "Go to Locker" };
+  }, [unlockNoticeFeatures]);
+
   return (
-    <section className="relative overflow-hidden bg-bg px-4 sm:px-6 py-12 md:py-20 pt-32 md:pt-28 pb-28 md:pb-24 min-h-screen">
+    <section className="relative overflow-hidden bg-bg px-4 sm:px-6 py-12 md:py-20 pt-36 md:pt-28 pb-28 md:pb-24 min-h-screen">
       <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at 2px 2px, white 1px, transparent 0)", backgroundSize: "40px 40px" }} />
       <div className="max-w-6xl mx-auto relative z-10">
         <div className="mb-12 text-center">
@@ -746,28 +885,44 @@ export function VaultGrid({
         <SegmentedTabs
           tabs={categoryTabs}
           activeKey={activeCategoryKey}
-          onChange={(key) => {
-            const isPrimary = key === primaryCategoryKey;
-
-            if (isPrimary) {
-              setSelectedCategory(PRODUCT_TYPES[0]);
-              setComingSoonCategory(null);
-              return;
-            }
-
-            setSelectedCategory(null);
-            setComingSoonCategory(key);
-          }}
+          onChange={(key) => setActiveCategoryKey(key)}
           containerTutorialId="categories"
           layoutId="open-categories-indicator"
           mode="fill"
           className="w-full"
         />
-        <AnimatePresence>
-          {comingSoonCategory && (
-            <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 14 }} className="mb-8 flex justify-center">
+        <motion.div
+          key={activeCategoryKey}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="mb-8"
+        >
+          {isPrimaryCategory ? (
+            <div className={`relative transition-all duration-300 ${isBroke ? "blur-xl grayscale pointer-events-none scale-[0.97] opacity-20" : ""}`}>
+              <div
+                data-tutorial="vault-grid"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 gap-y-6 sm:gap-y-8 max-w-6xl mx-auto"
+              >
+                {VAULTS.map((vault, index) => (
+                  <VaultCard
+                    key={vault.name}
+                    vault={vault}
+                    index={index}
+                    balance={balance}
+                    onSelect={handleSelect}
+                    disabled={isTutorialActive && vault.name !== "Diamond"}
+                    prestigeLevel={prestigeLevel}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="flex justify-center">
               <div className="w-full max-w-xl rounded-2xl border border-neon-cyan/30 bg-surface-elevated/70 backdrop-blur-xl px-5 py-6 sm:px-7 sm:py-7 text-center shadow-[0_0_40px_rgba(0,240,255,0.12)]">
-                <h3 className="text-lg sm:text-xl font-black uppercase tracking-widest text-neon-cyan">Coming Soon</h3>
+                <h3 className="text-lg sm:text-xl font-black uppercase tracking-widest text-neon-cyan">
+                  Coming Soon
+                </h3>
                 <p className="text-xs sm:text-sm text-text-muted mt-2">
                   Community vault categories are next. Join the waitlist and help vote which collection drops first.
                 </p>
@@ -784,22 +939,11 @@ export function VaultGrid({
                   Join Waitlist to Vote
                 </button>
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
-        <AnimatePresence>
-          {selectedCategory && !comingSoonCategory && (
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className={`relative transition-all duration-500 ${isBroke ? "blur-xl grayscale pointer-events-none scale-[0.97] opacity-20" : ""}`}>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 gap-y-6 sm:gap-y-8 max-w-6xl mx-auto">
-                {VAULTS.map((vault, index) => (
-                  <VaultCard key={vault.name} vault={vault} index={index} balance={balance} onSelect={handleSelect} disabled={isTutorialActive && vault.name !== "Diamond"} prestigeLevel={prestigeLevel} />
-                ))}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        </motion.div>
         <p className="text-center text-[10px] text-text-dim mt-8 font-mono uppercase tracking-wider max-w-lg mx-auto">
-          Demo only â€” item prices, drop odds, game mechanics, and inventory are subject to change before launch.
+          Demo only - item prices, drop odds, game mechanics, and inventory are subject to change before launch.
         </p>
         {isBroke && (
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 text-center w-full max-w-md px-4">
@@ -813,7 +957,7 @@ export function VaultGrid({
       </div>
       <AnimatePresence>
         {selectedVault && (
-          <VaultOverlay key={`overlay-${overlayKey}`} tier={selectedVault} balance={balance} category={selectedCategory} onClose={handleCloseOverlay} onPurchase={purchaseVault} onClaim={handleClaim} onStore={handleStore} onShip={handleShip} isTutorial={isTutorialActive} tutorialStep={tutorialStep} onTutorialAdvance={onTutorialAdvance} onTutorialPurchase={tutorialOpenVault} onTutorialSetAction={onTutorialSetAction} prestigeLevel={prestigeLevel} onUseFreeSpinForVault={useFreeSpinForVault} onBonusShards={grantBonusShards} freeSpins={freeSpins} />
+          <VaultOverlay key={`overlay-${overlayKey}`} tier={selectedVault} balance={balance} category={selectedCategory} onClose={handleCloseOverlay} onPurchase={purchaseVault} onClaim={handleClaim} onEquip={handleEquip} onShip={handleShip} isTutorial={isTutorialActive} tutorialStep={tutorialStep} onTutorialAdvance={onTutorialAdvance} onTutorialPurchase={tutorialOpenVault} onTutorialSetAction={onTutorialSetAction} prestigeLevel={prestigeLevel} onUseFreeSpinForVault={useFreeSpinForVault} onBonusShards={grantBonusShards} freeSpins={freeSpins} />
         )}
       </AnimatePresence>
       <AnimatePresence>
@@ -823,6 +967,120 @@ export function VaultGrid({
             value={legendaryHype.value}
             onDismiss={() => setLegendaryHype(null)}
           />
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {equipLockedNotice && (
+          <motion.div
+            key="equip-locked-notice"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[190] flex items-center justify-center bg-black/85 backdrop-blur-sm px-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 20 }}
+              className="bg-surface-elevated border border-neon-green/30 rounded-2xl p-8 sm:p-10 max-w-md w-full text-center shadow-[0_0_60px_rgba(57,255,20,0.1)]"
+            >
+              <div className="w-16 h-16 bg-neon-green/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-neon-green/30">
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  className="text-neon-green"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight mb-3">
+                Saved to Locker
+              </h2>
+              <p className="text-text-muted text-sm leading-relaxed mb-8">
+                {equipLockedNotice}
+              </p>
+              <button
+                onClick={() => setEquipLockedNotice(null)}
+                className="px-8 py-3 bg-neon-green/90 text-bg text-sm font-black uppercase tracking-widest rounded-xl border-b-[4px] border-[#2ab80f] shadow-[0_6px_16px_rgba(57,255,20,0.2)] hover:shadow-[0_4px_12px_rgba(57,255,20,0.3)] active:border-b-[2px] transition-all duration-100 cursor-pointer"
+              >
+                Got It
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {unlockNoticeFeatures && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[190] flex items-center justify-center bg-black/85 backdrop-blur-sm px-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 20 }}
+              className="bg-surface-elevated border border-neon-green/30 rounded-2xl p-8 sm:p-10 max-w-md w-full text-center shadow-[0_0_60px_rgba(57,255,20,0.1)]"
+            >
+              <div className="w-16 h-16 bg-neon-green/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-neon-green/30">
+                <svg
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  className="text-neon-green"
+                >
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight mb-3">
+                New Feature Unlocked
+              </h3>
+              <p className="text-text-muted text-sm leading-relaxed mb-6">
+                Your equip action unlocked:
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
+                {unlockNoticeFeatures.map((featureKey) => (
+                  <span
+                    key={featureKey}
+                    className="px-3 py-1.5 rounded-lg border border-neon-green/45 bg-neon-green/10 text-neon-green text-xs font-bold uppercase tracking-wider"
+                  >
+                    {FEATURE_UNLOCK_LABEL[featureKey]}
+                  </span>
+                ))}
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  onClick={() => {
+                    trackEvent(AnalyticsEvents.CTA_CLICK, { cta_name: "unlock_modal_stay", location: "vaults" });
+                    setUnlockNoticeFeatures(null);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-surface border border-white/20 text-white text-[10px] font-black uppercase tracking-widest hover:border-white/35 transition-colors cursor-pointer"
+                >
+                  Stay Here
+                </button>
+                <button
+                  onClick={() => {
+                    trackEvent(AnalyticsEvents.CTA_CLICK, { cta_name: "unlock_modal_go", location: "vaults", destination: unlockDestination.path });
+                    setUnlockNoticeFeatures(null);
+                    navigate(unlockDestination.path);
+                  }}
+                  className="px-4 py-2.5 rounded-xl bg-neon-green/20 border border-neon-green/45 text-neon-green text-[10px] font-black uppercase tracking-widest hover:bg-neon-green/28 transition-colors cursor-pointer"
+                >
+                  {unlockDestination.label}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </section>
