@@ -57,14 +57,14 @@ export function PrestigeButton({
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
           </svg>
           <span className="leading-none flex-1 text-center">
-            Prestige {nextPrestigeLevel}
+            Rank Up {nextPrestigeLevel}
           </span>
         </span>
       </button>
       <p className="text-[10px] text-text-muted text-center mt-2">
         {disabled
-          ? `Reach Level 10 to prestige (currently Level ${currentLevel})`
-          : "Reset XP to 0, improve vault odds, unlock new color scheme"}
+          ? `Reach Level 10 to rank up (currently Level ${currentLevel})`
+          : "Reset XP, improve vault odds, unlock new theme"}
       </p>
     </motion.div>
   );

@@ -1,8 +1,8 @@
-import type { InventoryItem } from "./inventory";
+import type { Collectible } from "./collectible";
 
 export interface MarketplaceListing {
   id: string;
-  item: InventoryItem;
+  item: Collectible;
   sellerName: string;
   askingPrice: number;
   listedAt: number;
@@ -10,7 +10,7 @@ export interface MarketplaceListing {
 
 export interface Auction {
   id: string;
-  item: InventoryItem;
+  item: Collectible;
   sellerName: string;
   startingBid: number;
   currentBid: number;

@@ -127,7 +127,7 @@ export function PrestigeOverlay({ prestigeLevel, onClose }: PrestigeOverlayProps
             transition={{ delay: 0.3 }}
             className="text-xs font-black uppercase tracking-[0.8em] text-white/40 mb-6"
           >
-            Ascension Complete
+            Rank Up Complete
           </motion.div>
 
           <motion.h1
@@ -136,7 +136,7 @@ export function PrestigeOverlay({ prestigeLevel, onClose }: PrestigeOverlayProps
               textShadow: `0 0 30px ${colors.primary}, 0 0 60px ${colors.primary}80`
             }}
           >
-            PRESTIGE {prestigeLevel}
+            RANK {prestigeLevel}
           </motion.h1>
 
           <motion.div

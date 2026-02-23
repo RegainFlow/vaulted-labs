@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useState } from "react";
 
 const LIVE_NOW_ITEMS = [
-  "Playable demo at /play with visible drop odds per vault.",
+  "Playable demo at /open with visible drop odds per vault.",
   "Vault reveal loop with Hold, Ship, or Cashout actions in the demo.",
   "Waitlist signup with tiered early-access credits.",
   "Product feedback channel for early users.",

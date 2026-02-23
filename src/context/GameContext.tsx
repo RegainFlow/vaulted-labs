@@ -9,7 +9,7 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import type {
-  InventoryItem,
+  Collectible,
   CreditTransaction,
   CreditType,
   MarketplaceListing,
@@ -19,19 +19,26 @@ import type {
   LevelInfo,
   QuestToast,
   QuestProgress,
-  QuestRequirementType
+  QuestRequirementType,
+  SquadStats,
+  CombatResult
 } from "../types/game";
 import { getLevelInfo } from "../data/gamification";
+import { BOSS_ENERGY_CONFIG, SHARD_CONFIG } from "../data/gamification";
 import { SEED_LISTINGS, SEED_AUCTIONS } from "../data/mock-data";
 import { QUESTS } from "../data/quests";
+import { generateItemStats } from "../data/item-stats";
+import { getForgeOdds, applyForgeBoost, rollForgeResult } from "../data/forge";
+import { pickValue, pickProduct, RARITY_CONFIG } from "../data/vaults";
 import { trackEvent, AnalyticsEvents } from "../lib/analytics";
 
 // localStorage helpers
 const STORAGE_KEY = "vaultedlabs-game-state";
+const STATE_VERSION = 2;
 
 interface PersistedState {
   creditTransactions: CreditTransaction[];
-  inventory: InventoryItem[];
+  inventory: Collectible[];
   xp: number;
   listings: MarketplaceListing[];
   auctions: Auction[];
@@ -41,12 +48,20 @@ interface PersistedState {
   hasSeenInventoryTutorial: boolean;
   hasSeenShopTutorial: boolean;
   hasSeenBossFightTutorial: boolean;
+  hasSeenArenaTutorial: boolean;
+  hasSeenCollectionTutorial: boolean;
   questProgress: QuestProgress[];
   nextId: number;
   prestigeLevel: number;
   defeatedBosses: string[];
   freeSpins: number;
   cashoutStreak: number;
+  // v2 fields
+  bossEnergy: number;
+  lastEnergyRegenAt: number;
+  shards: number;
+  equippedItemIds: string[];
+  stateVersion: number;
 }
 
 const DEFAULT_TX: CreditTransaction = {
@@ -75,10 +90,57 @@ function saveState(state: PersistedState) {
   }
 }
 
+/**
+ * Migrate v1 state to v2: add stats to items, initialize new fields.
+ */
+function migrateState(state: PersistedState): PersistedState {
+  if (state.stateVersion >= STATE_VERSION) return state;
+
+  // Add stats & isEquipped to existing items
+  const migratedInventory = state.inventory.map((item) => ({
+    ...item,
+    stats: item.stats ?? generateItemStats(item.rarity, item.vaultTier),
+    isEquipped: item.isEquipped ?? false
+  }));
+
+  // Migrate listings/auctions items too
+  const migratedListings = state.listings.map((l) => ({
+    ...l,
+    item: {
+      ...l.item,
+      stats: l.item.stats ?? generateItemStats(l.item.rarity, l.item.vaultTier),
+      isEquipped: l.item.isEquipped ?? false
+    }
+  }));
+
+  const migratedAuctions = state.auctions.map((a) => ({
+    ...a,
+    item: {
+      ...a.item,
+      stats: a.item.stats ?? generateItemStats(a.item.rarity, a.item.vaultTier),
+      isEquipped: a.item.isEquipped ?? false
+    }
+  }));
+
+  return {
+    ...state,
+    inventory: migratedInventory,
+    listings: migratedListings,
+    auctions: migratedAuctions,
+    bossEnergy: state.bossEnergy ?? BOSS_ENERGY_CONFIG.maxEnergy,
+    lastEnergyRegenAt: state.lastEnergyRegenAt ?? Date.now(),
+    shards: state.shards ?? 0,
+    equippedItemIds: state.equippedItemIds ?? [],
+    hasSeenArenaTutorial: state.hasSeenArenaTutorial ?? false,
+    hasSeenCollectionTutorial: state.hasSeenCollectionTutorial ?? false,
+    stateVersion: STATE_VERSION
+  };
+}
+
 // Context
 interface GameContextValue {
   creditTransactions: CreditTransaction[];
-  inventory: InventoryItem[];
+  inventory: Collectible[];
   xp: number;
   listings: MarketplaceListing[];
   auctions: Auction[];
@@ -90,6 +152,8 @@ interface GameContextValue {
   hasSeenInventoryTutorial: boolean;
   hasSeenShopTutorial: boolean;
   hasSeenBossFightTutorial: boolean;
+  hasSeenArenaTutorial: boolean;
+  hasSeenCollectionTutorial: boolean;
   questProgress: QuestProgress[];
   questToast: QuestToast | null;
   dismissQuestToast: () => void;
@@ -102,7 +166,7 @@ interface GameContextValue {
     value: number,
     funkoId?: string,
     funkoName?: string
-  ) => InventoryItem;
+  ) => Collectible;
   cashoutItem: (itemId: string) => void;
   shipItem: (itemId: string) => void;
   listItem: (itemId: string) => void;
@@ -118,6 +182,8 @@ interface GameContextValue {
   setHasSeenInventoryTutorial: (seen: boolean) => void;
   setHasSeenShopTutorial: (seen: boolean) => void;
   setHasSeenBossFightTutorial: (seen: boolean) => void;
+  setHasSeenArenaTutorial: (seen: boolean) => void;
+  setHasSeenCollectionTutorial: (seen: boolean) => void;
   seedDemoItem: () => void;
   removeDemoItem: () => void;
   resetDemo: () => void;
@@ -125,6 +191,7 @@ interface GameContextValue {
   canPrestige: boolean;
   prestige: () => void;
   defeatedBosses: string[];
+  /** @deprecated Use completeBattle instead */
   defeatBoss: (
     bossId: string,
     creditReward: number,
@@ -136,13 +203,30 @@ interface GameContextValue {
   useFreeSpinForVault: (vaultName: string, price: number) => boolean;
   cashoutFlashTimestamp: number;
   cashoutStreak: number;
+  // v2 — Arena economy
+  bossEnergy: number;
+  maxBossEnergy: number;
+  spendBossEnergy: (cost?: number) => boolean;
+  grantBossEnergy: (count: number) => void;
+  shards: number;
+  grantShards: (count: number) => void;
+  grantBonusShards: (count: number) => void;
+  convertShardsToFreeSpin: () => boolean;
+  equippedItemIds: string[];
+  equippedItems: Collectible[];
+  squadStats: SquadStats;
+  equipItem: (itemId: string) => boolean;
+  unequipItem: (itemId: string) => void;
+  forgeItems: (itemIds: [string, string, string], freeSpinsUsed: number) => Collectible | null;
+  completeBattle: (bossId: string, result: CombatResult) => void;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
 
 // Hydrate nextId from persisted state to avoid collisions
 const saved = loadState();
-let nextId = saved?.nextId ?? 2;
+const migrated = saved ? migrateState(saved) : null;
+let nextId = migrated?.nextId ?? 2;
 
 function uid(prefix: string) {
   return `${prefix}-${nextId++}-${Date.now()}`;
@@ -158,12 +242,12 @@ function initQuestProgress(): QuestProgress[] {
 }
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  const initial = loadState();
+  const initial = migrated;
 
   const [creditTransactions, setCreditTransactions] = useState<
     CreditTransaction[]
   >(initial?.creditTransactions ?? [DEFAULT_TX]);
-  const [inventory, setInventory] = useState<InventoryItem[]>(
+  const [inventory, setInventory] = useState<Collectible[]>(
     initial?.inventory ?? []
   );
   const [xp, setXP] = useState(initial?.xp ?? 0);
@@ -191,6 +275,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [hasSeenBossFightTutorial, setHasSeenBossFightTutorial] = useState(
     initial?.hasSeenBossFightTutorial ?? false
   );
+  const [hasSeenArenaTutorial, setHasSeenArenaTutorial] = useState(
+    initial?.hasSeenArenaTutorial ?? false
+  );
+  const [hasSeenCollectionTutorial, setHasSeenCollectionTutorial] = useState(
+    initial?.hasSeenCollectionTutorial ?? false
+  );
   const [questProgress, setQuestProgress] = useState<QuestProgress[]>(
     initial?.questProgress ?? initQuestProgress()
   );
@@ -204,6 +294,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [freeSpins, setFreeSpins] = useState(initial?.freeSpins ?? 0);
   const [cashoutStreak, setCashoutStreak] = useState(initial?.cashoutStreak ?? 0);
   const [cashoutFlashTimestamp, setCashoutFlashTimestamp] = useState(0);
+
+  // v2 state
+  const [bossEnergy, setBossEnergy] = useState(
+    initial?.bossEnergy ?? BOSS_ENERGY_CONFIG.maxEnergy
+  );
+  const [lastEnergyRegenAt, setLastEnergyRegenAt] = useState(
+    initial?.lastEnergyRegenAt ?? Date.now()
+  );
+  const [shards, setShards] = useState(initial?.shards ?? 0);
+  const [equippedItemIds, setEquippedItemIds] = useState<string[]>(
+    initial?.equippedItemIds ?? []
+  );
 
   // Ref to track toast auto-dismiss timer
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -225,7 +327,36 @@ export function GameProvider({ children }: { children: ReactNode }) {
     }
   }, [prestigeLevel]);
 
-  // every state change
+  // Energy regen on mount — catch up on missed regen ticks
+  useEffect(() => {
+    const now = Date.now();
+    const elapsed = now - lastEnergyRegenAt;
+    const ticksToGrant = Math.floor(elapsed / BOSS_ENERGY_CONFIG.regenIntervalMs);
+    if (ticksToGrant > 0) {
+      setBossEnergy((prev) =>
+        Math.min(BOSS_ENERGY_CONFIG.maxEnergy, prev + ticksToGrant)
+      );
+      setLastEnergyRegenAt(
+        lastEnergyRegenAt + ticksToGrant * BOSS_ENERGY_CONFIG.regenIntervalMs
+      );
+    }
+  // Only run on mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Energy regen interval during session
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBossEnergy((prev) => {
+        if (prev >= BOSS_ENERGY_CONFIG.maxEnergy) return prev;
+        return prev + 1;
+      });
+      setLastEnergyRegenAt(Date.now());
+    }, BOSS_ENERGY_CONFIG.regenIntervalMs);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Persist on every state change
   useEffect(() => {
     saveState({
       creditTransactions,
@@ -239,30 +370,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
       hasSeenInventoryTutorial,
       hasSeenShopTutorial,
       hasSeenBossFightTutorial,
+      hasSeenArenaTutorial,
+      hasSeenCollectionTutorial,
       questProgress,
       nextId,
       prestigeLevel,
       defeatedBosses,
       freeSpins,
-      cashoutStreak
+      cashoutStreak,
+      bossEnergy,
+      lastEnergyRegenAt,
+      shards,
+      equippedItemIds,
+      stateVersion: STATE_VERSION
     });
   }, [
-    creditTransactions,
-    inventory,
-    xp,
-    listings,
-    auctions,
-    hasSeenTutorial,
-    hasSeenWalletTutorial,
-    hasSeenProfileTutorial,
-    hasSeenInventoryTutorial,
-    hasSeenShopTutorial,
-    hasSeenBossFightTutorial,
-    questProgress,
-    prestigeLevel,
-    defeatedBosses,
-    freeSpins,
-    cashoutStreak
+    creditTransactions, inventory, xp, listings, auctions,
+    hasSeenTutorial, hasSeenWalletTutorial, hasSeenProfileTutorial,
+    hasSeenInventoryTutorial, hasSeenShopTutorial, hasSeenBossFightTutorial,
+    hasSeenArenaTutorial, hasSeenCollectionTutorial,
+    questProgress, prestigeLevel, defeatedBosses, freeSpins, cashoutStreak,
+    bossEnergy, lastEnergyRegenAt, shards, equippedItemIds
   ]);
 
   const balance = useMemo(
@@ -271,6 +399,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const levelInfo = useMemo(() => getLevelInfo(xp), [xp]);
+
+  // Derived: equipped items resolved from IDs
+  const equippedItems = useMemo(
+    () => equippedItemIds
+      .map((id) => inventory.find((item) => item.id === id))
+      .filter((item): item is Collectible => item != null && item.status === "held"),
+    [equippedItemIds, inventory]
+  );
+
+  // Derived: squad stats from equipped items
+  const squadStats = useMemo<SquadStats>(() => {
+    const stats = equippedItems.reduce(
+      (acc, item) => ({
+        totalAtk: acc.totalAtk + item.stats.atk,
+        totalDef: acc.totalDef + item.stats.def,
+        totalAgi: acc.totalAgi + item.stats.agi,
+        memberCount: acc.memberCount + 1
+      }),
+      { totalAtk: 0, totalDef: 0, totalAgi: 0, memberCount: 0 }
+    );
+    return stats;
+  }, [equippedItems]);
 
   // Auto-unlock quests when level increases
   useEffect(() => {
@@ -318,7 +468,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return changed ? updated : prev;
       });
 
-      // Fire rewards outside the state updater (safe from StrictMode double-invoke)
       if (completedQuests.length > 0) {
         setTimeout(() => {
           for (const quest of completedQuests) {
@@ -389,8 +538,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       value: number,
       funkoId?: string,
       funkoName?: string
-    ): InventoryItem => {
-      const item: InventoryItem = {
+    ): Collectible => {
+      const item: Collectible = {
         id: uid("item"),
         product,
         vaultTier,
@@ -398,6 +547,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         value,
         status: "held",
         acquiredAt: Date.now(),
+        stats: generateItemStats(rarity, vaultTier),
+        isEquipped: false,
         ...(funkoId ? { funkoId } : {}),
         ...(funkoName ? { funkoName } : {})
       };
@@ -411,6 +562,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const cashoutItem = useCallback(
     (itemId: string) => {
+      // Auto-unequip if equipped
+      setEquippedItemIds((prev) => prev.filter((id) => id !== itemId));
       setInventory((prev) =>
         prev.map((item) => {
           if (item.id !== itemId || item.status !== "held") return item;
@@ -427,7 +580,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
           advanceQuests("cashout_item", 1);
           setCashoutFlashTimestamp(Date.now());
           setCashoutStreak((prev) => prev + 1);
-          return { ...item, status: "cashed_out" as const };
+          return { ...item, status: "cashed_out" as const, isEquipped: false };
         })
       );
     },
@@ -436,12 +589,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const shipItem = useCallback(
     (itemId: string) => {
+      // Auto-unequip if equipped
+      setEquippedItemIds((prev) => prev.filter((id) => id !== itemId));
       setInventory((prev) =>
         prev.map((item) => {
           if (item.id === itemId && item.status === "held") {
             advanceQuests("ship_item", 1);
             setCashoutStreak(0);
-            return { ...item, status: "shipped" as const };
+            return { ...item, status: "shipped" as const, isEquipped: false };
           }
           return item;
         })
@@ -455,13 +610,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const item = inventory.find(i => i.id === itemId && i.status === "held");
       if (!item) return;
 
+      // Auto-unequip if equipped
+      setEquippedItemIds((prev) => prev.filter((id) => id !== itemId));
       setInventory(prev => prev.map(i =>
-        i.id === itemId ? { ...i, status: "listed" as const } : i
+        i.id === itemId ? { ...i, status: "listed" as const, isEquipped: false } : i
       ));
 
       setListings(prev => [...prev, {
         id: uid("listing"),
-        item: { ...item, status: "listed" as const },
+        item: { ...item, status: "listed" as const, isEquipped: false },
         sellerName: "You",
         askingPrice: item.value,
         listedAt: Date.now()
@@ -486,6 +643,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
       ]);
       setXP((prev) => prev + price);
+      // Grant boss energy on vault open
+      setBossEnergy((prev) =>
+        Math.min(BOSS_ENERGY_CONFIG.maxEnergy, prev + BOSS_ENERGY_CONFIG.grantPerVaultOpen)
+      );
       advanceQuests("vault_purchase", 1);
       advanceQuests("spend_amount", price);
       return true;
@@ -529,7 +690,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
           ...listing.item,
           id: uid("item"),
           status: "held",
-          acquiredAt: Date.now()
+          acquiredAt: Date.now(),
+          isEquipped: false,
+          stats: listing.item.stats ?? generateItemStats(listing.item.rarity, listing.item.vaultTier)
         }
       ]);
       setListings((prev) => prev.filter((l) => l.id !== listingId));
@@ -563,10 +726,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setXP((prev) => prev + amount);
   }, []);
 
-  /** Free vault open for tutorial — awards XP + quest progress, no credit charge */
   const tutorialOpenVault = useCallback(
     (_vaultName: string, price: number) => {
       setXP((prev) => prev + price);
+      // Grant boss energy on tutorial vault open
+      setBossEnergy((prev) =>
+        Math.min(BOSS_ENERGY_CONFIG.maxEnergy, prev + BOSS_ENERGY_CONFIG.grantPerVaultOpen)
+      );
       advanceQuests("vault_purchase", 1);
       advanceQuests("spend_amount", price);
     },
@@ -582,6 +748,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (freeSpins <= 0) return false;
       setFreeSpins((prev) => prev - 1);
       setXP((prev) => prev + price);
+      // Grant boss energy on free spin vault open
+      setBossEnergy((prev) =>
+        Math.min(BOSS_ENERGY_CONFIG.maxEnergy, prev + BOSS_ENERGY_CONFIG.grantPerVaultOpen)
+      );
       setCreditTransactions((prev) => [
         ...prev,
         {
@@ -606,8 +776,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setPrestigeLevel((prev) => prev + 1);
     setXP(0);
     setDefeatedBosses([]);
+    // Keep shards and energy across rank-ups (intentional)
   }, [levelInfo.level, prestigeLevel]);
 
+  /** @deprecated Use completeBattle instead */
   const defeatBoss = useCallback(
     (
       bossId: string,
@@ -641,10 +813,134 @@ export function GameProvider({ children }: { children: ReactNode }) {
             rarity: specialItem.rarity,
             value: specialItem.value,
             status: "held",
-            acquiredAt: Date.now()
+            acquiredAt: Date.now(),
+            stats: generateItemStats(specialItem.rarity, "Bronze"),
+            isEquipped: false
           }
         ]);
       }
+    },
+    [defeatedBosses]
+  );
+
+  // ─── v2 Arena Economy Methods ───
+
+  const spendBossEnergy = useCallback((cost: number = BOSS_ENERGY_CONFIG.costPerFight): boolean => {
+    if (bossEnergy < cost) return false;
+    setBossEnergy((prev) => prev - cost);
+    return true;
+  }, [bossEnergy]);
+
+  const grantBossEnergy = useCallback((count: number) => {
+    setBossEnergy((prev) =>
+      Math.min(BOSS_ENERGY_CONFIG.maxEnergy, prev + count)
+    );
+  }, []);
+
+  const grantShards = useCallback((count: number) => {
+    setShards((prev) => prev + count);
+  }, []);
+
+  const grantBonusShards = useCallback((count: number) => {
+    setShards((prev) => prev + count);
+  }, []);
+
+  const convertShardsToFreeSpin = useCallback((): boolean => {
+    if (shards < SHARD_CONFIG.freeSpinConversionCost) return false;
+    setShards((prev) => prev - SHARD_CONFIG.freeSpinConversionCost);
+    setFreeSpins((prev) => prev + 1);
+    return true;
+  }, [shards]);
+
+  const equipItem = useCallback((itemId: string): boolean => {
+    const item = inventory.find((i) => i.id === itemId && i.status === "held");
+    if (!item) return false;
+    if (equippedItemIds.length >= 3) return false;
+    if (equippedItemIds.includes(itemId)) return false;
+    setEquippedItemIds((prev) => [...prev, itemId]);
+    setInventory((prev) =>
+      prev.map((i) => (i.id === itemId ? { ...i, isEquipped: true } : i))
+    );
+    return true;
+  }, [inventory, equippedItemIds]);
+
+  const unequipItem = useCallback((itemId: string) => {
+    setEquippedItemIds((prev) => prev.filter((id) => id !== itemId));
+    setInventory((prev) =>
+      prev.map((i) => (i.id === itemId ? { ...i, isEquipped: false } : i))
+    );
+  }, []);
+
+  const forgeItems = useCallback(
+    (itemIds: [string, string, string], freeSpinsUsed: number): Collectible | null => {
+      const items = itemIds.map((id) =>
+        inventory.find((i) => i.id === id && i.status === "held")
+      );
+      if (items.some((i) => !i)) return null;
+      const validItems = items as Collectible[];
+
+      // Spend free spins if used for boost
+      if (freeSpinsUsed > 0) {
+        if (freeSpins < freeSpinsUsed) return null;
+        setFreeSpins((prev) => prev - freeSpinsUsed);
+      }
+
+      // Calculate forge odds
+      const baseOdds = getForgeOdds(
+        validItems[0].rarity,
+        validItems[1].rarity,
+        validItems[2].rarity
+      );
+      const finalOdds = applyForgeBoost(baseOdds, freeSpinsUsed);
+      const resultRarity = rollForgeResult(finalOdds);
+
+      // Pick a vault tier from the highest-tier input
+      const tierOrder: VaultTierName[] = ["Bronze", "Silver", "Gold", "Platinum", "Obsidian", "Diamond"];
+      const highestTier = validItems.reduce((best, item) => {
+        const bestIdx = tierOrder.indexOf(best);
+        const itemIdx = tierOrder.indexOf(item.vaultTier);
+        return itemIdx > bestIdx ? item.vaultTier : best;
+      }, "Bronze" as VaultTierName);
+
+      const rarityConfig = RARITY_CONFIG[resultRarity];
+      const avgPrice = validItems.reduce((sum, i) => sum + i.value, 0) / 3;
+      const resultValue = pickValue(avgPrice, rarityConfig);
+
+      const newItem: Collectible = {
+        id: uid("item"),
+        product: pickProduct(),
+        vaultTier: highestTier,
+        rarity: resultRarity,
+        value: resultValue,
+        status: "held",
+        acquiredAt: Date.now(),
+        stats: generateItemStats(resultRarity, highestTier),
+        isEquipped: false
+      };
+
+      // Remove input items, unequip if needed
+      const idsToRemove = new Set(itemIds);
+      setEquippedItemIds((prev) => prev.filter((id) => !idsToRemove.has(id)));
+      setInventory((prev) => [
+        ...prev.filter((i) => !idsToRemove.has(i.id)),
+        newItem
+      ]);
+
+      return newItem;
+    },
+    [inventory, freeSpins]
+  );
+
+  const completeBattle = useCallback(
+    (bossId: string, result: CombatResult) => {
+      if (result.victory && !defeatedBosses.includes(bossId)) {
+        setDefeatedBosses((prev) => [...prev, bossId]);
+      }
+      // Grant shards + XP only — no credits, no items
+      if (result.shardsEarned > 0) {
+        setShards((prev) => prev + result.shardsEarned);
+      }
+      setXP((prev) => prev + result.xpEarned);
     },
     [defeatedBosses]
   );
@@ -653,9 +949,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const seedDemoItem = useCallback(() => {
     setInventory((prev) => {
-      if (prev.length > 0) return prev;
+      if (prev.some((item) => item.id === DEMO_ITEM_ID)) return prev;
       return [
-        ...prev,
         {
           id: DEMO_ITEM_ID,
           product: "Funko Pop!",
@@ -663,8 +958,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
           rarity: "uncommon" as Rarity,
           value: 24,
           status: "held" as const,
-          acquiredAt: Date.now()
-        }
+          acquiredAt: Date.now(),
+          stats: generateItemStats("uncommon", "Bronze"),
+          isEquipped: false
+        },
+        ...prev
       ];
     });
   }, []);
@@ -687,12 +985,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setHasSeenInventoryTutorial(false);
     setHasSeenShopTutorial(false);
     setHasSeenBossFightTutorial(false);
+    setHasSeenArenaTutorial(false);
+    setHasSeenCollectionTutorial(false);
     setQuestProgress(initQuestProgress());
     setQuestToast(null);
     setPrestigeLevel(0);
     setDefeatedBosses([]);
     setFreeSpins(0);
     setCashoutStreak(0);
+    setBossEnergy(BOSS_ENERGY_CONFIG.maxEnergy);
+    setLastEnergyRegenAt(Date.now());
+    setShards(0);
+    setEquippedItemIds([]);
     document.documentElement.removeAttribute("data-prestige");
   }, []);
 
@@ -711,6 +1015,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       hasSeenInventoryTutorial,
       hasSeenShopTutorial,
       hasSeenBossFightTutorial,
+      hasSeenArenaTutorial,
+      hasSeenCollectionTutorial,
       questProgress,
       questToast,
       dismissQuestToast,
@@ -732,6 +1038,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setHasSeenInventoryTutorial,
       setHasSeenShopTutorial,
       setHasSeenBossFightTutorial,
+      setHasSeenArenaTutorial,
+      setHasSeenCollectionTutorial,
       seedDemoItem,
       removeDemoItem,
       resetDemo,
@@ -744,50 +1052,40 @@ export function GameProvider({ children }: { children: ReactNode }) {
       grantFreeSpins,
       useFreeSpinForVault,
       cashoutFlashTimestamp,
-      cashoutStreak
+      cashoutStreak,
+      // v2
+      bossEnergy,
+      maxBossEnergy: BOSS_ENERGY_CONFIG.maxEnergy,
+      spendBossEnergy,
+      grantBossEnergy,
+      shards,
+      grantShards,
+      grantBonusShards,
+      convertShardsToFreeSpin,
+      equippedItemIds,
+      equippedItems,
+      squadStats,
+      equipItem,
+      unequipItem,
+      forgeItems,
+      completeBattle
     }),
     [
-      creditTransactions,
-      inventory,
-      xp,
-      listings,
-      auctions,
-      balance,
-      levelInfo,
-      hasSeenTutorial,
-      hasSeenWalletTutorial,
-      hasSeenProfileTutorial,
-      hasSeenInventoryTutorial,
-      hasSeenShopTutorial,
-      hasSeenBossFightTutorial,
-      questProgress,
-      questToast,
-      dismissQuestToast,
-      addCredits,
-      spendCredits,
-      addItem,
-      cashoutItem,
-      shipItem,
-      listItem,
-      purchaseVault,
-      claimCreditsFromReveal,
-      buyListing,
-      placeBid,
-      addXP,
-      tutorialOpenVault,
-      seedDemoItem,
-      removeDemoItem,
-      resetDemo,
-      prestigeLevel,
-      canPrestige,
-      prestige,
-      defeatedBosses,
-      defeatBoss,
-      freeSpins,
-      grantFreeSpins,
-      useFreeSpinForVault,
-      cashoutFlashTimestamp,
-      cashoutStreak
+      creditTransactions, inventory, xp, listings, auctions, balance, levelInfo,
+      hasSeenTutorial, hasSeenWalletTutorial, hasSeenProfileTutorial,
+      hasSeenInventoryTutorial, hasSeenShopTutorial, hasSeenBossFightTutorial,
+      hasSeenArenaTutorial, hasSeenCollectionTutorial,
+      questProgress, questToast, dismissQuestToast,
+      addCredits, spendCredits, addItem, cashoutItem, shipItem, listItem,
+      purchaseVault, claimCreditsFromReveal, buyListing, placeBid, addXP,
+      tutorialOpenVault, seedDemoItem, removeDemoItem, resetDemo,
+      prestigeLevel, canPrestige, prestige, defeatedBosses, defeatBoss,
+      freeSpins, grantFreeSpins, useFreeSpinForVault,
+      cashoutFlashTimestamp, cashoutStreak,
+      bossEnergy, spendBossEnergy, grantBossEnergy,
+      shards, grantShards, grantBonusShards, convertShardsToFreeSpin,
+      equippedItemIds, equippedItems, squadStats, equipItem, unequipItem,
+      forgeItems, completeBattle
     ]
   );
 

@@ -28,6 +28,7 @@ const RARITY_COLORS: Record<Rarity, { bg: string; border: string; glow: string; 
 };
 
 const SIZE_CONFIG = {
+  xs: { outer: "w-8 h-8", icon: 12, text: "text-[6px]", radius: "rounded-md" },
   sm: { outer: "w-10 h-10", icon: 16, text: "text-[7px]", radius: "rounded-lg" },
   md: { outer: "w-20 h-20", icon: 32, text: "text-[9px]", radius: "rounded-xl" },
   lg: { outer: "w-32 h-32", icon: 52, text: "text-[11px]", radius: "rounded-2xl" }
@@ -36,7 +37,7 @@ const SIZE_CONFIG = {
 interface FunkoImageProps {
   name: string;
   rarity: Rarity;
-  size?: "sm" | "md" | "lg";
+  size?: "xs" | "sm" | "md" | "lg";
   className?: string;
 }
 
@@ -67,7 +68,7 @@ export function FunkoImage({ name, rarity, size = "md", className = "" }: FunkoI
       </svg>
 
       {/* Name badge */}
-      {size !== "sm" && (
+      {size !== "xs" && size !== "sm" && (
         <span
           className={`${sizeConfig.text} font-bold uppercase tracking-wider text-center leading-tight mt-1 px-1 truncate w-full`}
           style={{ color: colors.border }}

@@ -1,6 +1,6 @@
 // Barrel re-export — all domain types accessible from one import
 export * from "./vault";
-export * from "./inventory";
+export * from "./collectible";
 export * from "./marketplace";
 export * from "./wallet";
 export * from "./gamification";
@@ -9,3 +9,4 @@ export * from "./landing";
 export * from "./tutorial";
 export * from "./bonus";
 export * from "./funko";
+export * from "./forge";

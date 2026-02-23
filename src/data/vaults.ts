@@ -1,6 +1,8 @@
 import type { IncentiveTier } from "../types/landing";
 import type { Vault, RarityBreakdown, VaultTierName } from "../types/vault";
 import type { VaultLockSlot } from "../types/bonus";
+// Re-export for convenience
+export { SHARD_REWARDS } from "../types/bonus";
 
 export const VAULT_COLORS: Record<string, string> = {
   Bronze: "#cd7f32",
@@ -181,9 +183,6 @@ export const INCENTIVE_TIERS: IncentiveTier[] = [
 ];
 
 export const PREMIUM_BONUS_CHANCE: Record<string, number> = {
-  Bronze: 0.15,
-  Silver: 0.20,
-  Gold: 0.25,
   Platinum: 0.45,
   Obsidian: 0.55,
   Diamond: 0.65

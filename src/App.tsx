@@ -1,11 +1,10 @@
 import { useEffect } from "react";
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { GameProvider } from "./context/GameContext";
 import { LandingPage } from "./pages/LandingPage";
-import { PlayPage } from "./pages/PlayPage";
-import { ShopPage } from "./pages/ShopPage";
-import { InventoryPage } from "./pages/InventoryPage";
-import { ProfilePage } from "./pages/ProfilePage";
+import { OpenPage } from "./pages/OpenPage";
+import { CollectionPage } from "./pages/CollectionPage";
+import { ArenaPage } from "./pages/ArenaPage";
 import { WalletPage } from "./pages/WalletPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { TermsPage } from "./pages/TermsPage";
@@ -26,13 +25,17 @@ function App() {
       <GameProvider>
         <Routes>
           <Route path="/" element={<LandingPage />} />
-          <Route path="/play" element={<PlayPage />} />
-          <Route path="/shop" element={<ShopPage />} />
-          <Route path="/inventory" element={<InventoryPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/open" element={<OpenPage />} />
+          <Route path="/collection" element={<CollectionPage />} />
+          <Route path="/arena" element={<ArenaPage />} />
           <Route path="/wallet" element={<WalletPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
+          {/* Redirects from old routes */}
+          <Route path="/play" element={<Navigate to="/open" replace />} />
+          <Route path="/shop" element={<Navigate to="/collection" replace />} />
+          <Route path="/inventory" element={<Navigate to="/collection" replace />} />
+          <Route path="/profile" element={<Navigate to="/arena" replace />} />
         </Routes>
         <QuestToastNotification />
       </GameProvider>

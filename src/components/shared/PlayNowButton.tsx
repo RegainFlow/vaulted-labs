@@ -6,9 +6,9 @@ interface PlayNowButtonProps {
   location?: string;
 }
 
-export function PlayNowButton({ to = "/play", location }: PlayNowButtonProps) {
+export function PlayNowButton({ to = "/open", location }: PlayNowButtonProps) {
   const handleClick = () => {
-    trackEvent(AnalyticsEvents.CTA_CLICK, { cta_name: "play_now", location });
+    trackEvent(AnalyticsEvents.CTA_CLICK, { cta_name: "open_now", location });
     trackEvent(AnalyticsEvents.PLAY_CLICK);
   };
 
@@ -16,7 +16,7 @@ export function PlayNowButton({ to = "/play", location }: PlayNowButtonProps) {
     <Link to={to} className="pushable" onClick={handleClick}>
       <span className="pushable-shadow" />
       <span className="pushable-edge" />
-      <span className="pushable-front">PLAY NOW</span>
+      <span className="pushable-front">OPEN NOW</span>
     </Link>
   );
 }

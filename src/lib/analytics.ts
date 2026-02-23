@@ -21,7 +21,12 @@ export const AnalyticsEvents = {
   BONUS_SPIN_TRIGGERED: "bonus_spin_triggered",
   VAULT_LOCK_COMPLETE: "vault_lock_complete",
   FREE_SPIN_USED: "free_spin_used",
-  FEEDBACK_BUTTON_CLICK: "feedback_button_click"
+  FEEDBACK_BUTTON_CLICK: "feedback_button_click",
+  BATTLE_STARTED: "battle_started",
+  BATTLE_COMPLETED: "battle_completed",
+  FORGE_COMPLETED: "forge_completed",
+  SHARDS_CONVERTED: "shards_converted",
+  SQUAD_SELECTED: "squad_selected"
 } as const;
 
 type AnalyticsEventName = (typeof AnalyticsEvents)[keyof typeof AnalyticsEvents];

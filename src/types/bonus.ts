@@ -20,10 +20,10 @@ export interface VaultLockSlot {
 export interface VaultLockBonusStageProps {
   purchasedTierName: VaultTierName;
   prestigeLevel?: number;
-  onComplete: (freeSpinsAwarded: number) => void;
+  onComplete: (shardsAwarded: number) => void;
 }
 
-export const FREE_SPIN_REWARDS: Record<VaultTierName, number> = {
+export const SHARD_REWARDS: Record<VaultTierName, number> = {
   Bronze: 1,
   Silver: 1,
   Gold: 2,
@@ -31,3 +31,6 @@ export const FREE_SPIN_REWARDS: Record<VaultTierName, number> = {
   Obsidian: 3,
   Diamond: 3
 };
+
+/** @deprecated Use SHARD_REWARDS instead */
+export const FREE_SPIN_REWARDS = SHARD_REWARDS;

@@ -13,7 +13,7 @@ Each experiment is scored using ICE (Impact / Confidence / Ease, each 1–10). H
 **Channel**: TikTok (organic)
 
 **Steps**:
-1. Open the demo at `/play` on mobile or desktop
+1. Open the demo at `/open` on mobile or desktop
 2. Screen record opening a Bronze vault ($12) — capture the full animation sequence
 3. Add a face cam reaction or voiceover (even a simple "wait for it...")
 4. Overlay text: "This mystery box shows you the odds BEFORE you open"

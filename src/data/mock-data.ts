@@ -1,13 +1,17 @@
-import type { InventoryItem } from "../types/inventory";
+import type { Collectible } from "../types/collectible";
 import type { Auction, MarketplaceListing } from "../types/marketplace";
+import { generateItemStats } from "./item-stats";
 
 function makeItem(
-  overrides: Partial<InventoryItem> &
-    Pick<InventoryItem, "id" | "product" | "vaultTier" | "rarity" | "value">
-): InventoryItem {
+  overrides: Partial<Collectible> &
+    Pick<Collectible, "id" | "product" | "vaultTier" | "rarity" | "value">
+): Collectible {
+  const stats = overrides.stats ?? generateItemStats(overrides.rarity, overrides.vaultTier);
   return {
     status: "held",
     acquiredAt: Date.now() - Math.floor(Math.random() * 86400000),
+    isEquipped: false,
+    stats,
     ...overrides
   };
 }

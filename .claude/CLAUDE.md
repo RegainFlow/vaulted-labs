@@ -2,14 +2,14 @@
 
 ## Project Overview
 
-VaultedLabs is a gamified commerce platform. Users open "Vaults" to reveal collectibles, manage inventory, trade on a marketplace, and progress through an XP/level/prestige system. The repo contains a landing page (waitlist), a demo game page (vault opening with guided tutorial, Vault Lock bonus mini-game), and dedicated pages for shop, inventory, profile (with boss fights and prestige), and wallet.
+VaultedLabs is a gamified commerce platform. Users open "Vaults" to reveal collectibles, manage a collection, trade on a marketplace, battle bosses in the Arena, forge new items from shards, and progress through an XP/level/rank-up system. The repo contains a landing page (waitlist), a vault opening page (guided tutorial, Vault Lock bonus mini-game), a collection page (inventory + marketplace), an arena page (battles, forge, quests), and a wallet page.
 
 ## Tech Stack
 
 - **Build**: Vite 6 with `@tailwindcss/vite` plugin
 - **Framework**: React 19 with TypeScript (strict mode)
-- **Routing**: React Router DOM v7 — six routes: `/` (landing), `/play` (demo game), `/shop` (listings & auctions), `/inventory` (loot management), `/profile` (XP, quests, boss fights, prestige), `/wallet`
-- **State**: React Context (`GameProvider` in `src/context/GameContext.tsx`) wraps all routes — shared credits, inventory, XP, marketplace, prestige, boss fights, free spins state
+- **Routing**: React Router DOM v7 — routes: `/` (landing), `/open` (vault opening), `/collection` (inventory + marketplace), `/arena` (battles, forge, quests), `/wallet`, `/privacy`, `/terms`
+- **State**: React Context (`GameProvider` in `src/context/GameContext.tsx`) wraps all routes — shared credits, inventory, XP, marketplace, prestige, boss energy, shards, equipped items, free spins state
 - **Styling**: Tailwind CSS v4 (CSS-native config via `@theme` in `index.css`)
 - **Animations**: Motion (formerly Framer Motion) — import from `motion/react`
 - **Typewriter**: Typed.js — hero subtitle typing animation
@@ -44,9 +44,9 @@ VaultedLabs is a gamified commerce platform. Users open "Vaults" to reveal colle
 
 | Vault Tier | Bonus Chance |
 | ---------- | ------------ |
-| Platinum   | 30%          |
-| Obsidian   | 40%          |
-| Diamond    | 50%          |
+| Platinum   | 45%          |
+| Obsidian   | 55%          |
+| Diamond    | 65%          |
 
 Bronze, Silver, and Gold do not trigger the bonus round.
 
@@ -95,22 +95,23 @@ Players can prestige at Level 10, resetting XP to 0 and defeated bosses. Each pr
 
 Max prestige level is 3.
 
-### Boss Fights (4 encounters with reel-based combat)
+### Battles (4 encounters with stat-based combat)
 
-| Boss             | Required Level | Credit Reward | XP Reward | Special Item   |
-| ---------------- | -------------- | ------------- | --------- | -------------- |
-| The Vault Keeper | 3              | 50            | 100       | Keeper's Badge |
-| Chrono Shard     | 5              | 100           | 200       | Time Fragment  |
-| Neon Hydra       | 8              | 200           | 400       | Hydra Scale    |
-| Diamond Golem    | 12             | 500           | 1000      | Diamond Core   |
+| Boss             | Required Level | Energy Cost | Shard Reward | XP Reward |
+| ---------------- | -------------- | ----------- | ------------ | --------- |
+| The Vault Keeper | 3              | 1           | 2-3          | 100       |
+| Chrono Shard     | 5              | 1           | 2-3          | 200       |
+| Neon Hydra       | 8              | 2           | 2-3          | 400       |
+| Diamond Golem    | 12             | 3           | 3-4          | 1000      |
 
-Boss fights use a reel-based combat system:
-- Player and boss each have independent slot reels with rarity outcomes
-- Player HP: 120; Boss HP: 120 + (requiredLevel - 3) * 8
-- Attack timing window determines quality: Perfect (center), Good, Miss
-- Damage = base rarity damage + quality modifier
-- Player reel odds: 30% common, 35% uncommon, 25% rare, 10% legendary (constant)
-- Boss reel odds: per-boss config, scaled harder by prestige level
+Battles use a stat-based combat system:
+- Player selects up to 3 collectibles as a squad (each has ATK/DEF/AGI stats)
+- Squad HP: 120; Boss HP: per-boss config, scaled +15% per rank level
+- Combat auto-resolves exchanges: squad attacks boss, boss attacks squad
+- Damage = (ATK * variance * AGI bonus) - DEF * 0.4
+- Max 20 rounds; victory = boss HP reaches 0
+- Neon Hydra special mechanic: regenerates 5 HP per round
+- Per-boss `energyCost` field determines energy spent to initiate battle
 
 ### Vault Lock Bonus Mini-Game
 
@@ -205,70 +206,73 @@ Applied via `html[data-prestige="N"]` in CSS. Each prestige level overrides `--c
 ## Page Structure
 
 ### Landing Page (`/`)
-1. **Navbar** — Fixed nav with wordmark + nav links + "Join" button (no HUD)
-2. **Hero** — Full-viewport vault door visual with Typed.js subtitle + "Play Now" CTA + neon scroll indicator
-3. **HowItWorks** — 6 steps (2 rows of 3): The Vault (Pick, Reveal, Choose) + The Platform (Shop, Level Up, Credits) with styled images
-4. **AppPreview** — Benefits list (left) + iPhone mockup (right)
-5. **CTASection** — "Try the Demo" button linking to `/play`
+1. **Navbar** — Fixed nav with wordmark + Join button only (no landing Play/Shop links)
+2. **Hero** — Full-viewport vault door visual with Typed.js subtitle + "Open Now" CTA + neon scroll indicator
+3. **HowItWorks** — 6 steps (2 rows of 3): The Vault (Pick, Reveal, Choose) + The Platform (Collection, Arena, Credits) with styled images
+4. **FeatureHighlights** — 4 compact clickable cards (Collection, Arena, Rank Up, Forge + Quests) linking to game pages
+5. **CTASection** — "Try the Demo" button linking to `/open`
 6. **WaitlistSection** — IncentiveBanner (4-tier card grid) + WaitlistForm (with post-signup feedback CTA)
-7. **Footer** — Brand + feedback link + copyright
+7. **CompactFAQ** — Expandable FAQ accordion
+8. **Footer** — Brand + feedback link + copyright
 
-### Demo Game Page (`/play`)
-1. **Navbar** — Fixed nav with HUD (credits/loot/level/free spins)
-2. **VaultGrid** — Category selector, 6 vault cards, full-screen multi-stage reveal overlay, Vault Lock bonus stage
-3. **Tutorial** — Guided first-time onboarding overlay (welcome -> HUD -> categories -> open vault -> pick box -> result actions) with skip support
-4. **TutorialHelpButton** — Floating "?" to replay tutorial (visible after completion)
+### Open Page (`/open`)
+1. **Navbar** — Fixed nav with HUD plus global bottom dock navigation (`Open`, `Collection`, `Arena`)
+2. **VaultGrid** — Category selector, 6 vault cards, full-screen multi-stage reveal overlay (3 result options: Keep/Ship/Cashout), Vault Lock bonus stage
+3. **Tutorial** — Guided first-time onboarding overlay (auto-triggers on first visit; welcome -> HUD -> categories -> odds -> contents -> open vault -> spin -> result actions) with skip support
+4. **TutorialHelpButton** — Floating "?" to replay tutorial
 5. **Footer** — Brand + feedback link + copyright
 
-### Shop Page (`/shop`)
-1. **Navbar** — Fixed nav with HUD
-2. **ShopTabs** — Listings + Auctions tabs with buy/bid functionality
-3. **PageTutorial** — First-time shop tutorial
-4. **Footer**
+### Collection Page (`/collection`)
+1. **Navbar** — Fixed nav with HUD plus global bottom dock navigation
+2. **SegmentedTabs** — My Collection / Market / Auctions
+3. **InventoryGrid** — Owned items grid with status filter, Hold/Ship/Cashout/List actions
+4. **ListingGrid + AuctionGrid** — Marketplace listings or auctions based on selected tab
+5. **TutorialHelpButton** — Floating "?" to trigger tutorial (no auto-popup)
+6. **Footer**
 
-### Inventory Page (`/inventory`)
-1. **Navbar** — Fixed nav with HUD
-2. **InventoryGrid** — Owned items grid with status filter, Hold/Ship/Cashout/List actions
-3. **PageTutorial** — First-time inventory tutorial
-4. **Footer**
-
-### Profile Page (`/profile`)
-1. **Navbar** — Fixed nav with HUD
-2. **ProfilePanel** — XP bar, level, stats, boss fight cards with BossFightOverlay
-3. **PrestigeButton** — Shown when level >= 10 and prestige < 3; triggers PrestigeOverlay
-4. **QuestList** — Active quests with progress tracking
-5. **Reset Demo** — Button to clear all progress
-6. **PageTutorial** — First-time profile tutorial
-7. **Footer**
+### Arena Page (`/arena`)
+1. **Navbar** — Fixed nav with HUD plus global bottom dock navigation
+2. **ResourceBar** — Energy + Shards + Free Spins display
+3. **SegmentedTabs** — Battles / Forge / Quests
+4. **BattleCard grid** — 4 boss encounters with per-boss energy cost, locked/unlocked/defeated states
+5. **BattleSetupModal** — Squad selection (up to 3 collectibles) with stat comparison
+6. **BattleOverlay** — Full-screen combat animation with round-by-round exchange display
+7. **ForgePanel** — Combine 3 items into 1 new item with rarity odds + optional free spin boost
+8. **QuestList** — Active quests with progress tracking (in Quests tab)
+9. **PrestigeButton** — Shown when level >= 10 and prestige < 3; triggers PrestigeOverlay ("Rank Up")
+10. **Reset Demo** — Button to clear all progress
+11. **TutorialHelpButton** — Floating "?" to replay Arena tutorial (no auto-popup)
+12. **Footer**
 
 ### Wallet Page (`/wallet`)
-1. **Navbar** — Fixed nav with HUD
+1. **Navbar** — Fixed nav with HUD plus global bottom dock navigation (including energy/shards)
 2. **WalletHeader** — Credit balance summary
 3. **TransactionList** — Filterable credit transaction history
-4. **PageTutorial** — First-time wallet tutorial
+4. **TutorialHelpButton** — Floating "?" to trigger tutorial (no auto-popup)
 5. **Footer**
 
 ## Source Files
 
 ### Pages
 
-| File                      | Description                                                                |
-| ------------------------- | -------------------------------------------------------------------------- |
-| `App.tsx`                 | Root — route shell + GameProvider wrapper + QuestToast + pageview tracking |
-| `pages/LandingPage.tsx`   | Landing page composition                                                   |
-| `pages/PlayPage.tsx`      | Game page with tutorial integration                                        |
-| `pages/ShopPage.tsx`      | Shop page — listings + auctions via ShopTabs                               |
-| `pages/InventoryPage.tsx` | Inventory page — loot grid with status filter                              |
-| `pages/ProfilePage.tsx`   | Profile page — XP, quests, boss fights, prestige, demo reset               |
-| `pages/WalletPage.tsx`    | Wallet page — credit balance + transaction history                         |
+| File                        | Description                                                                |
+| --------------------------- | -------------------------------------------------------------------------- |
+| `App.tsx`                   | Root — route shell + GameProvider wrapper + QuestToast + pageview tracking |
+| `pages/LandingPage.tsx`     | Landing page composition                                                   |
+| `pages/OpenPage.tsx`        | Vault opening page with tutorial integration                               |
+| `pages/CollectionPage.tsx`  | Collection page — inventory + market + auctions via shared segmented tabs |
+| `pages/ArenaPage.tsx`       | Arena page — battles, forge, quests, rank-up, demo reset                   |
+| `pages/WalletPage.tsx`      | Wallet page — credit balance + transaction history                         |
 
 ### Components — Shared (`components/shared/`)
 
 | File                              | Description                                                             |
 | --------------------------------- | ----------------------------------------------------------------------- |
-| `shared/Navbar.tsx`               | Fixed nav with optional HUD (credits/loot/level) + contextual nav links |
+| `shared/Navbar.tsx`               | Fixed nav with optional HUD + unified bottom dock nav on all breakpoints |
+| `shared/SegmentedTabs.tsx`        | Reusable segmented control used by Collection and Arena section switching |
 | `shared/Footer.tsx`               | Footer with branding + feedback link                                    |
-| `shared/PlayNowButton.tsx`        | 3D pushable CTA button with analytics tracking                          |
+| `shared/PlayNowButton.tsx`        | 3D pushable "OPEN NOW" CTA button linking to `/open` with analytics tracking |
+| `shared/CollectionModal.tsx`      | Reusable modal for selecting collectibles (used in squad selection)      |
 | `shared/FeedbackButton.tsx`       | Google Form feedback button (graceful no-op when env var missing)       |
 | `shared/QuestToast.tsx`           | Quest completion toast notification                                     |
 | `shared/PageTutorial.tsx`         | Reusable page tutorial overlay with welcome/spotlight/complete steps + skip + viewport-clamped tooltips |
@@ -276,23 +280,26 @@ Applied via `html[data-prestige="N"]` in CSS. Each prestige level overrides `--c
 
 ### Components — Landing
 
-| File                             | Description                                                                             |
-| -------------------------------- | --------------------------------------------------------------------------------------- |
-| `components/Hero.tsx`            | Hero with vault door + Typed.js subtitle + CTA + neon scroll indicator                  |
-| `components/HowItWorks.tsx`      | 6-step explainer (2 rows) with styled images                                            |
-| `components/AppPreview.tsx`      | Benefits + phone mockup two-column layout                                               |
-| `components/PhoneMockup.tsx`     | iPhone frame with auto-playing 5-screen demo                                            |
-| `components/CTASection.tsx`      | "Try the Demo" CTA linking to /play                                                     |
-| `components/WaitlistSection.tsx` | Lifts useWaitlistCount, passes count/loading to IncentiveBanner + WaitlistForm          |
-| `components/IncentiveBanner.tsx` | 4-tier incentive card grid with per-tier colors and progress bars                       |
-| `components/WaitlistForm.tsx`    | Email form with tier-aware success messaging + Edge Function integration + feedback CTA |
-| `components/TurnstileWidget.tsx` | Cloudflare Turnstile CAPTCHA widget (managed mode, dark theme)                          |
+| File                              | Description                                                                             |
+| --------------------------------- | --------------------------------------------------------------------------------------- |
+| `components/Hero.tsx`             | Hero with vault door + Typed.js subtitle + CTA + neon scroll indicator                  |
+| `components/HowItWorks.tsx`       | 6-step explainer (2 rows) with styled images                                            |
+| `components/FeatureHighlights.tsx` | 4 compact clickable feature cards (Collection, Arena, Rank Up, Forge + Quests)          |
+| `components/CTASection.tsx`       | "Try the Demo" CTA linking to /open                                                     |
+| `components/WaitlistSection.tsx`  | Lifts useWaitlistCount, passes count/loading to IncentiveBanner + WaitlistForm          |
+| `components/IncentiveBanner.tsx`  | 4-tier incentive card grid with per-tier colors and progress bars                       |
+| `components/WaitlistForm.tsx`     | Email form with tier-aware success messaging + Edge Function integration + feedback CTA |
+| `components/CompactFAQ.tsx`       | FAQ accordion with expandable Q&A items                                                  |
+| `components/TurnstileWidget.tsx`  | Cloudflare Turnstile CAPTCHA widget (managed mode, dark theme)                          |
+| `components/AppPreview.tsx`       | (archived) Benefits + phone mockup — not rendered on landing                            |
+| `components/PhoneMockup.tsx`      | iPhone frame with auto-playing 5-screen demo (used by AppPreview)                       |
+| `components/PrelaunchClarity.tsx` | (archived) Scope cards + FAQ — content relocated to CompactFAQ                          |
 
 ### Components — Vault (`components/vault/`)
 
 | File                              | Description                                                                            |
 | --------------------------------- | -------------------------------------------------------------------------------------- |
-| `vault/VaultGrid.tsx`             | Category selector, vault cards + full-screen reveal overlay + bonus stage integration  |
+| `vault/VaultGrid.tsx`             | Category selector, vault cards + full-screen reveal overlay (3 options: Keep/Ship/Cashout) + bonus stage integration |
 | `vault/VaultCard.tsx`             | Individual vault card with rarity bars                                                 |
 | `vault/VaultIcons.tsx`            | SVG mineral/ore icon mapper per tier (delegates to `assets/vault-icons.tsx`)           |
 | `vault/VaultLockBonusStage.tsx`   | 3-reel Vault Lock mini-game with cascading lock, escalating effects, free spin rewards |
@@ -314,15 +321,23 @@ Applied via `html[data-prestige="N"]` in CSS. Each prestige level overrides `--c
 | `inventory/InventoryGrid.tsx`     | Inventory grid with status filter             |
 | `inventory/InventoryItemCard.tsx` | Item card with Hold/Ship/Cashout/List actions |
 
+### Components — Arena (`components/arena/`)
+
+| File                            | Description                                                              |
+| ------------------------------- | ------------------------------------------------------------------------ |
+| `arena/ResourceBar.tsx`         | Energy + Shards + Free Spins resource display bar                        |
+| `arena/BattleCard.tsx`          | Locked/unlocked battle card with per-boss energy cost display            |
+| `arena/BattleSetupModal.tsx`    | Squad selection modal (up to 3 collectibles) with stat comparison        |
+| `arena/BattleOverlay.tsx`       | Full-screen stat-based combat UI with round-by-round exchange display    |
+| `arena/ForgePanel.tsx`          | Forge UI: select 3 items, optional free spin boost, rarity odds preview  |
+| `arena/SquadPanel.tsx`          | (archived) Squad management panel — no longer rendered                   |
+
 ### Components — Profile (`components/profile/`)
 
 | File                            | Description                                                              |
 | ------------------------------- | ------------------------------------------------------------------------ |
-| `profile/ProfilePanel.tsx`      | XP bar, level, stats, boss fights grid                                   |
-| `profile/BossFightCard.tsx`     | Locked/unlocked boss fight card                                          |
-| `profile/BossFightOverlay.tsx`  | Full-screen reel-based combat UI with HP bars, attack timing, tutorials  |
-| `profile/PrestigeButton.tsx`    | Prestige trigger button (shown at Level 10+, max prestige 3)            |
-| `profile/PrestigeOverlay.tsx`   | Prestige celebration with particle effects, benefit badges, phase reveal |
+| `profile/PrestigeButton.tsx`    | "Rank Up" trigger button (shown at Level 10+, max prestige 3)           |
+| `profile/PrestigeOverlay.tsx`   | Rank-up celebration with particle effects, benefit badges, phase reveal  |
 | `profile/QuestCard.tsx`         | Quest card with progress bar                                             |
 | `profile/QuestList.tsx`         | Quest list with category filter                                          |
 
@@ -349,7 +364,9 @@ Applied via `html[data-prestige="N"]` in CSS. Each prestige level overrides `--c
 | `types/inventory.ts`    | `ItemStatus`, `InventoryItem`, `InventoryItemCardProps`                                                     |
 | `types/marketplace.ts`  | `MarketplaceListing`, `Auction`, `AuctionCardProps`                                                         |
 | `types/wallet.ts`       | `CreditType`, `CreditTransaction`, `TransactionRowProps`                                                    |
-| `types/gamification.ts` | `PrestigeLevel`, `LevelInfo`, `BossFight`, `BossFightCardProps`, `AttackQuality`, `DamageResult`            |
+| `types/gamification.ts` | `PrestigeLevel`, `LevelInfo`, `Battle` (with `energyCost`), `BattleCardProps`, `BossEnergyConfig`, `SquadStats`, `CombatExchange`, `CombatResult`, `ShardConfig` |
+| `types/collectible.ts`  | `Collectible`, `ItemStats` — collectible items with ATK/DEF/AGI stats                                      |
+| `types/forge.ts`        | `ForgeOdds`, `ForgeResult` — forge system types                                                             |
 | `types/quest.ts`        | `Quest`, `QuestProgress`, `QuestToast`, `QuestCardProps`, `QuestRequirement` + related union types          |
 | `types/landing.ts`      | `Step`, `IncentiveTier`, `IncentiveBannerProps`, `WaitlistFormProps`, `TurnstileWidget*`, `NavbarProps`     |
 | `types/tutorial.ts`     | `TutorialStep`, `TutorialProps` (with `onSkip`), `TargetRect`, `PageTutorialStepConfig`, `PageTutorialProps` |
@@ -360,10 +377,12 @@ Applied via `html[data-prestige="N"]` in CSS. Each prestige level overrides `--c
 | File                   | Description                                                                          |
 | ---------------------- | ------------------------------------------------------------------------------------ |
 | `data/vaults.ts`       | Vault tiers, rarity config, pick helpers, incentive tiers, product types, vault lock strip generation, prestige odds |
-| `data/gamification.ts` | XP formulas, level curve functions, boss fight config + odds, prestige boss scaling   |
+| `data/gamification.ts` | XP formulas, level curve functions, battle config (BATTLES with `energyCost`), boss energy config, shard economy, stat-based combat engine, prestige battle scaling |
+| `data/item-stats.ts`   | Item stat generation (ATK/DEF/AGI) based on rarity and vault tier                    |
+| `data/forge.ts`        | Forge odds calculation, boost application, result rolling                             |
 | `data/mock-data.ts`    | Seed marketplace listings + auctions with mock sellers                               |
 | `data/quests.ts`       | Quest definitions (onboarding, engagement, milestone categories)                     |
-| `data/tutorial.ts`     | Tutorial step flow, overlay/tooltip step configs, page tutorial steps (play, wallet, profile, inventory, shop, boss fight) |
+| `data/tutorial.ts`     | Tutorial step flow, overlay/tooltip step configs, page tutorial steps (open, wallet, arena, collection, boss fight) |
 | `data/inventory.ts`    | Inventory status filter config                                                       |
 | `data/wallet.ts`       | Wallet/credit type display config                                                    |
 
@@ -435,13 +454,15 @@ Applied via `html[data-prestige="N"]` in CSS. Each prestige level overrides `--c
 - Motion animations: keep lightweight — subtle hovers, gentle scroll reveals, polished form feedback
 - `useReducedMotion()` from Motion used in complex animations (boss fights, prestige, vault lock) for accessibility
 - Mobile-first responsive design: use `sm:`, `md:`, `lg:` breakpoints for progressive enhancement
+- Primary app navigation pattern: unified fixed bottom dock on all breakpoints; hide dock during blocking overlays/modals
 - One hook per file in `hooks/`
 - Relative imports (no path aliases configured)
 - Game state accessed via `useGame()` hook from GameContext — never local state for credits/inventory/XP/prestige/boss fights
 - Types organized by domain in `types/` — import from domain file in new code (e.g. `types/vault`, `types/quest`, `types/bonus`); `types/game.ts` barrel re-export maintained for backwards compatibility
-- Components organized by domain: `shared/`, `vault/`, `shop/`, `inventory/`, `profile/`, `wallet/`
+- Components organized by domain: `shared/`, `vault/`, `shop/`, `inventory/`, `arena/`, `profile/`, `wallet/`
 - SVG icon assets in `assets/` (vault-icons, step-icons, benefits-icons, boss-icons), not inline in components
 - Static images in `public/` for production-safe paths (not `src/assets/`)
+- Only `/open` auto-triggers its tutorial on first visit. All other pages show a "?" help button to manually trigger tutorials (no auto-popup)
 - All page tutorials follow the PageTutorial pattern: welcome step -> spotlight steps -> complete step, with skip support and localStorage persistence via GameContext
 
 ## GameContext State Shape
@@ -451,25 +472,34 @@ Persisted to `localStorage` key `vaultedlabs-game-state`:
 ```typescript
 interface PersistedState {
   creditTransactions: CreditTransaction[];
-  inventory: InventoryItem[];
+  inventory: Collectible[];
   xp: number;
   listings: MarketplaceListing[];
   auctions: Auction[];
   questProgress: QuestProgress[];
-  hasSeenTutorial: boolean;          // /play vault tutorial
+  hasSeenTutorial: boolean;            // /open vault tutorial
   hasSeenWalletTutorial: boolean;
   hasSeenProfileTutorial: boolean;
   hasSeenInventoryTutorial: boolean;
   hasSeenShopTutorial: boolean;
   hasSeenBossFightTutorial: boolean;
-  prestigeLevel: number;             // 0-3
-  defeatedBosses: string[];          // ["boss-1", ...]
-  freeSpins: number;                 // from Vault Lock bonus
+  hasSeenArenaTutorial: boolean;
+  hasSeenCollectionTutorial: boolean;
+  prestigeLevel: number;               // 0-3
+  defeatedBosses: string[];            // ["boss-1", ...]
+  freeSpins: number;                   // from Vault Lock bonus
+  cashoutStreak: number;
   nextId: number;
+  // v2 fields
+  bossEnergy: number;                  // current energy (max 5)
+  lastEnergyRegenAt: number;           // timestamp for regen tracking
+  shards: number;                      // earned from battles
+  equippedItemIds: string[];           // squad item IDs
+  stateVersion: number;                // migration version (currently 2)
 }
 ```
 
-Key context methods: `purchaseVault`, `addItem`, `cashoutItem`, `shipItem`, `listItem`, `buyListing`, `placeBid`, `prestige`, `defeatBoss`, `grantFreeSpins`, `useFreeSpinForVault`, `tutorialOpenVault`, `seedDemoItem`, `removeDemoItem`, `resetDemo`.
+Key context methods: `purchaseVault`, `addItem`, `cashoutItem`, `shipItem`, `listItem`, `buyListing`, `placeBid`, `prestige`, `completeBattle`, `spendBossEnergy` (accepts optional cost param), `grantBossEnergy`, `grantShards`, `convertShardsToFreeSpin`, `equipItem`, `unequipItem`, `forgeItems`, `grantFreeSpins`, `useFreeSpinForVault`, `tutorialOpenVault`, `seedDemoItem`, `removeDemoItem`, `resetDemo`.
 
 ## Commands
 
@@ -529,3 +559,5 @@ Both tables have RLS enabled. Anonymous select on `waitlist` only. Inserts go th
 ### Phase 2 (designed, not yet wired): Marketplace tables
 
 Planned: `user_profiles`, `inventory_items`, `credit_transactions`, `marketplace_listings`, `auctions`, `auction_bids`. All with RLS policies for authenticated users. Currently, marketplace state is managed in-memory via GameContext with mock data.
+
+

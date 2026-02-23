@@ -86,10 +86,20 @@ Configured in `src/lib/posthog.ts`:
 
 | Event | Source | Properties |
 | ----- | ------ | ---------- |
-| `tutorial_started` | `PlayPage` | `page_path` |
-| `tutorial_step_completed` | `PlayPage` | `step`, `page_path` |
-| `tutorial_completed` | `PlayPage` | `action`, `page_path` |
+| `tutorial_started` | `OpenPage` | `page_path` |
+| `tutorial_step_completed` | `OpenPage` | `step`, `page_path` |
+| `tutorial_completed` | `OpenPage` | `action`, `page_path` |
 | `quest_completed` | `GameContext` | `quest_id`, `quest_title`, `page_path` |
+
+### Arena / Combat
+
+| Event | Source | Properties |
+| ----- | ------ | ---------- |
+| `battle_started` | `ArenaPage` | `boss_id`, `squad_size`, `page_path` |
+| `battle_completed` | `ArenaPage` | `boss_id`, `victory`, `shards_earned`, `xp_earned`, `page_path` |
+| `forge_completed` | `ForgePanel` | `input_rarities`, `result_rarity`, `free_spins_used`, `page_path` |
+| `shards_converted` | `ForgePanel` | `shards_spent`, `page_path` |
+| `squad_selected` | `BattleSetupModal` | `squad_size`, `total_atk`, `total_def`, `page_path` |
 
 ### Marketplace / Shop
 
@@ -107,10 +117,10 @@ Configured in `src/lib/posthog.ts`:
 
 ## Funnel Definitions
 
-1. Landing to Play
+1. Landing to Open
 - `$pageview` where `page_path = "/"`
-- `cta_click` where `cta_name = "play_now"`
-- `$pageview` where `page_path = "/play"`
+- `cta_click` where `cta_name = "open_now"`
+- `$pageview` where `page_path = "/open"`
 - `vault_opened`
 
 2. Core Vault Completion
