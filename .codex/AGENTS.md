@@ -59,3 +59,14 @@ Repository guidance for coding agents working on VaultedLabs.
 - Collection and Arena section switching both use the shared segmented tab pattern.
 - Arena tutorial is wired and replayable from help button, covering resources, section tabs, battles, forge, quests, and rank-up.
 - Bonus spin percentage UI is premium-only: Platinum, Obsidian, Diamond.
+
+## Current Implementation Notes (2026-02-24)
+- Primary app routes now center on `/vaults`, `/wallet`, `/locker/*`, and `/arena/*`.
+- Bottom dock has exactly three items: `Wallet`, `Vaults`, `Locker`.
+- Locker is the only tabbed surface (`Inventory`, `Market`, `Arena`).
+- Arena tabs were removed; Arena Home cards route to `/arena/battles`, `/arena/forge`, `/arena/quests`.
+- XP gating is enforced via `LockedOverlay` for Locker/Market/Arena/Battles/Forge/Quests.
+- HUD is informational only: Credits, Energy, XP/Lv (no navigation actions).
+- Inventory defaults to active items only (status `held`); non-held history is surfaced via wallet/market flows.
+- Open reveal layout is constrained for mobile to prevent legendary overflow and floating rarity tags.
+- Tutorial spotlight utilities now auto-scroll and clamp tooltips to safe viewport areas across desktop/mobile.

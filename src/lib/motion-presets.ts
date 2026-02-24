@@ -128,11 +128,47 @@ export const RARITY_TEXT_CONFIG: Record<string, {
     flashOpacity: 0.3
   },
   legendary: {
-    titleSize: "text-5xl",
-    titleSizeLg: "text-8xl",
+    titleSize: "text-4xl",
+    titleSizeLg: "text-6xl",
     textShadow: "0 0 40px",
     entranceScale: 0.7,
     entranceDelay: 0.35,
     flashOpacity: 0.6
   }
+};
+
+/* ─── Jackpot Celebration Config ─── */
+
+export const JACKPOT_CELEBRATION = {
+  particleCount: 100,
+  spread: 600,
+  shockwaveCount: 2,
+  shockwaveStagger: 0.15,
+  flashDuration: 0.6,
+  textSpring: { damping: 10, stiffness: 200 },
+  particleColors: ["#ffd700", "#ffffff", "#ff2d95", "#00f0ff"]
+};
+
+/* ─── Forge Animation Config ─── */
+
+export const FORGE_ANIMATION = {
+  dissolveDuration: 1000,
+  crucibleDuration: 1000,
+  materializeDuration: 500,
+  sparkCount: 10,
+  emberCount: 30,
+  emberColors: ["#ff6b35", "#ff4500", "#ffa500", "#ffd700"],
+  crucibleGradient: "radial-gradient(ellipse at center, rgba(255,107,53,0.6) 0%, rgba(255,69,0,0.3) 40%, transparent 70%)"
+};
+
+/* ─── Battle Animation Config ─── */
+
+export const BATTLE_ANIMATION = {
+  hitFlashDuration: 0.15,
+  damageNumberDuration: 1,
+  damageNumberDistance: 60,
+  slashDuration: 0.3,
+  impactDuration: 0.3,
+  hpGreenThreshold: 60,
+  hpGoldThreshold: 30
 };

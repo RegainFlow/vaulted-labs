@@ -12,7 +12,7 @@ export const LINEAR_FLOW: Record<string, TutorialStep> = {
   odds: "contents",
   contents: "open-vault",
   "result-store": "result-ship",
-  "result-ship": "result-cashout"
+  "result-ship": "result-cashout",
 };
 
 export const TOOLTIP_STEPS: Record<
@@ -29,29 +29,28 @@ export const TOOLTIP_STEPS: Record<
     title: "Your Dashboard",
     description:
       "Track credits, energy, shards, and level here while you play.",
-    position: "bottom"
+    position: "bottom",
   },
   categories: {
     selector: '[data-tutorial="categories"]',
     title: "Category Filter",
     description:
       "Choose what collectible category you want to hunt before opening.",
-    position: "bottom"
+    position: "bottom",
   },
   odds: {
     selector: '[data-tutorial="vault-odds"]',
     title: "Check Odds",
     description:
       "Tap Odds to view rarity chances. Higher rank lowers common chance and boosts higher rarities.",
-    position: "bottom"
+    position: "bottom",
   },
   contents: {
     selector: '[data-tutorial="vault-contents"]',
     title: "Check Contents",
-    description:
-      "Tap Contents to preview what can drop from this vault tier.",
-    position: "bottom"
-  }
+    description: "Tap Contents to preview what can drop from this vault tier.",
+    position: "bottom",
+  },
 };
 
 // Steps that Tutorial.tsx should NOT render (handled inside VaultOverlay)
@@ -59,7 +58,7 @@ export const OVERLAY_STEPS = new Set<string>([
   "spin-reel",
   "result-store",
   "result-ship",
-  "result-cashout"
+  "result-cashout",
 ]);
 
 /* --- Page Tutorial Step Configs --- */
@@ -70,7 +69,7 @@ export const WALLET_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     type: "welcome",
     title: "Your Wallet",
     description:
-      "Track credits, view transactions, and understand your balance."
+      "Track credits, view transactions, and understand your balance.",
   },
   {
     id: "wallet-balance",
@@ -78,7 +77,7 @@ export const WALLET_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="wallet-balance"]',
     title: "Available Balance",
     description: "Your total spendable credits shown here.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "wallet-breakdown",
@@ -87,7 +86,7 @@ export const WALLET_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     title: "Credit Breakdown",
     description:
       "Earned (cashouts, quests, boss rewards), Incentive (promo grants), and Spent (vaults and market buys).",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "wallet-actions",
@@ -96,7 +95,7 @@ export const WALLET_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     title: "Quick Actions",
     description:
       "Add credits from the landing page, or select credits to cash out for money.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "wallet-filters",
@@ -104,7 +103,7 @@ export const WALLET_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="wallet-filters"]',
     title: "Filter Transactions",
     description: "Filter by type: All, Earned, Incentive, Spent.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "wallet-transactions",
@@ -113,14 +112,14 @@ export const WALLET_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     title: "Transaction History",
     description:
       "Every credit movement appears here: vault purchases, rewards, and cashouts.",
-    position: "top"
+    position: "top",
   },
   {
     id: "wallet-complete",
     type: "complete",
     title: "Wallet Unlocked!",
-    description: "You are ready to manage your credits."
-  }
+    description: "You are ready to manage your credits.",
+  },
 ];
 
 /** @deprecated Use ARENA_TUTORIAL_STEPS instead */
@@ -131,7 +130,8 @@ export const ARENA_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     id: "arena-welcome",
     type: "welcome",
     title: "The Arena",
-    description: "Battle bosses, forge upgrades, and complete quests to rank up faster."
+    description:
+      "Battle bosses, forge upgrades, and complete quests to rank up faster.",
   },
   {
     id: "arena-resources",
@@ -140,16 +140,15 @@ export const ARENA_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     title: "Energy and Shards",
     description:
       "Energy powers boss fights. Win battles to earn shards, then convert shards into free spins.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "arena-tabs",
     type: "spotlight",
     selector: '[data-tutorial="arena-tabs"]',
     title: "Arena Sections",
-    description:
-      "Use these tabs to move between Battles, Forge, and Quests.",
-    position: "bottom"
+    description: "Use these tabs to move between Battles, Forge, and Quests.",
+    position: "bottom",
   },
   {
     id: "arena-battles",
@@ -158,7 +157,7 @@ export const ARENA_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     title: "Battles",
     description:
       "Pick a boss, choose your squad, and auto-battle for shard and XP rewards.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "arena-tab-forge",
@@ -167,7 +166,7 @@ export const ARENA_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     title: "Forge Tab",
     description:
       "Switch to Forge when you want to combine 3 collectibles into one result.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "arena-forge",
@@ -176,7 +175,7 @@ export const ARENA_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     title: "Forge",
     description:
       "Combine 3 collectibles into a new one. Better inputs improve your odds.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "arena-tab-quests",
@@ -185,16 +184,15 @@ export const ARENA_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     title: "Quests Tab",
     description:
       "Switch to Quests to track milestones and collect progression XP.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "arena-quests",
     type: "spotlight",
     selector: '[data-tutorial="arena-quests"]',
     title: "Quests",
-    description:
-      "Complete quests for extra XP and progression milestones.",
-    position: "top"
+    description: "Complete quests for extra XP and progression milestones.",
+    position: "top",
   },
   {
     id: "arena-rankup",
@@ -203,14 +201,14 @@ export const ARENA_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     title: "Rank Up",
     description:
       "XP raises your level. At higher levels you can prestige to improve rarity odds.",
-    position: "top"
+    position: "top",
   },
   {
     id: "arena-complete",
     type: "complete",
     title: "Arena Ready!",
-    description: "Use energy wisely, collect shards, and climb the ranks."
-  }
+    description: "Use energy wisely, collect shards, and climb the ranks.",
+  },
 ];
 
 /** @deprecated Use COLLECTION_TUTORIAL_STEPS instead */
@@ -221,7 +219,8 @@ export const COLLECTION_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     id: "collection-welcome",
     type: "welcome",
     title: "Your Collection",
-    description: "Manage items, buy from Market, and bid in Auctions from one place."
+    description:
+      "Manage items, buy from Market, and bid in Auctions from one place.",
   },
   {
     id: "collection-tabs",
@@ -229,7 +228,7 @@ export const COLLECTION_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="collection-tabs"]',
     title: "Dashboard Tabs",
     description: "Switch between My Collection, Market, and Auctions.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "collection-item",
@@ -237,15 +236,15 @@ export const COLLECTION_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="collection-item"]',
     title: "Collectible Card",
     description: "Each item shows rarity, value, and combat stats.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "collection-actions",
     type: "spotlight",
     selector: '[data-tutorial="collection-actions"]',
     title: "Item Actions",
-    description: "Keep, Ship, Cashout, or List your held collectible.",
-    position: "top"
+    description: "Keep, Ship, Cashout, or List your item.",
+    position: "top",
   },
   {
     id: "collection-market-tab",
@@ -253,7 +252,7 @@ export const COLLECTION_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="collection-market-tab"]',
     title: "Market",
     description: "Move to fixed-price listings and buy instantly with credits.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "collection-listing",
@@ -261,7 +260,7 @@ export const COLLECTION_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="shop-listing"]',
     title: "Market Listing",
     description: "Browse player listings and compare rarity and price.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "collection-auction-tab",
@@ -269,7 +268,7 @@ export const COLLECTION_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="collection-auction-tab"]',
     title: "Auctions",
     description: "Switch to auctions to compete before the timer ends.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "collection-auction",
@@ -277,14 +276,15 @@ export const COLLECTION_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="shop-auction"]',
     title: "Auction Card",
     description: "Watch countdowns and place bids to win high-demand items.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "collection-complete",
     type: "complete",
     title: "Collection Ready!",
-    description: "You can now manage, trade, and route collectibles into Arena progression."
-  }
+    description:
+      "You can now manage, trade, and route collectibles into Arena progression.",
+  },
 ];
 
 export const LOCKER_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
@@ -293,7 +293,7 @@ export const LOCKER_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     type: "welcome",
     title: "Your Locker",
     description:
-      "Use Locker tabs to manage inventory, market actions, and arena systems."
+      "Use Locker tabs to manage inventory, market actions, and arena systems.",
   },
   {
     id: "locker-tabs",
@@ -301,15 +301,15 @@ export const LOCKER_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="locker-tabs"]',
     title: "Locker Tabs",
     description: "Inventory is your base, then move into Market and Arena.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "locker-inventory",
     type: "spotlight",
     selector: '[data-tutorial="locker-inventory"]',
     title: "Inventory",
-    description: "Filter and manage collectibles you opened and saved.",
-    position: "top"
+    description: "Manage collectibles you opened and saved.",
+    position: "top",
   },
   {
     id: "locker-market-tab",
@@ -317,7 +317,7 @@ export const LOCKER_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="locker-tab-market"]',
     title: "Market Tab",
     description: "Switch here to buy now listings and auctions.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "locker-market",
@@ -325,7 +325,7 @@ export const LOCKER_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="locker-market"]',
     title: "Market View",
     description: "Browse marketplace and auctions in one combined view.",
-    position: "top"
+    position: "top",
   },
   {
     id: "locker-arena-tab",
@@ -333,7 +333,7 @@ export const LOCKER_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="locker-tab-arena"]',
     title: "Arena Tab",
     description: "Go here to launch Battles, Forge, or Quests.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "locker-arena",
@@ -341,14 +341,14 @@ export const LOCKER_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="locker-arena"]',
     title: "Arena Home",
     description: "Pick the arena system you want to run next.",
-    position: "top"
+    position: "top",
   },
   {
     id: "locker-complete",
     type: "complete",
     title: "Locker Ready!",
-    description: "You now know where to manage, trade, and battle."
-  }
+    description: "You now know where to manage, trade, and battle.",
+  },
 ];
 
 export const BOSS_FIGHT_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
@@ -357,16 +357,15 @@ export const BOSS_FIGHT_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     type: "welcome",
     title: "Boss Battle!",
     description:
-      "Your squad stats auto-resolve against the boss. Stronger ATK/DEF/AGI improves win odds."
+      "Your squad stats auto-resolve against the boss. Stronger ATK/DEF/AGI improves win odds.",
   },
   {
     id: "boss-squad-hp",
     type: "spotlight",
     selector: '[data-tutorial="boss-squad-hp"]',
     title: "Squad HP",
-    description:
-      "Your squad health pool. If it hits zero, the battle is lost.",
-    position: "bottom"
+    description: "Your squad health pool. If it hits zero, the battle is lost.",
+    position: "bottom",
   },
   {
     id: "boss-enemy-hp",
@@ -374,7 +373,7 @@ export const BOSS_FIGHT_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="boss-enemy-hp"]',
     title: "Boss HP",
     description: "Reduce boss health to zero to win and collect shards.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "boss-exchanges",
@@ -383,14 +382,14 @@ export const BOSS_FIGHT_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     title: "Combat Exchanges",
     description:
       "Each round both sides trade damage based on stats and modifiers.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "boss-complete",
     type: "complete",
     title: "Ready to Fight!",
-    description: "Build a stronger squad and keep farming shards."
-  }
+    description: "Build a stronger squad and keep farming shards.",
+  },
 ];
 
 export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
@@ -398,7 +397,7 @@ export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     id: "shop-welcome",
     type: "welcome",
     title: "The Shop",
-    description: "Buy collectibles and bid on auctions from other players."
+    description: "Buy collectibles and bid on auctions from other players.",
   },
   {
     id: "shop-tabs",
@@ -407,7 +406,7 @@ export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     title: "Two Sections",
     description:
       "Marketplace for fixed-price listings, Auctions for competitive bidding.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "shop-listing",
@@ -415,7 +414,7 @@ export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="shop-listing"]',
     title: "Marketplace Listing",
     description: "Browse items listed by other players at fixed prices.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "shop-buy",
@@ -423,7 +422,7 @@ export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="shop-buy"]',
     title: "Buy Now",
     description: "Purchase instantly if you have enough credits.",
-    position: "top"
+    position: "top",
   },
   {
     id: "shop-auction-tab",
@@ -431,7 +430,7 @@ export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="shop-auction-tab"]',
     title: "Auctions",
     description: "Switch to auctions to bid on items before time runs out.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "shop-auction",
@@ -439,7 +438,7 @@ export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="shop-auction"]',
     title: "Auction Item",
     description: "Bid on items before time runs out. Highest bidder wins.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "shop-timer",
@@ -447,7 +446,7 @@ export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="shop-timer"]',
     title: "Countdown Timer",
     description: "When under 5 minutes, the timer pulses red.",
-    position: "bottom"
+    position: "bottom",
   },
   {
     id: "shop-bid",
@@ -455,12 +454,12 @@ export const SHOP_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
     selector: '[data-tutorial="shop-bid"]',
     title: "Place a Bid",
     description: "Enter a bid above current price and submit.",
-    position: "top"
+    position: "top",
   },
   {
     id: "shop-complete",
     type: "complete",
     title: "Shop Pro!",
-    description: "Buy, bid, and build your collection."
-  }
+    description: "Buy, bid, and build your collection.",
+  },
 ];

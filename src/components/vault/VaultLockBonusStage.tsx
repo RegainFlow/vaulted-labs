@@ -8,6 +8,7 @@ import {
   pickVaultLockLanding
 } from "../../data/vaults";
 import { VaultIcon } from "./VaultIcons";
+import { JACKPOT_CELEBRATION } from "../../lib/motion-presets";
 
 const PRESTIGE_THEMES: Record<number, { primary: string; secondary: string }> = {
   0: { primary: "#ff2d95", secondary: "#00f0ff" },
@@ -216,7 +217,8 @@ function ElectricArc({ color, fromIndex }: { color: string; fromIndex: number; t
 export function VaultLockBonusStage({
   purchasedTierName,
   prestigeLevel = 0,
-  onComplete
+  onComplete,
+  forcedLandings
 }: VaultLockBonusStageProps) {
   const prefersReducedMotion = useReducedMotion();
   const [phase, setPhase] = useState<VaultLockPhase>("announce");
@@ -231,10 +233,20 @@ export function VaultLockBonusStage({
   ], [purchasedTierName]);
 
   // Pre-determine landing results for each spinner
-  const landings = useMemo(() => strips.map((strip) => {
-    const landing = pickVaultLockLanding(strip);
-    return { tier: landing.tier, color: landing.color, index: landing.index };
-  }), [strips]);
+  const landings = useMemo(() => {
+    if (forcedLandings === "jackpot") {
+      // Force all 3 spinners to land on purchasedTierName for a guaranteed jackpot
+      return strips.map((strip) => {
+        const matchIndex = strip.findIndex((slot) => slot.tier === purchasedTierName);
+        const idx = matchIndex >= 0 ? matchIndex : 0;
+        return { tier: strip[idx].tier, color: strip[idx].color, index: idx };
+      });
+    }
+    return strips.map((strip) => {
+      const landing = pickVaultLockLanding(strip);
+      return { tier: landing.tier, color: landing.color, index: landing.index };
+    });
+  }, [strips, forcedLandings, purchasedTierName]);
 
   const [lockedResults, setLockedResults] = useState<(SpinnerResult | null)[]>([null, null, null]);
   const [escalation, setEscalation] = useState(0);
@@ -356,7 +368,7 @@ export function VaultLockBonusStage({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
-      className={`flex flex-col items-center justify-center w-full max-w-[96rem] px-2 sm:px-4 lg:px-8 ${phase === "evaluate" && matchCount === 3 ? "animate-edge-lightning" : ""}`}
+      className={`flex flex-col items-center justify-center w-full max-w-[96rem] px-2 sm:px-4 lg:px-8 ${phase === "evaluate" && matchCount === 3 ? "animate-jackpot-radial-pulse" : ""}`}
     >
       {/* Announce phase */}
       {phase === "announce" && (
@@ -404,7 +416,7 @@ export function VaultLockBonusStage({
           {/* 3 spinners side by side */}
           <div
             data-tutorial="bonus-round"
-            className="relative flex items-center justify-center gap-3 sm:gap-4 md:gap-6"
+            className="relative flex items-center justify-center gap-2 sm:gap-4 md:gap-6"
           >
             {strips.map((strip, i) => (
               <VaultLockSpinner
@@ -428,6 +440,7 @@ export function VaultLockBonusStage({
           {isSpinPhase && (
             <motion.button
               key={`lock-${phase}`}
+              data-tutorial="bonus-lock"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{
                 opacity: 1,
@@ -463,29 +476,43 @@ export function VaultLockBonusStage({
               >
                 {matchCount === 3 ? (
                   <div className="relative">
-                    {/* Confetti for jackpot */}
-                    <JackpotConfetti color={lockedResults[0]!.color} />
+                    <JackpotCelebration color={lockedResults[0]!.color} reduced={!!prefersReducedMotion} />
                     <motion.h3
-                      className="text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-tighter italic"
+                      className="text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-tighter italic relative z-10"
                       style={{
                         color: lockedResults[0]!.color,
                         textShadow: `0 0 40px ${lockedResults[0]!.color}`,
                         filter: `drop-shadow(0 0 30px ${lockedResults[0]!.color})`
                       }}
-                      animate={prefersReducedMotion ? undefined : { scale: [1, 1.05, 1] }}
-                      transition={prefersReducedMotion ? undefined : { duration: 1, repeat: Infinity }}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{
+                        type: "spring",
+                        damping: JACKPOT_CELEBRATION.textSpring.damping,
+                        stiffness: JACKPOT_CELEBRATION.textSpring.stiffness
+                      }}
                     >
                       Jackpot!
                     </motion.h3>
-                    <p className="text-lg sm:text-xl font-black text-white mt-3">
+                    <motion.p
+                      className="text-lg sm:text-xl font-black text-white mt-3 relative z-10"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
                       <span style={{ color: lockedResults[0]!.color }}>
                         +{SHARD_REWARDS[lockedResults[0]!.tier]}
                       </span>{" "}
                       Shard{SHARD_REWARDS[lockedResults[0]!.tier] > 1 ? "s" : ""}!
-                    </p>
-                    <p className="text-[10px] text-text-dim uppercase tracking-[0.3em] mt-1">
+                    </motion.p>
+                    <motion.p
+                      className="text-[10px] text-text-dim uppercase tracking-[0.3em] mt-1 relative z-10"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                    >
                       3x {lockedResults[0]!.tier} Match
-                    </p>
+                    </motion.p>
                   </div>
                 ) : matchCount === 2 ? (
                   <div className="bg-white/5 backdrop-blur-xl border border-white/10 px-8 py-5 rounded-3xl">
@@ -515,42 +542,84 @@ export function VaultLockBonusStage({
   );
 }
 
-function JackpotConfetti({ color }: { color: string }) {
+function JackpotCelebration({ color, reduced }: { color: string; reduced: boolean }) {
   const colorSeed = useMemo(() => color.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0), [color]);
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+  const particleCount = reduced ? 0 : isMobile ? 50 : JACKPOT_CELEBRATION.particleCount;
+
   const particles = useMemo<BurstParticle[]>(
     () =>
-      Array.from({ length: 80 }).map((_, i) => {
+      Array.from({ length: particleCount }).map((_, i) => {
         const base = colorSeed + i * 23.51;
+        const colorRoll = seededUnit(base + 3);
+        const isDiamond = seededUnit(base + 7) > 0.6;
         return {
           id: i,
-          x: (seededUnit(base + 1) - 0.5) * 600,
-          y: (seededUnit(base + 2) - 0.5) * 600,
-          color: seededUnit(base + 3) > 0.4 ? color : seededUnit(base + 4) > 0.5 ? "#ffffff" : "#ffd700",
-          scale: seededUnit(base + 5) * 0.8 + 0.2,
-          rotate: seededUnit(base + 6) * 720
-        };
+          x: (seededUnit(base + 1) - 0.5) * JACKPOT_CELEBRATION.spread,
+          y: (seededUnit(base + 2) - 0.5) * JACKPOT_CELEBRATION.spread,
+          color: colorRoll > 0.5 ? color : JACKPOT_CELEBRATION.particleColors[Math.floor(seededUnit(base + 4) * JACKPOT_CELEBRATION.particleColors.length)],
+          scale: seededUnit(base + 5) * 1.0 + 0.3,
+          rotate: seededUnit(base + 6) * 720,
+          isDiamond
+        } as BurstParticle & { isDiamond: boolean };
       }),
-    [color, colorSeed]
+    [color, colorSeed, particleCount]
   );
+
+  if (reduced) return null;
 
   return (
     <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible z-0">
-      {particles.map((p) => (
+      {/* Shockwave rings */}
+      {Array.from({ length: JACKPOT_CELEBRATION.shockwaveCount }).map((_, i) => (
         <motion.div
-          key={p.id}
-          initial={{ opacity: 1, x: 0, y: 0, scale: 0 }}
-          animate={{
-            opacity: 0,
-            x: p.x,
-            y: p.y,
-            rotate: p.rotate,
-            scale: p.scale
-          }}
-          transition={{ duration: 2.5, ease: "easeOut" }}
-          className="absolute w-2 h-2 rounded-sm"
-          style={{ backgroundColor: p.color }}
+          key={`shockwave-${i}`}
+          className="absolute rounded-full border-2"
+          style={{ borderColor: `${color}60`, width: 40, height: 40 }}
+          initial={{ scale: 0, opacity: 0.8 }}
+          animate={{ scale: 4, opacity: 0 }}
+          transition={{ duration: 1.2, delay: i * JACKPOT_CELEBRATION.shockwaveStagger, ease: "easeOut" }}
         />
       ))}
+
+      {/* Golden flash */}
+      <motion.div
+        className="fixed inset-0 pointer-events-none z-50"
+        initial={{ opacity: 0.7 }}
+        animate={{ opacity: 0 }}
+        transition={{ duration: JACKPOT_CELEBRATION.flashDuration }}
+        style={{ backgroundColor: "rgba(255,215,0,0.25)" }}
+      />
+
+      {/* Mixed particles (round + diamond-shaped) */}
+      {particles.map((p) => {
+        const pExt = p as BurstParticle & { isDiamond: boolean };
+        const sizeClass = pExt.isDiamond
+          ? `w-${Math.ceil(pExt.scale * 3)} h-${Math.ceil(pExt.scale * 3)}`
+          : `w-${Math.ceil(pExt.scale * 2)} h-${Math.ceil(pExt.scale * 2)}`;
+        return (
+          <motion.div
+            key={p.id}
+            initial={{ opacity: 1, x: 0, y: 0, scale: 0 }}
+            animate={{
+              opacity: 0,
+              x: p.x,
+              y: p.y,
+              rotate: p.rotate,
+              scale: p.scale
+            }}
+            transition={{ duration: 2.5, ease: "easeOut" }}
+            className={`absolute ${sizeClass}`}
+            style={{
+              backgroundColor: p.color,
+              borderRadius: pExt.isDiamond ? "2px" : "50%",
+              transform: pExt.isDiamond ? "rotate(45deg)" : undefined,
+              width: `${Math.max(4, p.scale * 12)}px`,
+              height: `${Math.max(4, p.scale * 12)}px`
+            }}
+          />
+        );
+      })}
     </div>
   );
 }

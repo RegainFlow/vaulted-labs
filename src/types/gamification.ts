@@ -69,6 +69,7 @@ export interface CombatExchange {
   squadHpAfter: number;
   bossHpAfter: number;
   quality: "critical" | "strong" | "normal" | "weak";
+  bossHeal?: number;
 }
 
 export interface CombatResult {

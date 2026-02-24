@@ -1,7 +1,7 @@
-@import "tailwindcss";
+﻿@import "tailwindcss";
 
 @theme {
-  /* Backgrounds — blue-shifted darks */
+  /* Backgrounds â€” blue-shifted darks */
   --color-bg: #0a0a0f;
   --color-surface: #111118;
   --color-surface-elevated: #1a1a24;
@@ -18,7 +18,7 @@
   /* Tertiary: Green neon */
   --color-neon-green: #39ff14;
 
-  /* Text — cool-tinted */
+  /* Text â€” cool-tinted */
   --color-text: #f0f0f5;
   --color-text-muted: #9a9ab0;
   --color-text-dim: #6a6a80;
@@ -55,7 +55,17 @@
     min-height: 100dvh;
   }
 
-  /* Prestige 1 — Gold/Amber */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+
+  /* Prestige 1 â€” Gold/Amber */
   html[data-prestige="1"] {
     --color-bg: #0f0a06;
     --color-surface: #161008;
@@ -65,7 +75,7 @@
     --color-accent-hover: #e07800;
   }
 
-  /* Prestige 2 — Violet/Purple */
+  /* Prestige 2 â€” Violet/Purple */
   html[data-prestige="2"] {
     --color-bg: #0a060f;
     --color-surface: #120e18;
@@ -75,7 +85,7 @@
     --color-accent-hover: #8035e0;
   }
 
-  /* Prestige 3 — Prismatic */
+  /* Prestige 3 â€” Prismatic */
   html[data-prestige="3"] {
     --color-bg: #060810;
     --color-surface: #0c0e18;
@@ -199,11 +209,11 @@
   }
   .animate-rainbow-border { animation: rainbow-border 2s linear infinite; }
 
-  @keyframes edge-lightning {
-    0%, 100% { box-shadow: inset 0 0 60px rgba(57,255,20,0), inset 0 0 120px rgba(0,240,255,0); }
-    50% { box-shadow: inset 0 0 80px rgba(57,255,20,0.25), inset 0 0 160px rgba(0,240,255,0.12); }
+  @keyframes jackpot-radial-pulse {
+    0%, 100% { background: radial-gradient(ellipse at center, rgba(255,215,0,0.08) 0%, transparent 70%); }
+    50% { background: radial-gradient(ellipse at center, rgba(255,215,0,0.18) 0%, rgba(255,215,0,0.04) 50%, transparent 80%); }
   }
-  .animate-edge-lightning { animation: edge-lightning 0.8s ease-in-out infinite; }
+  .animate-jackpot-radial-pulse { animation: jackpot-radial-pulse 1.5s ease-in-out infinite; }
 
   /* Legendary breathing background */
   @keyframes legendary-bg-breathe {
@@ -306,6 +316,13 @@
   }
 }
 
+/* Mobile performance: simplify legendary glow on small screens */
+@media (max-width: 640px) {
+  .glow-rarity-legendary {
+    box-shadow: 0 0 20px rgba(255,215,0,0.3);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -319,7 +336,7 @@
   .animate-urgency-pulse,
   .animate-legendary-breathe,
   .animate-rainbow-border,
-  .animate-edge-lightning,
+  .animate-jackpot-radial-pulse,
   .animate-balance-flash,
   .animate-pulse,
   .animate-spin {
@@ -339,3 +356,4 @@
     animation-iteration-count: 1 !important;
   }
 }
+

@@ -204,12 +204,18 @@ export function simulateCombat(
     );
     squadHp = exchange.squadHpAfter;
     bossHp = exchange.bossHpAfter;
-    exchanges.push(exchange);
 
     // Neon Hydra mechanic: boss regens 5 HP per round
     if (scaled.mechanics?.includes("Regenerates") && bossHp > 0) {
-      bossHp = Math.min(scaled.hp, bossHp + 5);
+      const healAmount = Math.min(5, scaled.hp - bossHp);
+      if (healAmount > 0) {
+        bossHp = bossHp + healAmount;
+        exchange.bossHeal = healAmount;
+        exchange.bossHpAfter = bossHp;
+      }
     }
+
+    exchanges.push(exchange);
   }
 
   const victory = bossHp <= 0;

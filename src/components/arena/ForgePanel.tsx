@@ -1,21 +1,27 @@
-import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "motion/react";
+import { useState, useMemo, useRef } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { useGame } from "../../context/GameContext";
 import { CollectionModal } from "../shared/CollectionModal";
 import { FunkoImage } from "../shared/FunkoImage";
 import { RARITY_CONFIG } from "../../data/vaults";
 import { getForgeOdds, applyForgeBoost } from "../../data/forge";
 import { MAX_FORGE_BOOSTS } from "../../types/forge";
+import { FORGE_ANIMATION } from "../../lib/motion-presets";
 import type { Collectible } from "../../types/collectible";
 import type { Rarity } from "../../types/vault";
+
+type ForgePhase = "dissolve" | "crucible" | "materialize" | null;
 
 export function ForgePanel() {
   const { inventory, freeSpins, forgeItems } = useGame();
   const [selectedItems, setSelectedItems] = useState<(Collectible | null)[]>([null, null, null]);
   const [boostSpins, setBoostSpins] = useState(0);
   const [modalSlot, setModalSlot] = useState<number | null>(null);
-  const [forging, setForging] = useState(false);
+  const [forgePhase, setForgePhase] = useState<ForgePhase>(null);
   const [forgeResult, setForgeResult] = useState<Collectible | null>(null);
+  const forgeLockRef = useRef(false);
+  const prefersReducedMotion = useReducedMotion();
+  const forging = forgePhase !== null;
 
   const selectedIds = selectedItems.filter(Boolean).map((i) => i!.id);
   const allSelected = selectedItems.every(Boolean);
@@ -31,6 +37,10 @@ export function ForgePanel() {
 
   const handleSelectItem = (item: Collectible) => {
     if (modalSlot === null) return;
+    if (selectedItems.some((entry) => entry?.id === item.id)) {
+      setModalSlot(null);
+      return;
+    }
     setSelectedItems((prev) => {
       const next = [...prev];
       next[modalSlot] = item;
@@ -48,23 +58,36 @@ export function ForgePanel() {
   };
 
   const handleForge = () => {
-    if (!allSelected) return;
+    if (!allSelected || forgeLockRef.current) return;
+    forgeLockRef.current = true;
     const items = selectedItems as Collectible[];
-    setForging(true);
 
-    // Animate forging for 2.5 seconds
+    // Phase 1: Dissolve
+    setForgePhase("dissolve");
+
     setTimeout(() => {
-      const result = forgeItems(
-        [items[0].id, items[1].id, items[2].id],
-        boostSpins
-      );
-      setForging(false);
-      if (result) {
-        setForgeResult(result);
-        setSelectedItems([null, null, null]);
-        setBoostSpins(0);
-      }
-    }, 2500);
+      // Phase 2: Crucible
+      setForgePhase("crucible");
+
+      setTimeout(() => {
+        // Phase 3: Materialize
+        setForgePhase("materialize");
+
+        setTimeout(() => {
+          const result = forgeItems(
+            [items[0].id, items[1].id, items[2].id],
+            boostSpins
+          );
+          setForgePhase(null);
+          forgeLockRef.current = false;
+          if (result) {
+            setForgeResult(result);
+            setSelectedItems([null, null, null]);
+            setBoostSpins(0);
+          }
+        }, FORGE_ANIMATION.materializeDuration);
+      }, FORGE_ANIMATION.crucibleDuration);
+    }, FORGE_ANIMATION.dissolveDuration);
   };
 
   const rarityColors: Record<Rarity, string> = {
@@ -175,7 +198,7 @@ export function ForgePanel() {
         disabled={!allSelected || forging}
         className={`w-full px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${
           allSelected && !forging
-            ? "bg-rarity-rare/10 border-rarity-rare/30 text-rarity-rare hover:bg-rarity-rare/20 cursor-pointer"
+            ? "bg-rarity-rare/10 border-rarity-rare/30 text-rarity-rare hover:bg-rarity-rare/20 active:scale-[0.98] cursor-pointer"
             : "bg-white/5 border-white/10 text-text-dim cursor-not-allowed"
         }`}
       >
@@ -189,16 +212,137 @@ export function ForgePanel() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-sm"
           >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-              className="w-24 h-24 rounded-full border-4 border-rarity-rare/30 border-t-rarity-rare"
-            />
-            <p className="absolute bottom-1/3 text-sm font-black uppercase tracking-widest text-rarity-rare">
-              Forging...
-            </p>
+            {prefersReducedMotion ? (
+              <div className="text-center">
+                <motion.p
+                  className="text-lg font-black uppercase tracking-widest text-rarity-rare"
+                  animate={{ opacity: [1, 0.5, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                  Forging...
+                </motion.p>
+              </div>
+            ) : (
+              <div className="relative flex flex-col items-center justify-center">
+                {/* Phase 1: Dissolve — items animate toward center */}
+                <AnimatePresence>
+                  {forgePhase === "dissolve" && selectedItems.map((item, i) => {
+                    if (!item) return null;
+                    const xOffset = (i - 1) * 80;
+                    return (
+                      <motion.div
+                        key={`dissolve-${item.id}`}
+                        className="absolute"
+                        initial={{ x: xOffset, y: 0, opacity: 1, scale: 1 }}
+                        animate={{ x: 0, y: 0, opacity: 0, scale: 0.2 }}
+                        transition={{ duration: 0.9, ease: "easeIn" }}
+                      >
+                        <FunkoImage name={item.funkoName || item.product} rarity={item.rarity} size="sm" />
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
+
+                {/* Dissolve spark particles */}
+                <AnimatePresence>
+                  {forgePhase === "dissolve" && (
+                    <>
+                      {Array.from({ length: FORGE_ANIMATION.sparkCount * 3 }).map((_, i) => {
+                        const itemIdx = Math.floor(i / FORGE_ANIMATION.sparkCount);
+                        const xStart = (itemIdx - 1) * 80;
+                        return (
+                          <motion.div
+                            key={`spark-${i}`}
+                            className="absolute w-1.5 h-1.5 rounded-full"
+                            style={{ backgroundColor: RARITY_CONFIG[(selectedItems[itemIdx]?.rarity ?? "common") as keyof typeof RARITY_CONFIG]?.color ?? "#a855f7" }}
+                            initial={{ x: xStart, y: 0, opacity: 1, scale: 0.5 }}
+                            animate={{
+                              x: xStart + (Math.random() - 0.5) * 100,
+                              y: (Math.random() - 0.5) * 100,
+                              opacity: 0,
+                              scale: 0
+                            }}
+                            transition={{ duration: 0.6, delay: Math.random() * 0.4, ease: "easeOut" }}
+                          />
+                        );
+                      })}
+                    </>
+                  )}
+                </AnimatePresence>
+
+                {/* Phase 2: Crucible — glowing orb with ember particles */}
+                <AnimatePresence>
+                  {forgePhase === "crucible" && (
+                    <>
+                      <motion.div
+                        className="w-24 h-24 rounded-full"
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: [0, 1.2, 1], opacity: 1 }}
+                        exit={{ scale: 1.5, opacity: 0 }}
+                        transition={{ duration: 0.8, ease: "easeOut" }}
+                        style={{ background: FORGE_ANIMATION.crucibleGradient }}
+                      />
+                      {/* Ember particles drifting upward */}
+                      {Array.from({ length: window.innerWidth < 640 ? 15 : FORGE_ANIMATION.emberCount }).map((_, i) => (
+                        <motion.div
+                          key={`ember-${i}`}
+                          className="absolute w-1 h-1 rounded-full"
+                          style={{
+                            backgroundColor: FORGE_ANIMATION.emberColors[i % FORGE_ANIMATION.emberColors.length]
+                          }}
+                          initial={{ x: 0, y: 0, opacity: 0, scale: 0.5 }}
+                          animate={{
+                            x: (Math.random() - 0.5) * 60,
+                            y: -(60 + Math.random() * 120),
+                            opacity: [0, 1, 0],
+                            scale: [0.5, 1, 0.3]
+                          }}
+                          transition={{
+                            duration: 0.8 + Math.random() * 0.5,
+                            delay: Math.random() * 0.6,
+                            ease: "easeOut"
+                          }}
+                        />
+                      ))}
+                    </>
+                  )}
+                </AnimatePresence>
+
+                {/* Phase 3: Materialize — white flash + new item placeholder */}
+                <AnimatePresence>
+                  {forgePhase === "materialize" && (
+                    <>
+                      <motion.div
+                        className="fixed inset-0 pointer-events-none z-50"
+                        initial={{ opacity: 0.6 }}
+                        animate={{ opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        style={{ backgroundColor: "rgba(255,255,255,0.3)" }}
+                      />
+                      <motion.div
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: "spring", damping: 15, stiffness: 200 }}
+                        className="w-20 h-20 rounded-2xl bg-rarity-rare/20 border-2 border-rarity-rare/40 flex items-center justify-center"
+                      >
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-rarity-rare">
+                          <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4l-6.4 4.8 2.4-7.2-6-4.8h7.6z" fill="currentColor" />
+                        </svg>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+
+                {/* Phase label */}
+                <p className="absolute -bottom-12 text-sm font-black uppercase tracking-widest text-rarity-rare">
+                  {forgePhase === "dissolve" ? "Dissolving..." :
+                   forgePhase === "crucible" ? "Smelting..." :
+                   "Materializing..."}
+                </p>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

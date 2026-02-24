@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import type { Battle } from "../../types/gamification";
 import type { Collectible } from "../../types/collectible";
@@ -25,6 +25,7 @@ export function BattleSetupModal({
   const { inventory, prestigeLevel } = useGame();
   const [selectedItems, setSelectedItems] = useState<Collectible[]>([]);
   const [collectionModalOpen, setCollectionModalOpen] = useState(false);
+  const startLockRef = useRef(false);
 
   const scaled = getPrestigeBattleStats(battle, prestigeLevel);
   const selectedIds = selectedItems.map((i) => i.id);
@@ -39,13 +40,25 @@ export function BattleSetupModal({
   );
 
   const handleAddUnit = (item: Collectible) => {
-    if (selectedItems.length >= 3) return;
-    setSelectedItems((prev) => [...prev, item]);
+    setSelectedItems((prev) => {
+      if (prev.length >= 3) return prev;
+      if (prev.some((selected) => selected.id === item.id)) return prev;
+      return [...prev, item];
+    });
     setCollectionModalOpen(false);
   };
 
   const handleRemoveUnit = (index: number) => {
     setSelectedItems((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleStartBattle = () => {
+    if (selectedItems.length === 0 || startLockRef.current) return;
+    startLockRef.current = true;
+    onStartBattle(selectedItems);
+    window.setTimeout(() => {
+      startLockRef.current = false;
+    }, 400);
   };
 
   return (
@@ -164,7 +177,7 @@ export function BattleSetupModal({
               )}
 
               <button
-                onClick={() => selectedItems.length > 0 && onStartBattle(selectedItems)}
+                onClick={handleStartBattle}
                 disabled={selectedItems.length === 0}
                 className={`w-full px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest border transition-all ${
                   selectedItems.length > 0

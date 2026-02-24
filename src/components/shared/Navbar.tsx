@@ -1,10 +1,33 @@
-import { useMemo, useState } from "react";
-import { motion } from "motion/react";
+import { useMemo, useState, useRef, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "motion/react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
 import { isFeatureUnlocked } from "../../lib/unlocks";
 import { LockedOverlay } from "./LockedOverlay";
 import type { NavbarProps } from "../../types/landing";
+
+const HUD_TOOLTIPS: Record<string, { title: string; text: string; color: string; borderColor: string }> = {
+  credits: {
+    title: "Credits",
+    text: "Earned from cashouts, reveals, and rewards. Spend them on vaults and marketplace purchases.",
+    color: "text-vault-gold",
+    borderColor: "border-l-vault-gold"
+  },
+  shards: {
+    title: "Shards & Free Spins",
+    text: "Shards drop from boss battles. Collect 7 to convert into a Free Spin. Free Spins let you open vaults without spending credits.",
+    color: "text-rarity-rare",
+    borderColor: "border-l-rarity-rare"
+  },
+  level: {
+    title: "Level",
+    text: "Earn XP by opening vaults, winning battles, and completing quests. Level up to unlock new features.",
+    color: "text-accent",
+    borderColor: "border-l-accent"
+  }
+};
+
+type HudTooltipKey = keyof typeof HUD_TOOLTIPS;
 
 export function Navbar({
   showHUD = false,
@@ -12,14 +35,31 @@ export function Navbar({
   xp = 0,
   level = 0,
   cashoutFlashTimestamp = 0,
-  bossEnergy = 0,
-  maxBossEnergy = 5,
+  shards = 0,
+  freeSpins = 0,
   hideDock = false,
   tutorialActive = false
 }: NavbarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [showLockerLocked, setShowLockerLocked] = useState(false);
+  const [activeTooltip, setActiveTooltip] = useState<HudTooltipKey | null>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
+
+  const toggleTooltip = useCallback((key: HudTooltipKey) => {
+    setActiveTooltip((prev) => (prev === key ? null : key));
+  }, []);
+
+  useEffect(() => {
+    if (!activeTooltip) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (tooltipRef.current && !tooltipRef.current.contains(e.target as Node)) {
+        setActiveTooltip(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [activeTooltip]);
 
   const scrollToWaitlist = () => {
     trackEvent(AnalyticsEvents.CTA_CLICK, {
@@ -52,11 +92,17 @@ export function Navbar({
     [location.pathname]
   );
 
-  const dockLinkClass = (isActive: boolean) =>
-    `flex-1 flex flex-col items-center justify-center gap-1 py-2.5 rounded-lg border transition-all cursor-pointer ${
+  const DOCK_COLORS = {
+    wallet: { active: "bg-vault-gold/15 border-vault-gold/40 text-vault-gold", hover: "hover:text-vault-gold" },
+    vaults: { active: "bg-accent/15 border-accent/40 text-accent", hover: "hover:text-accent" },
+    locker: { active: "bg-neon-cyan/15 border-neon-cyan/40 text-neon-cyan", hover: "hover:text-neon-cyan" }
+  } as const;
+
+  const dockLinkClass = (isActive: boolean, route: "wallet" | "vaults" | "locker") =>
+    `flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-lg border transition-all cursor-pointer ${
       isActive
-        ? "bg-accent/15 border-accent/40 text-accent"
-        : "bg-transparent border-transparent text-text-muted hover:text-white"
+        ? DOCK_COLORS[route].active
+        : `bg-transparent border-transparent text-text-muted ${DOCK_COLORS[route].hover}`
     }`;
 
   const handleDockClick = (target: "wallet" | "vaults" | "locker") => {
@@ -87,7 +133,7 @@ export function Navbar({
       <button
         type="button"
         onClick={() => handleDockClick("wallet")}
-        className={dockLinkClass(isWalletRoute)}
+        className={dockLinkClass(isWalletRoute, "wallet")}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
           <rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" strokeWidth="1.8" />
@@ -99,7 +145,7 @@ export function Navbar({
       <button
         type="button"
         onClick={() => handleDockClick("vaults")}
-        className={dockLinkClass(isVaultsRoute)}
+        className={dockLinkClass(isVaultsRoute, "vaults")}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
           <path d="M4 7h16v10H4z" stroke="currentColor" strokeWidth="1.8" />
@@ -111,7 +157,7 @@ export function Navbar({
       <button
         type="button"
         onClick={() => handleDockClick("locker")}
-        className={dockLinkClass(isLockerRoute)}
+        className={dockLinkClass(isLockerRoute, "locker")}
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="shrink-0">
           <rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" strokeWidth="1.8" />
@@ -150,10 +196,15 @@ export function Navbar({
 
           {showHUD ? (
             <div
-              className="hidden md:flex items-center gap-2 rounded-xl border border-white/10 bg-surface/70 px-2 py-1.5"
+              className="hidden md:flex items-center gap-2 rounded-xl border border-white/10 bg-surface/70 px-2 py-1.5 relative"
               data-tutorial="hud-desktop"
+              ref={tooltipRef}
             >
-              <div className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5">
+              <button
+                type="button"
+                onClick={() => toggleTooltip("credits")}
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-white/5 transition-colors cursor-pointer"
+              >
                 <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim">
                   Credits
                 </span>
@@ -163,25 +214,55 @@ export function Navbar({
                 >
                   ${balance.toLocaleString()}
                 </span>
-              </div>
+              </button>
 
-              <div className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim">
-                  Energy
-                </span>
-                <span className="text-[11px] font-mono font-bold text-neon-green">
-                  {bossEnergy}/{maxBossEnergy}
-                </span>
-              </div>
+              <button
+                type="button"
+                onClick={() => toggleTooltip("shards")}
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-rarity-rare shrink-0">
+                  <path d="M12 2L4 12l8 10 8-10L12 2z" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1.5" />
+                </svg>
+                <span className="text-[11px] font-mono font-bold text-rarity-rare">{shards}</span>
+                <span className="text-text-dim text-[9px]">/</span>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" className="text-vault-gold shrink-0">
+                  <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4l-6.4 4.8 2.4-7.2-6-4.8h7.6z" fill="currentColor" />
+                </svg>
+                <span className="text-[11px] font-mono font-bold text-vault-gold">{freeSpins}</span>
+              </button>
 
-              <div className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim">
-                  XP
-                </span>
+              <button
+                type="button"
+                onClick={() => toggleTooltip("level")}
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-white/5 transition-colors cursor-pointer"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-accent shrink-0">
+                  <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4l-6.4 4.8 2.4-7.2-6-4.8h7.6z" fill="currentColor" stroke="currentColor" strokeWidth="1" />
+                </svg>
                 <span className="text-[11px] font-mono font-bold text-accent">
-                  {xp} · Lv {level}
+                  Lv {level}
                 </span>
-              </div>
+              </button>
+
+              <AnimatePresence>
+                {activeTooltip && (() => {
+                  const tip = HUD_TOOLTIPS[activeTooltip];
+                  return (
+                    <motion.div
+                      key={activeTooltip}
+                      initial={{ opacity: 0, y: -4 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -4 }}
+                      transition={{ duration: 0.15 }}
+                      className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-surface-elevated border border-white/10 border-l-2 ${tip.borderColor} rounded-lg px-3.5 py-3 max-w-[240px] z-[60] shadow-[0_8px_32px_rgba(0,0,0,0.5)]`}
+                    >
+                      <p className={`text-[10px] font-black uppercase tracking-wider ${tip.color} mb-1`}>{tip.title}</p>
+                      <p className="text-[11px] text-text-muted leading-relaxed">{tip.text}</p>
+                    </motion.div>
+                  );
+                })()}
+              </AnimatePresence>
             </div>
           ) : (
             <button
@@ -199,7 +280,11 @@ export function Navbar({
             data-tutorial="hud"
           >
             <div className="grid grid-cols-3 gap-1.5 w-full rounded-lg border border-white/10 bg-surface/65 p-1.5">
-              <div className="rounded-md px-2 py-1.5 text-center">
+              <button
+                type="button"
+                onClick={() => toggleTooltip("credits")}
+                className="rounded-md px-2 py-1.5 text-center hover:bg-white/5 transition-colors cursor-pointer"
+              >
                 <p className="text-[8px] font-bold uppercase tracking-wider text-text-dim">
                   Credits
                 </p>
@@ -209,26 +294,55 @@ export function Navbar({
                 >
                   ${balance.toLocaleString()}
                 </p>
-              </div>
+              </button>
 
-              <div className="rounded-md px-2 py-1.5 text-center">
+              <button
+                type="button"
+                onClick={() => toggleTooltip("shards")}
+                className="rounded-md px-2 py-1.5 text-center hover:bg-white/5 transition-colors cursor-pointer"
+              >
                 <p className="text-[8px] font-bold uppercase tracking-wider text-text-dim">
-                  Energy
+                  Shards / Spins
                 </p>
-                <p className="text-[10px] font-mono font-bold text-neon-green">
-                  {bossEnergy}/{maxBossEnergy}
+                <p className="text-[10px] font-mono font-bold">
+                  <span className="text-rarity-rare">{shards}</span>
+                  <span className="text-text-dim"> / </span>
+                  <span className="text-vault-gold">{freeSpins}</span>
                 </p>
-              </div>
+              </button>
 
-              <div className="rounded-md px-2 py-1.5 text-center">
+              <button
+                type="button"
+                onClick={() => toggleTooltip("level")}
+                className="rounded-md px-2 py-1.5 text-center hover:bg-white/5 transition-colors cursor-pointer"
+              >
                 <p className="text-[8px] font-bold uppercase tracking-wider text-text-dim">
-                  XP / Lv
+                  Level
                 </p>
                 <p className="text-[10px] font-mono font-bold text-accent">
-                  {xp} / {level}
+                  Lv {level}
                 </p>
-              </div>
+              </button>
             </div>
+
+            <AnimatePresence>
+              {activeTooltip && (() => {
+                const tip = HUD_TOOLTIPS[activeTooltip];
+                return (
+                  <motion.div
+                    key={`mobile-${activeTooltip}`}
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.15 }}
+                    className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-surface-elevated border border-white/10 border-l-2 ${tip.borderColor} rounded-lg px-3.5 py-3 max-w-[240px] z-[60] shadow-[0_8px_32px_rgba(0,0,0,0.5)]`}
+                  >
+                    <p className={`text-[10px] font-black uppercase tracking-wider ${tip.color} mb-1`}>{tip.title}</p>
+                    <p className="text-[11px] text-text-muted leading-relaxed">{tip.text}</p>
+                  </motion.div>
+                );
+              })()}
+            </AnimatePresence>
           </div>
         )}
       </motion.nav>

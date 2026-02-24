@@ -1,39 +1,14 @@
-import { useState } from "react";
 import { motion } from "motion/react";
 import { useGame } from "../../context/GameContext";
 import { InventoryItemCard } from "./InventoryItemCard";
-import { FILTERS } from "../../data/inventory";
-import type { ItemStatus } from "../../types/inventory";
 
 export function InventoryGrid() {
   const { inventory, cashoutItem, shipItem, listItem } = useGame();
-  const [filter, setFilter] = useState<ItemStatus | "all">("all");
-
-  const filtered =
-    filter === "all"
-      ? inventory
-      : inventory.filter((item) => item.status === filter);
+  const items = inventory.filter((item) => item.status === "held");
 
   return (
     <div>
-      {/* Filter tabs */}
-      <div className="flex gap-1.5 sm:gap-2 mb-4 sm:mb-6 flex-wrap" data-tutorial="inventory-filters">
-        {FILTERS.map((f) => (
-          <button
-            key={f.value}
-            onClick={() => setFilter(f.value)}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[9px] sm:text-[10px] font-bold uppercase tracking-wider border transition-all cursor-pointer ${
-              filter === f.value
-                ? "bg-accent/10 border-accent/30 text-accent"
-                : "bg-surface border-white/10 text-text-muted hover:text-white hover:border-white/20"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-
-      {filtered.length === 0 ? (
+      {items.length === 0 ? (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -61,7 +36,7 @@ export function InventoryGrid() {
         </motion.div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((item, idx) => (
+          {items.map((item, idx) => (
             <InventoryItemCard
               key={item.id}
               item={item}

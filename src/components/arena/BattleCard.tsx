@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import type { Battle } from "../../types/gamification";
+import type { Battle, LevelInfo } from "../../types/gamification";
 import { BossIcon } from "../../assets/boss-icons";
 
 interface BattleCardProps {
@@ -9,6 +9,7 @@ interface BattleCardProps {
   energyCost: number;
   currentEnergy: number;
   onFight: (battle: Battle) => void;
+  levelInfo?: LevelInfo;
 }
 
 export function BattleCard({
@@ -17,7 +18,8 @@ export function BattleCard({
   isDefeated,
   energyCost,
   currentEnergy,
-  onFight
+  onFight,
+  levelInfo
 }: BattleCardProps) {
   const isLocked = playerLevel < battle.requiredLevel;
   const hasEnergy = currentEnergy >= energyCost;
@@ -31,8 +33,8 @@ export function BattleCard({
         isLocked
           ? "opacity-50 grayscale"
           : isDefeated
-            ? "border-neon-green/30"
-            : "border-white/10 hover:border-accent/30"
+            ? "border-neon-green/30 hover:-translate-y-0.5 hover:shadow-lg"
+            : "border-white/10 hover:border-accent/30 hover:-translate-y-0.5 hover:shadow-lg"
       }`}
     >
       {/* Defeated badge */}
@@ -75,7 +77,7 @@ export function BattleCard({
         </div>
 
         {/* Reward info */}
-        <div className="flex items-center justify-between mb-4 text-[10px]">
+        <div className="flex items-center justify-between mb-2 text-[10px]">
           <span className="text-text-dim">
             Shards: <span className="text-rarity-rare font-bold">{battle.shardReward.min}-{battle.shardReward.max}</span>
           </span>
@@ -83,6 +85,23 @@ export function BattleCard({
             XP: <span className="text-accent font-bold">+{battle.xpReward}</span>
           </span>
         </div>
+
+        {/* XP progress toward next level */}
+        {levelInfo && (
+          <div className="mb-4">
+            <div className="flex items-center justify-between text-[9px] mb-1">
+              <span className="text-text-dim">
+                {Math.round(levelInfo.currentXP - levelInfo.xpForCurrentLevel)} / {levelInfo.xpForNextLevel - levelInfo.xpForCurrentLevel} XP to Lv {levelInfo.level + 1}
+              </span>
+            </div>
+            <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-accent/60 rounded-full transition-all duration-300"
+                style={{ width: `${levelInfo.progressPercent}%` }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Action */}
         {isLocked ? (
@@ -97,7 +116,7 @@ export function BattleCard({
             disabled={!canFight}
             className={`w-full px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border transition-all ${
               canFight
-                ? "bg-accent/10 border-accent/30 text-accent hover:bg-accent/20 hover:border-accent/50 cursor-pointer"
+                ? "bg-accent/10 border-accent/30 text-accent hover:bg-accent/20 hover:border-accent/50 active:scale-[0.98] cursor-pointer"
                 : "bg-white/5 border-white/10 text-text-dim cursor-not-allowed"
             }`}
           >

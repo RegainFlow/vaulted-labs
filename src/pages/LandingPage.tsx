@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Navbar } from "../components/shared/Navbar";
 import { Hero } from "../components/Hero";
 import { HowItWorks } from "../components/HowItWorks";
-import { FeatureHighlights } from "../components/FeatureHighlights";
 import { CTASection } from "../components/CTASection";
 import { WaitlistSection } from "../components/WaitlistSection";
 import { CompactFAQ } from "../components/CompactFAQ";
@@ -33,7 +32,6 @@ export function LandingPage() {
       <main>
         <Hero />
         <HowItWorks />
-        <FeatureHighlights />
         <CTASection />
         <WaitlistSection />
         <CompactFAQ />

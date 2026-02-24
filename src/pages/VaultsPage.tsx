@@ -46,7 +46,7 @@ export function VaultsPage() {
         tutorialActive={tutorialActive}
       />
       <main>
-        <VaultGrid onOverlayChange={setVaultOpen} />
+        <VaultGrid onOverlayChange={setVaultOpen} microTutorialActive={tutorialActive} />
       </main>
       <OpenMicroTutorial
         key={`open-micro-${tutorialReplayNonce}`}

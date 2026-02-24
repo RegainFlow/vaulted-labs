@@ -58,23 +58,32 @@ export function PageTutorial({
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const [targetMissing, setTargetMissing] = useState(false);
   const [tooltipHeight, setTooltipHeight] = useState(TOOLTIP_MIN_HEIGHT);
-  const clickTimestamps = useRef<number[]>([]);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const targetRef = useRef<Element | null>(null);
+  const wasActiveRef = useRef(false);
+  const stepChangeRef = useRef(onStepChange);
   const currentStep = steps[currentIndex];
 
   useEffect(() => {
-    if (!isActive) return;
+    stepChangeRef.current = onStepChange;
+  }, [onStepChange]);
+
+  useEffect(() => {
+    if (!isActive) {
+      wasActiveRef.current = false;
+      return;
+    }
+    if (wasActiveRef.current) return;
+    wasActiveRef.current = true;
 
     const resetId = window.setTimeout(() => {
       setCurrentIndex(0);
       setTargetRect(null);
       setTargetMissing(false);
-      onStepChange?.(0);
+      stepChangeRef.current?.(0);
     }, 0);
-
     return () => window.clearTimeout(resetId);
-  }, [isActive, onStepChange]);
+  }, [isActive]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -83,23 +92,6 @@ export function PageTutorial({
       document.body.classList.remove("tutorial-active");
     };
   }, [isActive]);
-
-  useEffect(() => {
-    if (!isActive) return;
-    const handleClick = () => {
-      const now = Date.now();
-      clickTimestamps.current.push(now);
-      clickTimestamps.current = clickTimestamps.current.filter((timestamp) => now - timestamp < 1000);
-      if (clickTimestamps.current.length > 3) {
-        setCurrentIndex(0);
-        onStepChange?.(0);
-        onComplete();
-      }
-    };
-
-    window.addEventListener("click", handleClick);
-    return () => window.removeEventListener("click", handleClick);
-  }, [isActive, onComplete, onStepChange]);
 
   const syncSpotlightRect = useCallback(() => {
     if (!targetRef.current) return;

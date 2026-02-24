@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { RARITY_CONFIG, VAULT_COLORS } from "../../data/vaults";
 import { FunkoImage } from "./FunkoImage";
@@ -20,10 +21,16 @@ export function CollectionModal({
   excludeIds = [],
   title = "Select Collectible"
 }: CollectionModalProps) {
+  const [selectionLocked, setSelectionLocked] = useState(false);
   const excludeSet = new Set(excludeIds);
   const available = items.filter(
     (item) => item.status === "held" && !excludeSet.has(item.id)
   );
+
+  const handleClose = () => {
+    setSelectionLocked(false);
+    onClose();
+  };
 
   return (
     <AnimatePresence>
@@ -33,7 +40,7 @@ export function CollectionModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-          onClick={onClose}
+          onClick={handleClose}
         >
           <motion.div
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -49,7 +56,7 @@ export function CollectionModal({
                 {title}
               </h3>
               <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="p-2 rounded-lg bg-error/10 border border-error/30 text-error hover:bg-error/20 transition-colors cursor-pointer"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -76,7 +83,13 @@ export function CollectionModal({
                     return (
                       <button
                         key={item.id}
-                        onClick={() => onSelect(item)}
+                        onClick={() => {
+                          if (selectionLocked) return;
+                          setSelectionLocked(true);
+                          onSelect(item);
+                          window.setTimeout(() => setSelectionLocked(false), 0);
+                        }}
+                        disabled={selectionLocked}
                         className="group relative rounded-xl border bg-surface/50 p-3 text-left transition-all duration-200 hover:scale-[1.02] hover:border-accent/40 hover:shadow-lg cursor-pointer"
                         style={{ borderColor: `${vaultColor}30` }}
                       >

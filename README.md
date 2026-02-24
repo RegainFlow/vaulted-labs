@@ -5,41 +5,46 @@ VaultedLabs is a gamified commerce demo where players open vaults, reveal collec
 ## Product Snapshot
 
 - 6 fixed vault tiers with transparent rarity odds.
-- Reveal outcomes with 3 actions: Keep, Ship, Cashout.
-- Collection dashboard with inventory, market listings, and auctions.
-- Arena loop with energy, shard farming, forging, quests, and XP progression.
+- Reveal outcomes with 3 actions: Cashout, Equip, Ship.
+- Locker hub with Inventory, Market (with Auctions inside), and Arena Home.
+- Arena loop with Battles, Forge, Quests, energy/shard economy, and XP progression.
 - Wallet with typed credit history (earned, incentive, spent).
 - Waitlist and prelaunch incentive flow on landing page.
 
 ## Routes
 
 - `/` - Landing (join-first funnel)
-- `/open` - Vault opening loop and first-run tutorial
-- `/collection` - My Collection + Market + Auctions
-- `/arena` - Battles + Forge + Quests + rank-up flow
+- `/vaults` - Vault opening loop and first-run micro tutorial
 - `/wallet` - Balance and transaction history
+- `/locker` - Redirects to `/locker/inventory`
+- `/locker/inventory` - Inventory items (active items only)
+- `/locker/market` - Market + Auctions
+- `/locker/arena` - Arena Home menu
+- `/arena/battles`, `/arena/forge`, `/arena/quests` - Arena sub-screens
 - `/privacy`, `/terms`
 
 Legacy redirects:
 
-- `/play` -> `/open`
-- `/shop` -> `/collection`
-- `/inventory` -> `/collection`
-- `/profile` -> `/arena`
+- `/open`, `/play` -> `/vaults`
+- `/collection`, `/inventory` -> `/locker/inventory`
+- `/shop`, `/market` -> `/locker/market`
+- `/profile`, `/arena` -> `/locker/arena`
 
 ## Navigation Model
 
 - Landing navbar: `Join` CTA only.
-- App pages (`/open`, `/collection`, `/arena`, `/wallet`):
+- App pages (`/vaults`, `/wallet`, `/locker/*`, `/arena/*`):
 - Top bar: centered wordmark on mobile + HUD resources.
-- Global primary nav: fixed bottom dock (`Open`, `Collection`, `Arena`) on all breakpoints.
+- Global primary nav: fixed bottom dock (`Wallet`, `Vaults`, `Locker`) on all breakpoints.
 - Dock auto-hides during full-screen overlays/modals (e.g. vault open flow, arena battle flow).
+- HUD is informational only (Credits, Energy, XP/Lv), not navigation.
 
 ## Tutorials
 
-- `/open`: auto-runs once for new users. Flow covers dashboard, categories, odds, contents, opening, spin, and post-reveal actions.
-- `/collection`, `/arena`, `/wallet`: replay via floating `?` button.
-- Collection tutorial includes a seeded demo item to ensure first-card walkthrough works.
+- `/vaults`: auto-runs once for new users (3-step micro walkthrough + bonus step when triggered), replayable via floating `?` button.
+- `/locker`: guided walkthrough across Inventory, Market, and Arena tabs.
+- `/wallet`: replayable via floating `?` button.
+- Tutorials use spotlight auto-scroll and viewport-safe tooltip placement for mobile/desktop.
 
 ## Financial Model Constants
 

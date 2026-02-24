@@ -560,4 +560,16 @@ Both tables have RLS enabled. Anonymous select on `waitlist` only. Inserts go th
 
 Planned: `user_profiles`, `inventory_items`, `credit_transactions`, `marketplace_listings`, `auctions`, `auction_bids`. All with RLS policies for authenticated users. Currently, marketplace state is managed in-memory via GameContext with mock data.
 
+## Current Navigation and Tutorial Baseline (2026-02-24)
+
+- Default gameplay route is `/vaults`.
+- Bottom dock has exactly three items: `Wallet`, `Vaults`, `Locker`.
+- Locker is the only tabbed hub (`/locker/inventory`, `/locker/market`, `/locker/arena`).
+- Arena uses card-based menu from Locker and separate routes: `/arena/battles`, `/arena/forge`, `/arena/quests`.
+- XP gates: Locker `50`, Market `150`, Arena/Battles `200`, Forge `250`, Quests `300`.
+- Locked interactions use `LockedOverlay` with CTA back to `/vaults`.
+- Global HUD is informational only: Credits, Energy, XP/Lv.
+- Open flow reveal actions are `Cashout`, `Equip`, `Ship`; equip saves to inventory and shows green unlock/saved dialogs.
+- Open micro tutorial: pick vault, spin stage, bonus stage (when triggered), reveal actions; persisted by `vaultedlabs_open_tutorial_completed`.
+
 

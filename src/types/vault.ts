@@ -38,6 +38,7 @@ export interface VaultGridProps {
   tutorialStep?: TutorialStep | null;
   onTutorialAdvance?: (step: TutorialStep) => void;
   onTutorialSetAction?: (action: string) => void;
+  microTutorialActive?: boolean;
 }
 
 export interface VaultIconProps {

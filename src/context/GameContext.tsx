@@ -71,11 +71,31 @@ interface PersistedState {
 
 const DEFAULT_TX: CreditTransaction = {
   id: "tx-init-1",
-  type: "earned",
+  type: "incentive",
   amount: 100,
-  description: "Demo starting credits",
+  description: "Demo incentive credits",
   timestamp: Date.now()
 };
+
+function normalizeCreditTransactions(
+  transactions: CreditTransaction[]
+): CreditTransaction[] {
+  return transactions.map((tx) => {
+    const isLegacyDemoGrant =
+      tx.id === "tx-init-1" &&
+      tx.type === "earned" &&
+      tx.amount === 100 &&
+      tx.description.toLowerCase().includes("demo");
+
+    if (!isLegacyDemoGrant) return tx;
+
+    return {
+      ...tx,
+      type: "incentive",
+      description: "Demo incentive credits"
+    };
+  });
+}
 
 function loadState(): PersistedState | null {
   try {
@@ -99,7 +119,13 @@ function saveState(state: PersistedState) {
  * Migrate v1 state to v2: add stats to items, initialize new fields.
  */
 function migrateState(state: PersistedState): PersistedState {
-  if (state.stateVersion >= STATE_VERSION) return state;
+  const normalizedTransactions = normalizeCreditTransactions(state.creditTransactions);
+  if (state.stateVersion >= STATE_VERSION) {
+    return {
+      ...state,
+      creditTransactions: normalizedTransactions
+    };
+  }
 
   // Add stats & isEquipped to existing items
   const migratedInventory = state.inventory.map((item) => ({
@@ -129,6 +155,7 @@ function migrateState(state: PersistedState): PersistedState {
 
   return {
     ...state,
+    creditTransactions: normalizedTransactions,
     inventory: migratedInventory,
     listings: migratedListings,
     auctions: migratedAuctions,
@@ -1044,6 +1071,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const resetDemo = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem("vaultedlabs_open_tutorial_completed");
     nextId = 2;
     setCreditTransactions([DEFAULT_TX]);
     setInventory([]);

@@ -21,6 +21,7 @@ export interface VaultLockBonusStageProps {
   purchasedTierName: VaultTierName;
   prestigeLevel?: number;
   onComplete: (shardsAwarded: number) => void;
+  forcedLandings?: "jackpot";
 }
 
 export const SHARD_REWARDS: Record<VaultTierName, number> = {

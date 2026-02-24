@@ -109,6 +109,24 @@ export function scrollTargetIntoView(
     inline: "nearest"
   });
 
+  // Nested scroll containers sometimes keep the spotlight off-screen after
+  // the first couple of steps. Force parent containers to center too.
+  let parent: HTMLElement | null = target.parentElement;
+  while (parent) {
+    const style = window.getComputedStyle(parent);
+    const canScrollY =
+      (style.overflowY === "auto" || style.overflowY === "scroll") &&
+      parent.scrollHeight > parent.clientHeight;
+    if (canScrollY) {
+      const targetRect = target.getBoundingClientRect();
+      const parentRect = parent.getBoundingClientRect();
+      const targetCenter = targetRect.top + targetRect.height / 2;
+      const parentCenter = parentRect.top + parentRect.height / 2;
+      parent.scrollBy({ top: targetCenter - parentCenter, behavior });
+    }
+    parent = parent.parentElement;
+  }
+
   const rect = target.getBoundingClientRect();
   const safeTop = topInset + SAFE_MARGIN;
   const safeBottom = window.innerHeight - bottomInset - SAFE_MARGIN;
@@ -137,8 +155,10 @@ export function getTooltipPlacement(
   const safeRight = window.innerWidth - insets.right - SAFE_MARGIN;
   const safeBottom = window.innerHeight - insets.bottom - SAFE_MARGIN;
   const availableWidth = Math.max(220, safeRight - safeLeft);
+  const availableHeight = Math.max(220, safeBottom - safeTop);
   const width = Math.min(maxWidth, availableWidth);
   const isMobile = window.innerWidth < 640;
+  const tooltipHeight = Math.min(tooltipHeightGuess, availableHeight);
 
   let left = isMobile
     ? safeLeft + (availableWidth - width) / 2
@@ -147,6 +167,7 @@ export function getTooltipPlacement(
 
   const roomAbove = rect.top - safeTop;
   const roomBelow = safeBottom - (rect.top + rect.height);
+  const targetIsTall = rect.height >= availableHeight * 0.55;
 
   let placeBelow = preferredPosition !== "top";
   if (preferredPosition === "top" && roomAbove < tooltipHeightGuess && roomBelow > roomAbove) {
@@ -156,10 +177,16 @@ export function getTooltipPlacement(
     placeBelow = false;
   }
 
-  const idealTop = placeBelow
+  let idealTop = placeBelow
     ? rect.top + rect.height + 12
-    : rect.top - tooltipHeightGuess - 12;
-  const top = clamp(idealTop, safeTop, safeBottom - tooltipHeightGuess);
+    : rect.top - tooltipHeight - 12;
+
+  // Large spotlight targets can trap tooltips off-screen. Center instead.
+  if (targetIsTall) {
+    idealTop = safeTop + (availableHeight - tooltipHeight) / 2;
+  }
+
+  const top = clamp(idealTop, safeTop, safeBottom - tooltipHeight);
 
   return {
     top,
