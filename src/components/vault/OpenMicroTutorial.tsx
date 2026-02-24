@@ -11,6 +11,7 @@ import {
 } from "../../lib/tutorial-viewport";
 import {
   OPEN_TUTORIAL_BONUS_SHOWN_EVENT,
+  OPEN_TUTORIAL_BONUS_JACKPOT_EVENT,
   OPEN_TUTORIAL_REVEAL_READY_EVENT,
   OPEN_TUTORIAL_SPIN_STARTED_EVENT
 } from "../../lib/tutorial-events";
@@ -37,6 +38,8 @@ interface TutorialStepConfig {
    * "hint"      — compact floating bar, no overlay, no spotlight (overlay steps).
    */
   mode: "spotlight" | "hint";
+  /** Render a pulsing border ring on the selector target (hint mode only). */
+  showRing?: boolean;
 }
 
 const STEPS: TutorialStepConfig[] = [
@@ -56,7 +59,8 @@ const STEPS: TutorialStepConfig[] = [
     message: "Hit SPIN to reveal your collectible.",
     hint: "Tap SPIN to reveal your collectible",
     selector: '[data-tutorial="spin-button"]',
-    mode: "hint"
+    mode: "hint",
+    showRing: true
   },
   {
     id: "bonus",
@@ -64,7 +68,8 @@ const STEPS: TutorialStepConfig[] = [
     message: "Click LOCK to stop each spinner. Match all 3 for a jackpot!",
     hint: "Tap LOCK to stop each spinner — match all 3!",
     selector: '[data-tutorial="bonus-lock"]',
-    mode: "hint"
+    mode: "hint",
+    showRing: true
   },
   {
     id: "reveal",
@@ -145,7 +150,7 @@ export function OpenMicroTutorial({
   const [targetMissing, setTargetMissing] = useState(false);
   const [tooltipHeight, setTooltipHeight] = useState(TOOLTIP_MIN_HEIGHT);
   const [spinActionTriggered, setSpinActionTriggered] = useState(false);
-  const [bonusSeen, setBonusSeen] = useState(false);
+  const [jackpotCelebrating, setJackpotCelebrating] = useState(false);
   const hasTrackedShownRef = useRef(false);
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const targetRef = useRef<Element | null>(null);
@@ -164,7 +169,7 @@ export function OpenMicroTutorial({
       setTargetRect(null);
       setTargetMissing(false);
       setSpinActionTriggered(false);
-      setBonusSeen(false);
+      setJackpotCelebrating(false);
     }, 0);
     return () => window.clearTimeout(resetId);
   }, [replayNonce]);
@@ -184,6 +189,65 @@ export function OpenMicroTutorial({
     document.body.classList.add("tutorial-active");
     return () => { document.body.classList.remove("tutorial-active"); };
   }, [isActive]);
+
+  /* ——— Hint ring target resolution (hint-mode steps with showRing) ——— */
+
+  const [hintRingRect, setHintRingRect] = useState<{
+    top: number; left: number; width: number; height: number;
+  } | null>(null);
+  const hintRingRef = useRef<Element | null>(null);
+
+  const syncHintRingRect = useCallback(() => {
+    if (!hintRingRef.current) return;
+    const insets = getTutorialInsets();
+    setHintRingRect(getSpotlightRect(hintRingRef.current, PADDING, insets));
+  }, []);
+
+  useEffect(() => {
+    if (!isActive || !step || step.mode !== "hint" || !step.showRing) {
+      hintRingRef.current = null;
+      setHintRingRect(null);
+      return;
+    }
+
+    let cancelled = false;
+    let retryTimeoutId: number | null = null;
+    let retries = 0;
+
+    const resolveTarget = async () => {
+      if (cancelled) return;
+      const fallbackSelectors = step.fallbackSelector ? [step.fallbackSelector] : [];
+      const target = await waitForTarget(step.selector, {
+        fallbackSelectors,
+        timeoutMs: 1200,
+        intervalMs: 120
+      });
+      if (cancelled) return;
+      if (target) {
+        hintRingRef.current = target;
+        const insets = getTutorialInsets();
+        setHintRingRect(getSpotlightRect(target, PADDING, insets));
+        return;
+      }
+      if (retries < TARGET_MAX_ATTEMPTS) {
+        retries += 1;
+        retryTimeoutId = window.setTimeout(resolveTarget, TARGET_RETRY_DELAY_MS);
+        return;
+      }
+      hintRingRef.current = null;
+      setHintRingRect(null);
+    };
+
+    resolveTarget();
+    window.addEventListener("resize", syncHintRingRect);
+    window.addEventListener("scroll", syncHintRingRect, true);
+    return () => {
+      cancelled = true;
+      if (retryTimeoutId != null) window.clearTimeout(retryTimeoutId);
+      window.removeEventListener("resize", syncHintRingRect);
+      window.removeEventListener("scroll", syncHintRingRect, true);
+    };
+  }, [isActive, step, syncHintRingRect]);
 
   /* ——— Spotlight target resolution (only for spotlight-mode steps) ——— */
 
@@ -305,7 +369,6 @@ export function OpenMicroTutorial({
   useEffect(() => {
     if (!isActive) return;
     const handleBonusShown = () => {
-      setBonusSeen(true);
       if (step.id !== "spin") return;
       setSpinActionTriggered(false);
       setTargetRect(null);
@@ -319,11 +382,16 @@ export function OpenMicroTutorial({
       setTargetMissing(false);
       setStepIndex(revealStepIndex);
     };
+    const handleJackpot = () => {
+      setJackpotCelebrating(true);
+    };
     window.addEventListener(OPEN_TUTORIAL_BONUS_SHOWN_EVENT, handleBonusShown);
     window.addEventListener(OPEN_TUTORIAL_REVEAL_READY_EVENT, handleRevealReady);
+    window.addEventListener(OPEN_TUTORIAL_BONUS_JACKPOT_EVENT, handleJackpot);
     return () => {
       window.removeEventListener(OPEN_TUTORIAL_BONUS_SHOWN_EVENT, handleBonusShown);
       window.removeEventListener(OPEN_TUTORIAL_REVEAL_READY_EVENT, handleRevealReady);
+      window.removeEventListener(OPEN_TUTORIAL_BONUS_JACKPOT_EVENT, handleJackpot);
     };
   }, [isActive, bonusStepIndex, revealStepIndex, step.id]);
 
@@ -380,7 +448,7 @@ export function OpenMicroTutorial({
     spinActionTriggered && (step.id === "pick-vault" || step.id === "spin");
 
   // Hide the bonus hint bar once the jackpot celebration starts
-  const hideBonusAfterJackpot = step.id === "bonus" && bonusSeen;
+  const hideBonusAfterJackpot = step.id === "bonus" && jackpotCelebrating;
 
   if (!isActive || hideDuringSpin || hideBonusAfterJackpot) return null;
 
@@ -389,59 +457,79 @@ export function OpenMicroTutorial({
    * —————————————————————————————————————————————————————— */
 
   if (step.mode === "hint") {
-    const borderClass = step.id === "bonus"
-      ? "border-neon-green/40"
-      : "border-accent/40";
-    const glowClass = step.id === "bonus"
+    const isBonus = step.id === "bonus";
+    const borderClass = isBonus ? "border-neon-green/40" : "border-accent/40";
+    const glowClass = isBonus
       ? "shadow-[0_-4px_24px_rgba(57,255,20,0.12)]"
       : "shadow-[0_-4px_24px_rgba(255,45,149,0.12)]";
-    const dotColor = step.id === "bonus" ? "bg-neon-green" : "bg-accent";
+    const dotColor = isBonus ? "bg-neon-green" : "bg-accent";
+    const ringBorderClass = isBonus ? "border-neon-green" : "border-accent";
+    const ringGlow = isBonus
+      ? "0 0 30px rgba(57,255,20,0.4), inset 0 0 20px rgba(57,255,20,0.15)"
+      : "0 0 30px rgba(255,45,149,0.4), inset 0 0 20px rgba(255,45,149,0.15)";
 
     return (
-      <AnimatePresence>
-        <motion.div
-          key={`hint-${step.id}`}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 20 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-          className="fixed bottom-0 left-0 right-0 z-[210] pointer-events-none flex justify-center px-3 pb-3 sm:pb-4"
-        >
+      <>
+        {/* Optional pulsing ring on target (no dark overlay) */}
+        {step.showRing && hintRingRect && (
           <div
-            className={`pointer-events-auto flex items-center gap-3 rounded-xl border ${borderClass} bg-surface-elevated/95 backdrop-blur-md px-4 py-3 ${glowClass} max-w-md w-full`}
+            className={`fixed rounded-xl border-2 ${ringBorderClass} pointer-events-none animate-pulse z-[210]`}
+            style={{
+              top: hintRingRect.top,
+              left: hintRingRect.left,
+              width: hintRingRect.width,
+              height: hintRingRect.height,
+              boxShadow: ringGlow
+            }}
+          />
+        )}
+
+        {/* Bottom pill bar */}
+        <AnimatePresence>
+          <motion.div
+            key={`hint-${step.id}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="fixed bottom-0 left-0 right-0 z-[210] pointer-events-none flex justify-center px-3 pb-3 sm:pb-4"
           >
-            {/* Pulsing dot */}
-            <span className="relative flex shrink-0">
-              <span className={`absolute inline-flex h-2.5 w-2.5 rounded-full ${dotColor} opacity-50 animate-ping`} />
-              <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${dotColor}`} />
-            </span>
+            <div
+              className={`pointer-events-auto flex items-center gap-3 rounded-xl border ${borderClass} bg-surface-elevated/95 backdrop-blur-md px-4 py-3 ${glowClass} max-w-md w-full`}
+            >
+              {/* Pulsing dot */}
+              <span className="relative flex shrink-0">
+                <span className={`absolute inline-flex h-2.5 w-2.5 rounded-full ${dotColor} opacity-50 animate-ping`} />
+                <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${dotColor}`} />
+              </span>
 
-            {/* Hint text */}
-            <p className="text-[11px] sm:text-xs text-text-muted leading-snug flex-1">
-              {step.hint}
-            </p>
+              {/* Hint text */}
+              <p className="text-[11px] sm:text-xs text-text-muted leading-snug flex-1">
+                {step.hint}
+              </p>
 
-            {/* Skip / Done */}
-            {step.id === "reveal" ? (
-              <button
-                type="button"
-                onClick={handleNext}
-                className="shrink-0 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-colors cursor-pointer bg-accent text-white hover:bg-accent-hover"
-              >
-                Got it
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={handleSkip}
-                className="shrink-0 text-[9px] text-text-dim hover:text-text-muted uppercase tracking-widest transition-colors cursor-pointer"
-              >
-                Skip
-              </button>
-            )}
-          </div>
-        </motion.div>
-      </AnimatePresence>
+              {/* Skip / Done */}
+              {step.id === "reveal" ? (
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="shrink-0 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-colors cursor-pointer bg-accent text-white hover:bg-accent-hover"
+                >
+                  Got it
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleSkip}
+                  className="shrink-0 text-[9px] text-text-dim hover:text-text-muted uppercase tracking-widest transition-colors cursor-pointer"
+                >
+                  Skip
+                </button>
+              )}
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </>
     );
   }
 

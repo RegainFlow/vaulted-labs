@@ -99,8 +99,12 @@ export function PageTutorial({
     setTargetRect(getSpotlightRect(targetRef.current, PADDING, insets));
   }, []);
 
+  const needsTarget =
+    currentStep?.type === "spotlight" ||
+    (currentStep?.type === "hint" && currentStep.showRing);
+
   useEffect(() => {
-    if (!isActive || !currentStep || currentStep.type !== "spotlight" || !currentStep.selector) {
+    if (!isActive || !currentStep || !needsTarget || !currentStep.selector) {
       targetRef.current = null;
       return;
     }
@@ -156,7 +160,7 @@ export function PageTutorial({
       window.removeEventListener("resize", syncSpotlightRect);
       window.removeEventListener("scroll", syncSpotlightRect, true);
     };
-  }, [isActive, currentStep, syncSpotlightRect]);
+  }, [isActive, currentStep, needsTarget, syncSpotlightRect]);
 
   useEffect(() => {
     if (!isActive) return;
@@ -328,6 +332,101 @@ export function PageTutorial({
       </AnimatePresence>
     );
   }
+
+  /* ——— Hint mode: lightweight pill bar + optional ring ——— */
+
+  if (currentStep.type === "hint") {
+    const accent = currentStep.accentColor ?? "accent";
+    const borderClass =
+      accent === "neon-green" ? "border-neon-green/40" :
+      accent === "neon-cyan" ? "border-neon-cyan/40" :
+      "border-accent/40";
+    const glowClass =
+      accent === "neon-green" ? "shadow-[0_-4px_24px_rgba(57,255,20,0.12)]" :
+      accent === "neon-cyan" ? "shadow-[0_-4px_24px_rgba(0,240,255,0.12)]" :
+      "shadow-[0_-4px_24px_rgba(255,45,149,0.12)]";
+    const dotColor =
+      accent === "neon-green" ? "bg-neon-green" :
+      accent === "neon-cyan" ? "bg-neon-cyan" :
+      "bg-accent";
+    const ringBorderClass =
+      accent === "neon-green" ? "border-neon-green" :
+      accent === "neon-cyan" ? "border-neon-cyan" :
+      "border-accent";
+    const ringGlow =
+      accent === "neon-green" ? "0 0 30px rgba(57,255,20,0.4), inset 0 0 20px rgba(57,255,20,0.15)" :
+      accent === "neon-cyan" ? "0 0 30px rgba(0,240,255,0.4), inset 0 0 20px rgba(0,240,255,0.15)" :
+      "0 0 30px rgba(255,45,149,0.4), inset 0 0 20px rgba(255,45,149,0.15)";
+    const pillText = currentStep.hint || currentStep.description;
+
+    return (
+      <>
+        {/* Optional pulsing ring on target (no dark overlay) */}
+        {currentStep.showRing && targetRect && (
+          <div
+            className={`fixed rounded-xl border-2 ${ringBorderClass} pointer-events-none animate-pulse z-[200]`}
+            style={{
+              top: targetRect.top,
+              left: targetRect.left,
+              width: targetRect.width,
+              height: targetRect.height,
+              boxShadow: ringGlow
+            }}
+          />
+        )}
+
+        {/* Bottom pill bar */}
+        <AnimatePresence>
+          <motion.div
+            key={`page-hint-${currentStep.id}`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="fixed bottom-0 left-0 right-0 z-[200] pointer-events-none flex justify-center px-3 pb-3 sm:pb-4"
+          >
+            <div
+              className={`pointer-events-auto flex items-center gap-3 rounded-xl border ${borderClass} bg-surface-elevated/95 backdrop-blur-md px-4 py-3 ${glowClass} max-w-md w-full`}
+            >
+              {/* Pulsing dot */}
+              <span className="relative flex shrink-0">
+                <span className={`absolute inline-flex h-2.5 w-2.5 rounded-full ${dotColor} opacity-50 animate-ping`} />
+                <span className={`relative inline-flex h-2.5 w-2.5 rounded-full ${dotColor}`} />
+              </span>
+
+              {/* Hint text */}
+              <p className="text-[11px] sm:text-xs text-text-muted leading-snug flex-1">
+                {pillText}
+              </p>
+
+              {/* Step indicator */}
+              <span className="text-[9px] font-mono text-text-dim shrink-0">
+                {stepIndicator}
+              </span>
+
+              {/* Skip + Next */}
+              <button
+                type="button"
+                onClick={handleSkip}
+                className="shrink-0 text-[9px] text-text-dim hover:text-text-muted uppercase tracking-widest transition-colors cursor-pointer"
+              >
+                Skip
+              </button>
+              <button
+                type="button"
+                onClick={handleNext}
+                className="shrink-0 px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-colors cursor-pointer bg-accent text-white hover:bg-accent-hover"
+              >
+                {currentIndex < steps.length - 1 ? "Next" : "Done"}
+              </button>
+            </div>
+          </motion.div>
+        </AnimatePresence>
+      </>
+    );
+  }
+
+  /* ——— Spotlight mode (default) ——— */
 
   const tooltipStyle = getTooltipStyle();
   const maskId = `page-tutorial-mask-${pageKey}-${currentStep.id}`;

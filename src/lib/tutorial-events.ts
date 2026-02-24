@@ -6,3 +6,6 @@ export const OPEN_TUTORIAL_BONUS_SHOWN_EVENT =
 
 export const OPEN_TUTORIAL_SPIN_STARTED_EVENT =
   "vaultedlabs:open-tutorial-spin-started";
+
+export const OPEN_TUTORIAL_BONUS_JACKPOT_EVENT =
+  "vaultedlabs:open-tutorial-bonus-jackpot";

@@ -9,6 +9,7 @@ import {
 } from "../../data/vaults";
 import { VaultIcon } from "./VaultIcons";
 import { JACKPOT_CELEBRATION } from "../../lib/motion-presets";
+import { OPEN_TUTORIAL_BONUS_JACKPOT_EVENT } from "../../lib/tutorial-events";
 
 const PRESTIGE_THEMES: Record<number, { primary: string; secondary: string }> = {
   0: { primary: "#ff2d95", secondary: "#00f0ff" },
@@ -296,6 +297,9 @@ export function VaultLockBonusStage({
       schedule(() => setPhase("evaluate"), 800);
     } else if (phase === "evaluate") {
       const matchCount = getMatchCount();
+      if (matchCount === 3) {
+        window.dispatchEvent(new Event(OPEN_TUTORIAL_BONUS_JACKPOT_EVENT));
+      }
       const delay = matchCount === 3 ? 3500 : 2500;
       schedule(() => setPhase("done"), delay);
     } else if (phase === "done") {

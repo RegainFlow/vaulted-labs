@@ -305,10 +305,12 @@ export const LOCKER_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
   },
   {
     id: "locker-inventory",
-    type: "spotlight",
+    type: "hint",
     selector: '[data-tutorial="locker-inventory"]',
     title: "Inventory",
     description: "Manage collectibles you opened and saved.",
+    hint: "Your saved collectibles live here",
+    showRing: true,
     position: "top",
   },
   {
@@ -321,10 +323,12 @@ export const LOCKER_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
   },
   {
     id: "locker-market",
-    type: "spotlight",
+    type: "hint",
     selector: '[data-tutorial="locker-market"]',
     title: "Market View",
     description: "Browse marketplace and auctions in one combined view.",
+    hint: "Browse listings and auctions here",
+    showRing: true,
     position: "top",
   },
   {
@@ -337,10 +341,12 @@ export const LOCKER_TUTORIAL_STEPS: PageTutorialStepConfig[] = [
   },
   {
     id: "locker-arena",
-    type: "spotlight",
+    type: "hint",
     selector: '[data-tutorial="locker-arena"]',
     title: "Arena Home",
     description: "Pick the arena system you want to run next.",
+    hint: "Launch Battles, Forge, or Quests from here",
+    showRing: true,
     position: "top",
   },
   {

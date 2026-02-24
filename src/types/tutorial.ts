@@ -28,11 +28,17 @@ export interface TargetRect {
 
 export interface PageTutorialStepConfig {
   id: string;
-  type: "welcome" | "spotlight" | "complete";
+  type: "welcome" | "spotlight" | "hint" | "complete";
   selector?: string;
   title: string;
   description: string;
   position?: "top" | "bottom";
+  /** Short one-liner for the hint pill (falls back to `description`). */
+  hint?: string;
+  /** Pill/ring accent theme. Default: "accent" (magenta). */
+  accentColor?: "accent" | "neon-green" | "neon-cyan";
+  /** Render a pulsing border ring on the selector target (no dark overlay). */
+  showRing?: boolean;
 }
 
 export interface PageTutorialProps {

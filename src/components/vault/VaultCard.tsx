@@ -158,9 +158,6 @@ export function VaultCard({
                   e.stopPropagation();
                   setShowOdds(!showOdds);
                 }}
-                {...(vault.name === "Diamond"
-                  ? { "data-tutorial": "vault-odds" }
-                  : {})}
                 className="group/odds relative rounded-xl border-none p-0 cursor-pointer outline-none"
                 style={{
                   background: showOdds
@@ -183,9 +180,6 @@ export function VaultCard({
                   e.stopPropagation();
                   setShowContents(true);
                 }}
-                {...(vault.name === "Diamond"
-                  ? { "data-tutorial": "vault-contents" }
-                  : {})}
                 className="group/contents relative rounded-xl border-none p-0 cursor-pointer outline-none"
                 style={{ background: "rgba(0,240,255,0.08)" }}
               >
