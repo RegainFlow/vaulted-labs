@@ -6,16 +6,25 @@ import { TransactionList } from "../components/wallet/TransactionList";
 import { PageTutorial } from "../components/shared/PageTutorial";
 import { TutorialHelpButton } from "../components/shared/TutorialHelpButton";
 import { useGame } from "../context/GameContext";
-import { WALLET_TUTORIAL_STEPS } from "../data/tutorial";
+import {
+  WALLET_TUTORIAL_STEPS,
+  WALLET_TUTORIAL_STORAGE_KEY,
+} from "../data/tutorial";
+import { setTutorialCompleted } from "../lib/tutorial-storage";
 
 export function WalletPage() {
-  const { balance, inventory, xp, levelInfo, prestigeLevel, freeSpins, cashoutFlashTimestamp, cashoutStreak, bossEnergy, maxBossEnergy, shards, resetDemo, setHasSeenWalletTutorial } = useGame();
+  const { balance, inventory, xp, levelInfo, prestigeLevel, freeSpins, cashoutFlashTimestamp, cashoutStreak, bossEnergy, maxBossEnergy, shards, resetDemo, hasSeenWalletTutorial, setHasSeenWalletTutorial } = useGame();
   const navigate = useNavigate();
   const [tutorialActive, setTutorialActive] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    if (!hasSeenWalletTutorial) return;
+    setTutorialCompleted(WALLET_TUTORIAL_STORAGE_KEY, true);
+  }, [hasSeenWalletTutorial]);
 
   return (
     <>
@@ -84,6 +93,7 @@ export function WalletPage() {
         isActive={tutorialActive}
         onComplete={() => {
           setTutorialActive(false);
+          setTutorialCompleted(WALLET_TUTORIAL_STORAGE_KEY, true);
           setHasSeenWalletTutorial(true);
         }}
       />

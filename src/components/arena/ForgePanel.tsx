@@ -1,12 +1,15 @@
-import { useState, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { useGame } from "../../context/GameContext";
+import { getFunkoById } from "../../data/funkos";
 import { CollectionModal } from "../shared/CollectionModal";
+import { CollectibleDisplayCard } from "../shared/CollectibleDisplayCard";
 import { FunkoImage } from "../shared/FunkoImage";
 import { RARITY_CONFIG } from "../../data/vaults";
 import { getForgeOdds, applyForgeBoost } from "../../data/forge";
 import { MAX_FORGE_BOOSTS } from "../../types/forge";
 import { FORGE_ANIMATION } from "../../lib/motion-presets";
+import { playSfx } from "../../lib/audio";
 import type { Collectible } from "../../types/collectible";
 import type { Rarity } from "../../types/vault";
 
@@ -22,6 +25,10 @@ export function ForgePanel() {
   const forgeLockRef = useRef(false);
   const prefersReducedMotion = useReducedMotion();
   const forging = forgePhase !== null;
+
+  useEffect(() => {
+    playSfx("foundry_open");
+  }, []);
 
   const selectedIds = selectedItems.filter(Boolean).map((i) => i!.id);
   const allSelected = selectedItems.every(Boolean);
@@ -60,6 +67,7 @@ export function ForgePanel() {
   const handleForge = () => {
     if (!allSelected || forgeLockRef.current) return;
     forgeLockRef.current = true;
+    playSfx("foundry_forge");
     const items = selectedItems as Collectible[];
 
     // Phase 1: Dissolve
@@ -111,23 +119,34 @@ export function ForgePanel() {
         {[0, 1, 2].map((index) => {
           const item = selectedItems[index];
           if (item) {
-            const rarityConfig = RARITY_CONFIG[item.rarity];
+            const funko = item.funkoId ? getFunkoById(item.funkoId) : undefined;
             return (
-              <button
+              <div
                 key={item.id}
-                onClick={() => handleRemoveItem(index)}
-                className="rounded-xl border bg-surface/50 p-3 text-center transition-all hover:border-error/40 cursor-pointer group"
-                style={{ borderColor: `${rarityConfig.color}40` }}
+                className="h-full"
               >
-                <FunkoImage name={item.funkoName || item.product} rarity={item.rarity} size="xs" className="mx-auto mb-1" />
-                <p className="text-[9px] font-bold text-white truncate">{item.funkoName || item.product}</p>
-                <span className="text-[8px] font-bold uppercase" style={{ color: rarityConfig.color }}>
-                  {item.rarity}
-                </span>
-                <div className="opacity-0 group-hover:opacity-100 text-[8px] text-error font-bold mt-1 transition-opacity">
-                  Remove
-                </div>
-              </button>
+                <CollectibleDisplayCard
+                  name={item.funkoName || item.product}
+                  rarity={item.rarity}
+                  imagePath={funko?.imagePath}
+                  stats={item.stats}
+                  metrics={[
+                    { label: "Value", value: `$${item.value}`, tone: "gold" },
+                    {
+                      label: "Market",
+                      value: funko ? `~$${funko.baseValue}` : "--",
+                    },
+                  ]}
+                  density="compact"
+                  actions={[
+                    {
+                      label: "Remove",
+                      onClick: () => handleRemoveItem(index),
+                      tone: "danger",
+                    },
+                  ]}
+                />
+              </div>
             );
           }
           return (

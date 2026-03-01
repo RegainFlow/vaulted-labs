@@ -52,35 +52,39 @@ export function LockedOverlay({
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 10 }}
           transition={{ type: "spring", damping: 22 }}
-          className="w-full max-w-sm rounded-2xl border border-white/10 bg-surface-elevated p-6 shadow-[0_0_45px_rgba(255,45,149,0.18)]"
+          className="system-shell w-full max-w-sm px-6 py-6 pr-14 sm:pr-16"
         >
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-accent mb-2">
+          {onClose && (
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={onClose}
+              className="system-close"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+          )}
+          <p className="system-kicker mb-2 text-accent">
             Locked
           </p>
-          <h3 className="text-2xl font-black uppercase tracking-tight text-white mb-2">
-            Locked
+          <h3 className="mb-2 text-2xl font-black uppercase tracking-tight text-white">
+            Access Restricted
           </h3>
-          <p className="text-sm text-text-muted mb-4">
+          <p className="mb-4 text-sm text-text-muted">
             Earn <span className="text-white font-bold">{remainingXP} XP</span> to unlock.
           </p>
-          <p className="text-[11px] text-text-dim mb-5">
+          <p className="mb-5 text-[11px] text-text-dim">
             Next unlock: {label} ({xp}/{unlockXP})
           </p>
           <div className="flex items-center gap-2">
             <button
               onClick={handleOpenVault}
-              className="flex-1 px-4 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-accent text-white hover:bg-accent-hover transition-colors cursor-pointer"
+              className="command-button flex-1 px-4 py-2.5 text-[10px] font-black uppercase tracking-widest"
             >
               Open a Vault
             </button>
-            {onClose && (
-              <button
-                onClick={onClose}
-                className="px-4 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-surface border border-white/15 text-text-muted hover:text-white hover:border-white/30 transition-colors cursor-pointer"
-              >
-                Close
-              </button>
-            )}
           </div>
         </motion.div>
       </motion.div>

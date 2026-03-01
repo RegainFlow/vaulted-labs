@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { useGame } from "../../context/GameContext";
+import { getFunkoById } from "../../data/funkos";
 import { CollectionModal } from "../shared/CollectionModal";
-import { FunkoImage } from "../shared/FunkoImage";
-import { RARITY_CONFIG } from "../../data/vaults";
+import { CollectibleDisplayCard } from "../shared/CollectibleDisplayCard";
 
 export function SquadPanel() {
   const { equippedItems, equipItem, unequipItem, inventory, squadStats } = useGame();
@@ -31,37 +31,36 @@ export function SquadPanel() {
         {slots.map((index) => {
           const item = equippedItems[index];
           if (item) {
-            const rarityConfig = RARITY_CONFIG[item.rarity];
+            const funko = item.funkoId ? getFunkoById(item.funkoId) : undefined;
             return (
-              <motion.button
+              <motion.div
                 key={item.id}
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="relative rounded-xl border-2 bg-surface-elevated/50 p-3 sm:p-4 text-left transition-all hover:border-error/40 cursor-pointer group"
-                style={{ borderColor: `${rarityConfig.color}40` }}
-                onClick={() => handleSlotClick(index)}
+                className="h-full"
               >
-                <div className="flex flex-col items-center gap-2">
-                  <FunkoImage name={item.funkoName || item.product} rarity={item.rarity} size="sm" />
-                  <p className="text-[10px] font-bold text-white text-center truncate w-full">
-                    {item.funkoName || item.product}
-                  </p>
-                  <span
-                    className="px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider"
-                    style={{ color: rarityConfig.color }}
-                  >
-                    {item.rarity}
-                  </span>
-                  <div className="flex gap-2 text-[8px] font-mono text-text-dim">
-                    <span className="text-error">{item.stats.atk}</span>
-                    <span className="text-neon-cyan">{item.stats.def}</span>
-                    <span className="text-neon-green">{item.stats.agi}</span>
-                  </div>
-                </div>
-                <div className="absolute inset-0 bg-error/5 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity flex items-center justify-center">
-                  <span className="text-[9px] font-black uppercase text-error">Remove</span>
-                </div>
-              </motion.button>
+                <CollectibleDisplayCard
+                  name={item.funkoName || item.product}
+                  rarity={item.rarity}
+                  imagePath={funko?.imagePath}
+                  stats={item.stats}
+                  metrics={[
+                    { label: "Value", value: `$${item.value}`, tone: "gold" },
+                    {
+                      label: "Market",
+                      value: funko ? `~$${funko.baseValue}` : "--",
+                    },
+                  ]}
+                  density="compact"
+                  actions={[
+                    {
+                      label: "Remove",
+                      onClick: () => handleSlotClick(index),
+                      tone: "danger",
+                    },
+                  ]}
+                />
+              </motion.div>
             );
           }
 

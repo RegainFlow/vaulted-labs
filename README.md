@@ -41,10 +41,11 @@ Legacy redirects:
 
 ## Tutorials
 
-- `/vaults`: auto-runs once for new users (3-step micro walkthrough + bonus step when triggered), replayable via floating `?` button.
-- `/locker`: guided walkthrough across Inventory, Market, and Arena tabs.
+- Tutorials now run through one shared vault-tech overlay system with a common controller, spotlight, and instruction rail.
+- `/vaults`: auto-runs once for new users, guiding the full open -> scan -> bonus -> reveal loop, replayable via floating `?` button.
+- `/locker`: guided walkthrough across Inventory, Market, and Arena sections on first eligible unlock, then replayable.
 - `/wallet`: replayable via floating `?` button.
-- Tutorials use spotlight auto-scroll and viewport-safe tooltip placement for mobile/desktop.
+- Tutorials use shared target resolution, viewport-safe placement, and mobile-safe safe-area handling.
 
 ## Financial Model Constants
 

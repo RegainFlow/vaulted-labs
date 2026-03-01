@@ -13,10 +13,13 @@ export function PlayNowButton({ to = "/vaults", location }: PlayNowButtonProps) 
   };
 
   return (
-    <Link to={to} className="pushable" onClick={handleClick}>
-      <span className="pushable-shadow" />
-      <span className="pushable-edge" />
-      <span className="pushable-front">OPEN NOW</span>
+    <Link
+      to={to}
+      state={to === "/vaults" ? { skipOpenTutorial: true } : undefined}
+      className="command-button min-w-[182px] px-6 py-3 text-[11px] font-black uppercase tracking-[0.24em] sm:min-w-[210px] sm:px-8 sm:py-4 sm:text-xs"
+      onClick={handleClick}
+    >
+      Open Vault
     </Link>
   );
 }

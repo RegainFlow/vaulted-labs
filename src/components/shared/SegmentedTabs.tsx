@@ -31,10 +31,10 @@ export function SegmentedTabs({
 
   return (
     <div
-      className={`mb-6 sm:mb-8 bg-surface/50 rounded-xl sm:rounded-2xl p-1 sm:p-1.5 border border-white/5 ${isScroll ? "overflow-x-auto" : ""} ${className}`.trim()}
+      className={`system-rail mb-6 sm:mb-8 p-1.5 sm:p-2 ${isScroll ? "overflow-x-auto scrollbar-none" : ""} ${className}`.trim()}
       {...(containerTutorialId ? { "data-tutorial": containerTutorialId } : {})}
     >
-      <div className={`${isScroll ? "flex w-max min-w-full justify-center gap-1" : "flex w-full gap-0.5 sm:gap-1"}`}>
+      <div className={`${isScroll ? "flex w-max min-w-full gap-1.5" : "flex w-full gap-1.5"}`}>
         {tabs.map((tab) => {
           const isActive = activeKey === tab.key;
           return (
@@ -42,25 +42,27 @@ export function SegmentedTabs({
               key={tab.key}
               onClick={() => onChange(tab.key)}
               {...(tab.tutorialId ? { "data-tutorial": tab.tutorialId } : {})}
-              className={`relative ${isScroll ? "shrink-0 px-4 sm:px-5" : "flex-1 px-2 sm:px-6"} py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-[9px] sm:text-xs font-bold uppercase tracking-wider sm:tracking-widest whitespace-nowrap transition-all duration-200 cursor-pointer ${
-                isActive
-                  ? "text-white bg-surface-elevated border border-white/10 shadow-lg"
-                  : "text-text-muted hover:text-white border border-transparent"
-              }`}
+              data-active={isActive ? "true" : "false"}
+              className={`command-segment ${isScroll ? "shrink-0 px-4 sm:px-5" : "flex-1 px-2 sm:px-6"} py-3 sm:py-3.5 text-[9px] sm:text-xs font-black uppercase tracking-[0.22em] sm:tracking-[0.28em] whitespace-nowrap cursor-pointer`}
             >
-              <span className="sm:hidden">{tab.mobileLabel ?? tab.label}</span>
-              <span className="hidden sm:inline">{tab.label}</span>
-              {tab.badgeText && (
-                <span className="ml-2 text-[9px] tracking-normal normal-case font-semibold text-text-dim">
-                  ({tab.badgeText})
-                </span>
-              )}
               {isActive && (
                 <motion.div
                   layoutId={layoutId}
-                  className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-accent"
-                  style={{ boxShadow: "0 0 10px rgba(255,45,149,0.5)" }}
+                  className="absolute inset-0 rounded-[16px] border border-white/10"
+                  style={{
+                    background:
+                      "linear-gradient(180deg, rgba(121,181,219,0.18) 0%, rgba(15,26,38,0.92) 100%)",
+                    boxShadow:
+                      "inset 0 1px 0 rgba(255,255,255,0.06), 0 0 18px rgba(121,181,219,0.14)",
+                  }}
                 />
+              )}
+              <span className="relative z-10 hidden sm:inline">{tab.label}</span>
+              <span className="relative z-10 sm:hidden">{tab.mobileLabel ?? tab.label}</span>
+              {tab.badgeText && (
+                <span className="relative z-10 ml-2 text-[9px] tracking-normal normal-case font-semibold text-text-dim">
+                  ({tab.badgeText})
+                </span>
               )}
             </button>
           );

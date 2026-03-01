@@ -4,6 +4,7 @@ import { useGame } from "../../context/GameContext";
 import { TransactionRow } from "./TransactionRow";
 import type { CreditType } from "../../types/wallet";
 import { FILTERS } from "../../data/wallet";
+import { SegmentedTabs } from "../shared/SegmentedTabs";
 
 export function TransactionList() {
   const { creditTransactions } = useGame();
@@ -19,30 +20,23 @@ export function TransactionList() {
 
   return (
     <div>
-      {/* Filter tabs */}
-      <div className="flex gap-1.5 sm:gap-2 mb-4 sm:mb-6 flex-wrap" data-tutorial="wallet-filters">
-        {FILTERS.map((f) => (
-          <button
-            key={f.value}
-            onClick={() => setFilter(f.value)}
-            className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-[9px] sm:text-[10px] font-bold uppercase tracking-wider border transition-all cursor-pointer ${
-              filter === f.value
-                ? "bg-accent/10 border-accent/30 text-accent"
-                : "bg-surface border-white/10 text-text-muted hover:text-white hover:border-white/20"
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
+      <SegmentedTabs
+        tabs={FILTERS.map((f) => ({ key: f.value, label: f.label, mobileLabel: f.label }))}
+        activeKey={filter}
+        onChange={(key) => setFilter(key as CreditType | "all")}
+        containerTutorialId="wallet-filters"
+        layoutId="wallet-filter-indicator"
+        mode="scroll"
+        className="max-w-full"
+      />
 
       {sorted.length === 0 ? (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="text-center py-16"
+          className="system-shell text-center py-16"
         >
-          <div className="w-16 h-16 rounded-full bg-surface-elevated border border-white/10 flex items-center justify-center mx-auto mb-4">
+          <div className="system-readout mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full">
             <svg
               width="24"
               height="24"
@@ -64,7 +58,7 @@ export function TransactionList() {
           </p>
         </motion.div>
       ) : (
-        <div className="rounded-xl border border-white/10 overflow-hidden" data-tutorial="wallet-transactions">
+        <div className="system-ledger" data-tutorial="wallet-transactions">
           {sorted.map((tx, i) => (
             <TransactionRow
               key={tx.id}

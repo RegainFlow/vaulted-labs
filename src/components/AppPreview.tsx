@@ -13,7 +13,7 @@ const benefits = [
     title: "100% Real Items",
     description:
       "Every vault contains a real collectible. Definite chance of winning a physical item.",
-    color: "text-neon-cyan",
+    color: "text-accent",
     icon: <DiamondIcon />
   },
   {
@@ -41,7 +41,7 @@ const benefits = [
 export function AppPreview() {
   return (
     <section className="relative overflow-hidden border-y border-white/10 bg-surface/60 px-4 sm:px-6 py-12 md:py-20">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(185,242,255,0.12)_0%,rgba(17,17,24,0)_52%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(255,45,149,0.12)_0%,rgba(17,17,24,0)_52%)]" />
       <div className="relative mx-auto grid w-full max-w-6xl items-center gap-10 md:gap-16 lg:grid-cols-2">
         {/* LEFT: Benefits */}
         <div className="space-y-8">

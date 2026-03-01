@@ -31,10 +31,10 @@ const vaultSteps: Step[] = [
     number: "02",
     title: "Reveal Your Collectible",
     description:
-      "Select a mystery box and watch the rarity reel spin. Premium vaults (Platinum+) can trigger a Vault Lock bonus round.",
+      "Charge the scan bar and sweep the extraction lane. Premium vaults (Platinum+) can trigger a Vault Lock bonus round.",
     illustration: <MysteryBoxIllustration />,
     image: "2_reveal_collectible.png",
-    iconColor: "text-neon-cyan",
+    iconColor: "text-accent",
     icon: <DiamondIcon />,
   },
   {
@@ -67,7 +67,7 @@ const platformSteps: Step[] = [
       "Equip your collectibles, battle bosses for shards, forge new items, and complete quests. Every fight strengthens your collection.",
     illustration: <LevelUpIllustration />,
     image: "5_level_up.jpg",
-    iconColor: "text-neon-cyan",
+    iconColor: "text-accent",
     icon: <StarIcon />,
   },
   {

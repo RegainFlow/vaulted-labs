@@ -30,6 +30,10 @@ interface WaitForTargetOptions {
   intervalMs?: number;
 }
 
+interface WaitForTargetsOptions extends WaitForTargetOptions {
+  requireAll?: boolean;
+}
+
 interface TooltipPlacementOptions {
   preferredPosition?: "top" | "bottom";
   insets?: SafeViewportInsets;
@@ -41,6 +45,22 @@ const SAFE_MARGIN = 8;
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(value, max));
+}
+
+function isVisibleTarget(element: Element): boolean {
+  if (!(element instanceof HTMLElement)) return false;
+
+  const style = window.getComputedStyle(element);
+  if (
+    style.display === "none" ||
+    style.visibility === "hidden" ||
+    style.opacity === "0"
+  ) {
+    return false;
+  }
+
+  const rect = element.getBoundingClientRect();
+  return rect.width > 0 && rect.height > 0 && element.getClientRects().length > 0;
 }
 
 export function getSafeViewportInsets({
@@ -196,9 +216,54 @@ export function getTooltipPlacement(
 }
 
 function queryTarget(selector: string, fallbackSelectors: string[] = []) {
-  return document.querySelector(selector) ??
-    fallbackSelectors.map((entry) => document.querySelector(entry)).find(Boolean) ??
-    null;
+  const directMatches = Array.from(document.querySelectorAll(selector));
+  const visibleDirectMatch = directMatches.find(isVisibleTarget);
+  if (visibleDirectMatch) {
+    return visibleDirectMatch;
+  }
+
+  const fallbackMatches = fallbackSelectors
+    .flatMap((entry) => Array.from(document.querySelectorAll(entry)));
+  const visibleFallbackMatch = fallbackMatches.find(isVisibleTarget);
+  if (visibleFallbackMatch) {
+    return visibleFallbackMatch;
+  }
+
+  return null;
+}
+
+function queryTargets(
+  selectors: string[],
+  fallbackSelectors: string[] = [],
+  requireAll = false
+) {
+  const resolved = selectors
+    .map((selector) => {
+      const matches = Array.from(document.querySelectorAll(selector));
+      return matches.find(isVisibleTarget) ?? null;
+    })
+    .filter((entry): entry is Element => Boolean(entry));
+
+  if (resolved.length > 0 && (!requireAll || resolved.length === selectors.length)) {
+    return resolved;
+  }
+
+  if (fallbackSelectors.length === 0) {
+    return resolved;
+  }
+
+  const fallbackResolved = fallbackSelectors
+    .map((selector) => {
+      const matches = Array.from(document.querySelectorAll(selector));
+      return matches.find(isVisibleTarget) ?? null;
+    })
+    .filter((entry): entry is Element => Boolean(entry));
+
+  if (fallbackResolved.length === 0) {
+    return resolved;
+  }
+
+  return fallbackResolved;
 }
 
 export function waitForTarget(
@@ -231,4 +296,66 @@ export function waitForTarget(
       }
     }, intervalMs);
   });
+}
+
+export function waitForTargets(
+  selectors: string[],
+  {
+    fallbackSelectors = [],
+    timeoutMs = 1600,
+    intervalMs = 120,
+    requireAll = false
+  }: WaitForTargetsOptions = {}
+): Promise<Element[]> {
+  return new Promise((resolve) => {
+    const immediate = queryTargets(selectors, fallbackSelectors, requireAll);
+    if (immediate.length > 0 && (!requireAll || immediate.length === selectors.length)) {
+      resolve(immediate);
+      return;
+    }
+
+    const startedAt = Date.now();
+    const interval = window.setInterval(() => {
+      const targets = queryTargets(selectors, fallbackSelectors, requireAll);
+      if (targets.length > 0 && (!requireAll || targets.length === selectors.length)) {
+        window.clearInterval(interval);
+        resolve(targets);
+        return;
+      }
+
+      if (Date.now() - startedAt >= timeoutMs) {
+        window.clearInterval(interval);
+        resolve(targets);
+      }
+    }, intervalMs);
+  });
+}
+
+export function getGroupedSpotlightRect(
+  targets: Element[],
+  padding = 8,
+  insets: SafeViewportInsets = getSafeViewportInsets()
+): TargetRect | null {
+  const visibleTargets = targets.filter(isVisibleTarget);
+  if (visibleTargets.length === 0) return null;
+
+  const rects = visibleTargets.map((target) => target.getBoundingClientRect());
+  const left = Math.min(...rects.map((rect) => rect.left));
+  const top = Math.min(...rects.map((rect) => rect.top));
+  const right = Math.max(...rects.map((rect) => rect.right));
+  const bottom = Math.max(...rects.map((rect) => rect.bottom));
+
+  const unionTarget = {
+    getBoundingClientRect: () =>
+      ({
+        left,
+        top,
+        right,
+        bottom,
+        width: right - left,
+        height: bottom - top,
+      }) as DOMRect,
+  };
+
+  return getSpotlightRect(unionTarget as Element, padding, insets);
 }

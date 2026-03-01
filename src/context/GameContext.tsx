@@ -12,6 +12,8 @@ import type {
   Collectible,
   CreditTransaction,
   CreditType,
+  ItemAcquisitionMeta,
+  ItemFundingSource,
   MarketplaceListing,
   Auction,
   Rarity,
@@ -35,10 +37,11 @@ import {
   FEATURE_UNLOCK_XP,
   type UnlockFeatureKey
 } from "../lib/unlocks";
+import { playSfx } from "../lib/audio";
 
 // localStorage helpers
 const STORAGE_KEY = "vaultedlabs-game-state";
-const STATE_VERSION = 3;
+const STATE_VERSION = 4;
 
 interface PersistedState {
   creditTransactions: CreditTransaction[];
@@ -76,6 +79,104 @@ const DEFAULT_TX: CreditTransaction = {
   description: "Demo incentive credits",
   timestamp: Date.now()
 };
+
+const INCENTIVE_SHIPPING_LOCK_REASON =
+  "Opened with incentive credits. Hold, equip, list, or cash out this collectible before shipping unlocks.";
+
+const FREE_SPIN_SHIPPING_LOCK_REASON =
+  "Free Spin prizes can be held, equipped, listed, or cashed out, but cannot be shipped yet.";
+
+const DEFAULT_ITEM_META: ItemAcquisitionMeta = {
+  fundingSource: "earned",
+  shippingEligible: true
+};
+
+function createItemMeta(
+  fundingSource: ItemFundingSource,
+  shippingEligible: boolean,
+  shippingLockReason?: string
+): ItemAcquisitionMeta {
+  return {
+    fundingSource,
+    shippingEligible,
+    ...(shippingLockReason ? { shippingLockReason } : {})
+  };
+}
+
+function normalizeItemMeta(
+  item: Collectible,
+  fallbackSource: ItemFundingSource = "earned"
+): Collectible {
+  const shippingEligible = item.shippingEligible ?? true;
+  const shippingLockReason =
+    item.shippingLockReason ??
+    (!shippingEligible && fallbackSource === "free_spin"
+      ? FREE_SPIN_SHIPPING_LOCK_REASON
+      : !shippingEligible
+        ? INCENTIVE_SHIPPING_LOCK_REASON
+        : undefined);
+
+  return {
+    ...item,
+    fundingSource: item.fundingSource ?? fallbackSource,
+    shippingEligible,
+    ...(shippingLockReason ? { shippingLockReason } : {})
+  };
+}
+
+function getCreditBuckets(transactions: CreditTransaction[]) {
+  let incentiveAvailable = 0;
+  let earnedAvailable = 0;
+
+  for (const tx of normalizeCreditTransactions(transactions)) {
+    if (tx.amount >= 0) {
+      if (tx.type === "incentive") {
+        incentiveAvailable += tx.amount;
+      } else if (tx.type === "earned") {
+        earnedAvailable += tx.amount;
+      }
+      continue;
+    }
+
+    let remainingSpend = Math.abs(tx.amount);
+    const incentiveSpend = Math.min(incentiveAvailable, remainingSpend);
+    incentiveAvailable -= incentiveSpend;
+    remainingSpend -= incentiveSpend;
+
+    if (remainingSpend > 0) {
+      earnedAvailable = Math.max(0, earnedAvailable - remainingSpend);
+    }
+  }
+
+  return { incentiveAvailable, earnedAvailable };
+}
+
+function resolveVaultAcquisitionMeta(
+  price: number,
+  transactions: CreditTransaction[]
+): ItemAcquisitionMeta {
+  const { incentiveAvailable } = getCreditBuckets(transactions);
+  const incentiveContribution = Math.min(incentiveAvailable, price);
+
+  if (incentiveContribution > 0) {
+    return createItemMeta("incentive", false, INCENTIVE_SHIPPING_LOCK_REASON);
+  }
+
+  return DEFAULT_ITEM_META;
+}
+
+function mergeItemMeta(items: Collectible[]): ItemAcquisitionMeta {
+  if (items.some((item) => item.fundingSource === "free_spin")) {
+    return createItemMeta("free_spin", false, FREE_SPIN_SHIPPING_LOCK_REASON);
+  }
+  if (items.some((item) => !item.shippingEligible || item.fundingSource === "incentive")) {
+    return createItemMeta("incentive", false, INCENTIVE_SHIPPING_LOCK_REASON);
+  }
+  if (items.some((item) => item.fundingSource === "marketplace")) {
+    return createItemMeta("marketplace", true);
+  }
+  return DEFAULT_ITEM_META;
+}
 
 function normalizeCreditTransactions(
   transactions: CreditTransaction[]
@@ -129,7 +230,7 @@ function migrateState(state: PersistedState): PersistedState {
 
   // Add stats & isEquipped to existing items
   const migratedInventory = state.inventory.map((item) => ({
-    ...item,
+    ...normalizeItemMeta(item),
     stats: item.stats ?? generateItemStats(item.rarity, item.vaultTier),
     isEquipped: item.isEquipped ?? false
   }));
@@ -138,7 +239,7 @@ function migrateState(state: PersistedState): PersistedState {
   const migratedListings = state.listings.map((l) => ({
     ...l,
     item: {
-      ...l.item,
+      ...normalizeItemMeta(l.item, "marketplace"),
       stats: l.item.stats ?? generateItemStats(l.item.rarity, l.item.vaultTier),
       isEquipped: l.item.isEquipped ?? false
     }
@@ -147,7 +248,7 @@ function migrateState(state: PersistedState): PersistedState {
   const migratedAuctions = state.auctions.map((a) => ({
     ...a,
     item: {
-      ...a.item,
+      ...normalizeItemMeta(a.item, "marketplace"),
       stats: a.item.stats ?? generateItemStats(a.item.rarity, a.item.vaultTier),
       isEquipped: a.item.isEquipped ?? false
     }
@@ -198,12 +299,22 @@ interface GameContextValue {
     rarity: Rarity,
     value: number,
     funkoId?: string,
-    funkoName?: string
+    funkoName?: string,
+    acquisitionMeta?: ItemAcquisitionMeta
   ) => Collectible;
+  addAndShipItem: (
+    product: string,
+    vaultTier: VaultTierName,
+    rarity: Rarity,
+    value: number,
+    funkoId?: string,
+    funkoName?: string,
+    acquisitionMeta?: ItemAcquisitionMeta
+  ) => Collectible | null;
   cashoutItem: (itemId: string) => void;
-  shipItem: (itemId: string) => void;
+  shipItem: (itemId: string) => boolean;
   listItem: (itemId: string) => void;
-  purchaseVault: (vaultName: string, price: number) => boolean;
+  purchaseVault: (vaultName: string, price: number) => ItemAcquisitionMeta | null;
   claimCreditsFromReveal: (value: number) => void;
   buyListing: (listingId: string) => boolean;
   placeBid: (auctionId: string, amount: number) => boolean;
@@ -234,7 +345,7 @@ interface GameContextValue {
   ) => void;
   freeSpins: number;
   grantFreeSpins: (count: number) => void;
-  useFreeSpinForVault: (vaultName: string, price: number) => boolean;
+  useFreeSpinForVault: (vaultName: string, price: number) => ItemAcquisitionMeta | null;
   cashoutFlashTimestamp: number;
   cashoutStreak: number;
   // v2 — Arena economy
@@ -256,7 +367,8 @@ interface GameContextValue {
     rarity: Rarity,
     value: number,
     funkoId?: string,
-    funkoName?: string
+    funkoName?: string,
+    acquisitionMeta?: ItemAcquisitionMeta
   ) => Collectible;
   unequipItem: (itemId: string) => void;
   forgeItems: (itemIds: [string, string, string], freeSpinsUsed: number) => Collectible | null;
@@ -596,7 +708,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       rarity: Rarity,
       value: number,
       funkoId?: string,
-      funkoName?: string
+      funkoName?: string,
+      acquisitionMeta: ItemAcquisitionMeta = DEFAULT_ITEM_META
     ): Collectible => {
       const item: Collectible = {
         id: uid("item"),
@@ -608,6 +721,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         acquiredAt: Date.now(),
         stats: generateItemStats(rarity, vaultTier),
         isEquipped: false,
+        ...acquisitionMeta,
         ...(funkoId ? { funkoId } : {}),
         ...(funkoName ? { funkoName } : {})
       };
@@ -619,8 +733,52 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [advanceQuests]
   );
 
+  const addAndShipItem = useCallback(
+    (
+      product: string,
+      vaultTier: VaultTierName,
+      rarity: Rarity,
+      value: number,
+      funkoId?: string,
+      funkoName?: string,
+      acquisitionMeta: ItemAcquisitionMeta = DEFAULT_ITEM_META
+    ): Collectible | null => {
+      if (!acquisitionMeta.shippingEligible) {
+        playSfx("ui_locked");
+        return null;
+      }
+
+      const item: Collectible = {
+        id: uid("item"),
+        product,
+        vaultTier,
+        rarity,
+        value,
+        status: "shipped",
+        acquiredAt: Date.now(),
+        stats: generateItemStats(rarity, vaultTier),
+        isEquipped: false,
+        ...acquisitionMeta,
+        ...(funkoId ? { funkoId } : {}),
+        ...(funkoName ? { funkoName } : {})
+      };
+
+      setInventory((prev) => [...prev, item]);
+      setCashoutStreak(0);
+      advanceQuests("hold_item", 1);
+      advanceQuests("ship_item", 1);
+      playSfx("ship_item");
+
+      return item;
+    },
+    [advanceQuests]
+  );
+
   const cashoutItem = useCallback(
     (itemId: string) => {
+      const targetItem = inventory.find((item) => item.id === itemId);
+      if (!targetItem || targetItem.status !== "held") return;
+
       // Auto-unequip if equipped
       setEquippedItemIds((prev) => prev.filter((id) => id !== itemId));
       setInventory((prev) =>
@@ -642,12 +800,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
           return { ...item, status: "cashed_out" as const, isEquipped: false };
         })
       );
+      playSfx("cashout");
     },
-    [advanceQuests]
+    [advanceQuests, inventory]
   );
 
   const shipItem = useCallback(
     (itemId: string) => {
+      const targetItem = inventory.find((item) => item.id === itemId);
+      if (!targetItem || targetItem.status !== "held" || !targetItem.shippingEligible) {
+        playSfx("ui_locked");
+        return false;
+      }
+
       // Auto-unequip if equipped
       setEquippedItemIds((prev) => prev.filter((id) => id !== itemId));
       setInventory((prev) =>
@@ -660,8 +825,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
           return item;
         })
       );
+      playSfx("ship_item");
+      return true;
     },
-    [advanceQuests]
+    [advanceQuests, inventory]
   );
 
   const listItem = useCallback(
@@ -684,13 +851,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }]);
 
       advanceQuests("marketplace_list", 1);
+      playSfx("sell_item");
     },
     [inventory, advanceQuests]
   );
 
   const purchaseVault = useCallback(
-    (vaultName: string, price: number): boolean => {
-      if (balance < price) return false;
+    (vaultName: string, price: number): ItemAcquisitionMeta | null => {
+      if (balance < price) return null;
+      const acquisitionMeta = resolveVaultAcquisitionMeta(price, creditTransactions);
       setCreditTransactions((prev) => [
         ...prev,
         {
@@ -708,9 +877,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       );
       advanceQuests("vault_purchase", 1);
       advanceQuests("spend_amount", price);
-      return true;
+      return acquisitionMeta;
     },
-    [balance, advanceQuests]
+    [balance, advanceQuests, creditTransactions]
   );
 
   const claimCreditsFromReveal = useCallback((value: number) => {
@@ -751,6 +920,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
           status: "held",
           acquiredAt: Date.now(),
           isEquipped: false,
+          fundingSource: "marketplace",
+          shippingEligible: true,
+          shippingLockReason: undefined,
           stats: listing.item.stats ?? generateItemStats(listing.item.rarity, listing.item.vaultTier)
         }
       ]);
@@ -806,11 +978,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const grantFreeSpins = useCallback((count: number) => {
     setFreeSpins((prev) => prev + count);
+    if (count > 0) playSfx("free_spin_awarded");
   }, []);
 
   const useFreeSpinForVault = useCallback(
-    (vaultName: string, price: number): boolean => {
-      if (freeSpins <= 0) return false;
+    (vaultName: string, price: number): ItemAcquisitionMeta | null => {
+      if (freeSpins <= 0) return null;
       setFreeSpins((prev) => prev - 1);
       setXP((prev) => prev + price);
       // Grant boss energy on free spin vault open
@@ -829,7 +1002,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       ]);
       advanceQuests("vault_purchase", 1);
       advanceQuests("spend_amount", price);
-      return true;
+      return createItemMeta("free_spin", false, FREE_SPIN_SHIPPING_LOCK_REASON);
     },
     [freeSpins, advanceQuests]
   );
@@ -880,7 +1053,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
             status: "held",
             acquiredAt: Date.now(),
             stats: generateItemStats(specialItem.rarity, "Bronze"),
-            isEquipped: false
+            isEquipped: false,
+            fundingSource: "earned",
+            shippingEligible: true
           }
         ]);
       }
@@ -914,6 +1089,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     if (shards < SHARD_CONFIG.freeSpinConversionCost) return false;
     setShards((prev) => prev - SHARD_CONFIG.freeSpinConversionCost);
     setFreeSpins((prev) => prev + 1);
+    playSfx("free_spin_awarded");
     return true;
   }, [shards]);
 
@@ -926,6 +1102,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setInventory((prev) =>
       prev.map((i) => (i.id === itemId ? { ...i, isEquipped: true } : i))
     );
+    playSfx("equip_item");
     return true;
   }, [inventory, equippedItemIds]);
 
@@ -936,7 +1113,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       rarity: Rarity,
       value: number,
       funkoId?: string,
-      funkoName?: string
+      funkoName?: string,
+      acquisitionMeta: ItemAcquisitionMeta = DEFAULT_ITEM_META
     ): Collectible => {
       const item: Collectible = {
         id: uid("item"),
@@ -948,6 +1126,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         acquiredAt: Date.now(),
         stats: generateItemStats(rarity, vaultTier),
         isEquipped: true,
+        ...acquisitionMeta,
         ...(funkoId ? { funkoId } : {}),
         ...(funkoName ? { funkoName } : {})
       };
@@ -956,6 +1135,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setEquippedItemIds((prev) => [...prev, item.id]);
       setCashoutStreak(0);
       advanceQuests("hold_item", 1);
+      playSfx("equip_item");
 
       return item;
     },
@@ -1013,7 +1193,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         status: "held",
         acquiredAt: Date.now(),
         stats: generateItemStats(resultRarity, highestTier),
-        isEquipped: false
+        isEquipped: false,
+        ...mergeItemMeta(validItems)
       };
 
       // Remove input items, unequip if needed
@@ -1058,7 +1239,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
           status: "held" as const,
           acquiredAt: Date.now(),
           stats: generateItemStats("uncommon", "Bronze"),
-          isEquipped: false
+          isEquipped: false,
+          fundingSource: "earned",
+          shippingEligible: true
         },
         ...prev
       ];
@@ -1123,6 +1306,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addCredits,
       spendCredits,
       addItem,
+      addAndShipItem,
       cashoutItem,
       shipItem,
       listItem,
@@ -1178,7 +1362,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       hasSeenInventoryTutorial, hasSeenShopTutorial, hasSeenBossFightTutorial,
       hasSeenArenaTutorial, hasSeenCollectionTutorial,
       questProgress, questToast, dismissQuestToast,
-      addCredits, spendCredits, addItem, cashoutItem, shipItem, listItem,
+      addCredits, spendCredits, addItem, addAndShipItem, cashoutItem, shipItem, listItem,
       purchaseVault, claimCreditsFromReveal, buyListing, placeBid, addXP, awardXP,
       tutorialOpenVault, seedDemoItem, removeDemoItem, resetDemo,
       prestigeLevel, canPrestige, prestige, defeatedBosses, defeatBoss,

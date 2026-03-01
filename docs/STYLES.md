@@ -1,180 +1,213 @@
-# Design System & Styling Guide
+# Vaulted Labs Styling Guide
 
-Source of truth: `src/index.css` `@theme` block.
+Source of truth: [src/index.css](/mnt/c/Users/lrami/Desktop/Code/vaulted-labs/src/index.css)
 
-## Typography
-- **Primary Font:** `Inter` (sans-serif) via `--font-sans`
-- **Weights:**
-  - `font-black` (900): Main headers and large impact text.
-  - `font-bold` (700): Subheaders and button text.
-  - `font-medium` (500): Body text and descriptive paragraphs.
-  - `font-mono`: Technical labels, stats, prices, countdowns for a "protocol/machine" aesthetic.
+## Global Visual Language
 
-## Color Palette
+### Vault-Tech System UI
+The product follows a premium tactical-futuristic vault-tech visual language across all major core surfaces.
 
-### Backgrounds
-| Token | Value | Usage |
-|-------|-------|-------|
-| `bg` | #0a0a0f | Blue-shifted dark background |
-| `surface` | #111118 | Blue-tinted card/panel surfaces |
-| `surface-elevated` | #1a1a24 | Cards, modals, elevated panels |
-| `border` | #2a2a3a | Default border color |
+This means:
+- major views should feel like engineered chambers, not stacked generic cards
+- interfaces should favor framed containment zones over nested rounded panels
+- active areas should feel like scan bays, control rails, or sealed system modules
+- glow and motion should feel like controlled routed energy, not decorative neon
 
-### Accents
-| Token | Value | Usage |
-|-------|-------|-------|
-| `accent` | #ff2d95 | Magenta neon — CTAs, headings, primary actions |
-| `accent-hover` | #e0267f | Magenta hover state |
-| `neon-cyan` | #00f0ff | Cyan — input focus, Hold accent, tech highlights |
-| `neon-cyan-hover` | #00d8e6 | Cyan hover state |
-| `neon-green` | #39ff14 | Green neon — success states, mint labels |
+### Composition Rules
+- prefer one dominant framed container over multiple nested containers
+- avoid card-inside-card structures unless the inner layer adds real UX value
+- primary interactive zones should read as containment chambers, scan lanes, command rails, or reveal bays
+- keep hierarchy strong: one primary chamber, then secondary controls
 
-### Text
-| Token | Value | Usage |
-|-------|-------|-------|
-| `text` | #f0f0f5 | Cool-tinted primary white |
-| `text-muted` | #9a9ab0 | Cool muted descriptions |
-| `text-dim` | #6a6a80 | Dimmed metadata and labels |
+### Panel Philosophy
+- large panels should feel like vault system housings
+- use reinforced borders, inset rails, subtle edge lighting, and layered surfaces
+- avoid decorative wrappers that reduce usable space or make content feel cramped
 
-### Vault Tiers (6 levels)
-| Tier | Color | Token | Price |
-|------|-------|-------|-------|
-| Bronze | #cd7f32 | `vault-bronze` | $12 |
-| Silver | #c0c0c0 | `vault-silver` | $25 |
-| Gold | #ffd700 | `vault-gold` | $40 |
-| Platinum | #79b5db | *(inline)* | $55 |
-| Obsidian | #6c4e85 | *(inline)* | $75 |
-| Diamond | #b9f2ff | `vault-diamond` | $90 |
+## Theme Foundation
 
-### Rarity Colors
-| Rarity | Color | Token | Value Multiplier |
-|--------|-------|-------|------------------|
-| Common | #6B7280 | `rarity-common` | 0.40x – 0.85x |
-| Uncommon | #3B82F6 | `rarity-uncommon` | 0.85x – 1.40x |
-| Rare | #a855f7 | `rarity-rare` | 1.40x – 2.20x |
-| Legendary | #FFD700 | `rarity-legendary` | 2.20x – 3.50x |
+### Core Tokens
+The app uses a neutral vault-tech base by default:
+- `bg`, `surface`, `surface-elevated`, `border`
+- `shell`, `shell-elevated`, `shell-deep`
+- `frame`, `frame-strong`, `rail`, `rail-glow`, `scan`, `command`
+- `text`, `text-muted`, `text-dim`
 
-### Semantic
-| Token | Value | Usage |
-|-------|-------|-------|
-| `success` | #00f0ff | Success feedback |
-| `error` | #ff3b5c | Error feedback |
+### Accent Policy
+- non-tier surfaces default to steel-blue / scan-cyan system accents
+- tier colors take over in vault-aware contexts
+- rarity colors stay local to collectible identity and payoff moments
+- magenta remains a legacy compatibility color, not the default system accent
 
-## Custom Utility Classes
-
-Defined in `src/index.css` `@layer utilities`:
-
-- **Glow effects:** `.glow-magenta`, `.glow-cyan` (box-shadow), `.text-glow-magenta`, `.text-glow-cyan`, `.text-glow-white` (text-shadow)
-- **Animations:** `.animate-gradient`, `.animate-vault-spin-slow`, `.animate-vault-glow-pulse`, `.animate-spin-slow`, `.animate-hud-shimmer`, `.animate-urgency-pulse`
-- **Helpers:** `.bg-clip-text` (Firefox fix), `.bg-300%` (gradient sizing)
-- **Buttons:** `.pushable` / `.pushable-shadow` / `.pushable-edge` / `.pushable-front` — 3D pushable button (Josh Comeau pattern), responsive padding (12px 28px mobile, 14px 42px at sm+)
+### Tier Behavior
+- Bronze: warm copper / amber energy
+- Silver: cool silver-white energy
+- Gold: radiant warm gold energy
+- Platinum: pale steel-blue energy
+- Obsidian: dark violet / magenta energy
+- Diamond: icy cyan / white crystalline energy
 
 ## Components
 
-### Buttons
-- **Primary Action:** Rounded corners (`rounded-xl`), uppercase, bold tracking (`tracking-widest`).
-- **Pushable CTA:** 3D depth effect with shadow/edge/front layers, magenta accent gradient.
-- **Interactive:** Hover states include glow (`shadow-[0_0_20px_...]`) and scale transforms.
-- **Marketplace Actions:** Hold/Ship/Cashout buttons use tier-specific colors with `whileHover` Motion animation.
-
 ### Cards
 
+#### Global Card Rule
+- cards are content units, not unnecessary wrapper layers around already-contained systems
+- if a section is already a framed system panel, do not place the primary interaction inside another large rounded card
+
 #### Vault Cards
-- **Style:** "Cubic" / "Vault Door" aesthetic.
-- **Header:** Metallic gradient background specific to tier, responsive height (`h-40 sm:h-44 md:h-48`).
-- **Body:** Dark surface with rarity probability stat bars, responsive padding (`p-4 sm:p-5 md:p-6`).
-- **Icons:** Custom SVG "Ore/Mineral" icons representing tier material (Bronze nugget, Silver ingot, Gold crystal, Platinum hexagonal prism, Obsidian shard, Diamond cut).
+- style: premium vault-tech display module
+- header: use header imagery from `public/images/vaults/headers`
+- body: structured dark chamber with minimal clutter
+- identity comes from material treatment, tier color, and header art before badges or pills
 
-#### Inventory Item Cards
-- **Header:** Vault tier gradient stripe, rarity badge (colored per rarity token).
-- **Body:** VaultIcon, product name, value in credits, status badge (held/shipped/cashed_out).
-- **Actions:** Button row at bottom — Hold (passive), Ship, Cashout, List (Coming Soon badge).
-- **States:** Held items are full color; shipped/cashed_out items are dimmed with `opacity-50`.
+Header image mapping:
+- Bronze: `/images/vaults/headers/bronze_vl_header.png`
+- Silver: `/images/vaults/headers/silver_vl_header.png`
+- Gold: `/images/vaults/headers/gold_vl_header.png`
+- Platinum: `/images/vaults/headers/platium_vl_header.png`
+- Obsidian: `/images/vaults/headers/obsidian_vl_header.png`
+- Diamond: `/images/vaults/headers/diamond_vl_header.png`
 
-#### Listing Cards
-- **Layout:** Item info + seller name (`@username` in muted text) + price in vault-gold.
-- **Buy button:** Full-width accent button, disabled state when insufficient credits.
+#### Reel / Reveal Cards
+- reel cards should appear as premium reveal assets inside a chamber
+- avoid excessive floating overlay tags on top of the card art
+- selected card emphasis should come from glow, rim light, lock-on scan treatment, and chamber integration
+- do not use large detached overlay boxes floating over the selected card
 
-#### Auction Cards
-- **Layout:** Item info + current bid display + countdown timer.
-- **Timer:** Font-mono, turns `text-error` + `.animate-urgency-pulse` when < 5 minutes.
-- **Bid input:** Number input with "Place Bid" button, validation feedback inline.
-- **Winning indicator:** "You're winning!" badge in neon-green when player is highest bidder.
+#### Module Cards
+- inventory, marketplace, and wallet cards should read as contained system modules
+- use framed edges, structured data zones, and command rails for actions
+- avoid bright pill clutter when art, hierarchy, and placement already communicate status
 
-#### Boss Fight Cards
-- **Locked:** Grayscale filter, padlock SVG icon, "Unlocks at Level N" text, `opacity-50`.
-- **Unlocked:** Glow border (neon-cyan), "FIGHT" button with Coming Soon tooltip on click.
-- **Content:** Boss name (font-black), description (text-muted), reward description.
+## Reveal Chamber System
 
-#### Incentive Tier Cards
-- **Layout:** 2x2 grid mobile, 4-col desktop. Each shows credit amount, tier label, spots info, mini progress bar.
-- **Active tier:** Pulsing dot + glow border in tier color.
-- **Completed tier:** Dimmed, strikethrough credit amount.
-- **Locked tier:** Low opacity + lock icon.
+### Primary Reveal Container
+For vault opening and reveal flows:
+- the main system section acts as the primary reveal chamber
+- the reel sits directly inside that chamber
+- do not wrap the reel in an additional large inner card
+- the chamber should feel like a scan bay, containment lane, or reveal chamber
 
-### Inline SVG Illustrations (HowItWorks)
-- **Style:** Stroke-only neon outlines with `feGaussianBlur` glow filters.
-- **Colors:** Step 1 magenta (#ff2d95), Step 2 cyan (#00f0ff), Step 3 green (#39ff14).
-- **Size:** `viewBox="0 0 120 120"` rendered at 140x140px.
+### Reveal Chamber Styling
+- use a single large framed container
+- support depth with subtle inset rails, edge framing, and restrained internal boundaries
+- avoid full secondary inner shells that visually shrink the reel
 
-### Navbar
-- **Fixed positioning:** `fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-bg/90 border-b border-white/5`
-- **Height:** `h-14 md:h-20` with mobile HUD bar below on HUD pages
-- **Contextual nav link:** Shows "Market" on /play, "Play" on /market — styled as bordered rounded button with hover glow
-- **HUD mode** (`showHUD=true`):
-  - Desktop: glassmorphic bar with Credits (vault-gold), Loot (neon-cyan), Level (accent) slots
-  - Mobile: compact bar below navbar with same 3 slots in a row
-  - All values use `animate-hud-shimmer` with staggered delays
-- **Landing mode** (`showHUD=false`):
-  - Right side: contextual nav link + "Join" button (scrolls to #waitlist)
+### Center Lock Zone
+The selected center position must feel like a built-in scan / lock zone.
 
-### Reel Glow
-- **Spinning state:** Subtle ambient glow via `boxShadow: 0 0 60px ${accentColor}25, 0 0 120px ${accentColor}10`
-- **Landed state:** Stronger glow using the landed rarity color: `0 0 50px ${landedColor}30, inset 0 0 25px ${landedColor}10`
-- **Boss fight reels:** Same pattern — cyan (`#00f0ff`) for player, magenta (`#ff2d95`) for boss
+Use:
+- faint vertical beam lines
+- restrained corner brackets
+- tight focused glow bloom
+- subtle pulse / lock-on effect
+- thick enough bracket geometry to visibly focus the selection
 
-### Boss Fight Layout
-- **Desktop (md+):** Side-by-side layout — player reel (left), attack control panel (center), boss reel (right)
-- **Mobile (< md):** Vertical stack — player on top, control panel, boss on bottom
-- **Reel sizing:** `w-full max-w-60 sm:max-w-72 md:max-w-80` — flexes down on tight layouts
+Avoid:
+- oversized translucent rounded overlays
+- debug-looking targeting boxes
+- detached cyan frames floating above the reel
 
-### Marketplace Tabs
-- **Tab bar:** Horizontal, uppercase tracking-widest, `text-[10px] md:text-xs`
-- **Active tab:** White text, accent underline (`border-b-2 border-accent`)
-- **Inactive tab:** Muted text, transparent underline, hover brightens
-- **Mobile:** Horizontally scrollable if needed
+The lock zone must feel integrated into the chamber itself.
 
-### Tutorial Overlays
-- **Z-index:** `z-[200]` for all tutorial overlays (above navbar z-50 and modals)
-- **Backdrop:** `bg-black/85 backdrop-blur-sm` for welcome/complete overlays
-- **Spotlight:** SVG mask cutout with accent border glow (`animate-pulse`, `box-shadow: 0 0 30px rgba(255,45,149,0.4)`)
-- **Tooltip:** `bg-surface-elevated border-accent/40` rounded card, viewport-clamped positioning (min 8px from edges)
-- **Skip button:** Subtle `text-[10px] text-text-dim hover:text-text-muted uppercase tracking-widest` — not a primary action
-- **Help button:** Fixed `bottom-6 right-6` floating circle with accent border glow, bold `?` text character
-- **CTA buttons:** Same pushable style as other CTAs — accent background with `border-b-[4px] border-[#a01d5e]`
+## Buttons
 
-### Profile Panel
-- **XP bar:** Full-width progress bar with gradient fill (accent to neon-cyan), rounded-full
-- **Level display:** Large number with glow, "Level N" label
-- **Stats:** Row of 3 stat cards (items collected, vaults opened, credits earned)
+### Command Buttons
+Primary buttons should feel like vault actuators or command rails, not generic web buttons.
 
-## Mobile Responsiveness
+### Reveal Action Button
+For hold-to-activate actions:
+- prefer a single-word centered label
+- default action language should be short and forceful
+- recommended default: `SCAN`
 
-### Breakpoint Strategy
-- **Base (< 640px):** Smallest viable layout — reduced padding, smaller text, single-column grids.
-- **sm (640px+):** Intermediate sizing — slightly larger text and padding.
-- **md (768px+):** Tablet — multi-column grids begin, full-size headings.
-- **lg (1024px+):** Desktop — full layout with side-by-side sections.
+### Charge Fill Behavior
+For hold interactions:
+- the entire button body acts as the progress indicator
+- progress fills left-to-right across the whole control surface
+- do not use a detached loader pill, bottom bar, or side meter
+- the fill should read like routed system energy charging the control bar
 
-### Responsive Patterns
-- **Headings:** Progressive scaling, e.g. `text-2xl sm:text-3xl md:text-4xl lg:text-5xl`
-- **Section padding:** `py-12 md:py-24` or `py-16 sm:py-24 md:py-32`
-- **Card padding:** `p-4 sm:p-5 md:p-6` or `p-5 sm:p-6 md:p-8`
-- **Grid gaps:** `gap-4 sm:gap-6 md:gap-8`
-- **Layout:** Single column stacking on mobile, `sm:grid-cols-2` / `md:grid-cols-3` / `lg:grid-cols-4` for desktop
-- **Vault door (Hero):** `w-[280px] sm:w-[350px] md:w-[500px]` to prevent overflow on narrow screens
-- **Phone mockup:** `max-w-[280px] sm:max-w-[330px]` for small screens
-- **Navbar:** `h-14 md:h-20` with `px-4 md:px-6`, mobile HUD as separate row below
-- **Inventory/Listing/Auction grids:** `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`
-- **Incentive cards:** `grid-cols-2 md:grid-cols-4`
-- **Boss fight cards:** `grid-cols-1 sm:grid-cols-2` on mobile, `grid-cols-2 md:grid-cols-4` on desktop
+### Charge Visual Rules
+- label remains centered and readable while charging
+- fill may include a subtle internal light sweep
+- rim glow intensifies as progress increases
+- at full charge, the button should feel fully armed
+
+## Shared Primitives
+
+### Utility Classes
+Defined in `src/index.css`:
+- `.system-shell`
+- `.system-shell-strong`
+- `.module-card`
+- `.system-rail`
+- `.command-segment`
+- `.system-readout`
+- `.system-label`
+- `.system-kicker`
+- `.specimen-frame`
+
+### Usage Rules
+- use `system-shell` for dominant housings and modals
+- use `module-card` for content tiles and list rows
+- use `system-rail` for tab bars, command rows, and compact control surfaces
+- use `command-segment` for integrated rail buttons, not standalone pill buttons
+- use `system-readout` for compact stat blocks and metadata chips
+
+## Color & Glow System
+
+### Tier-Synced Accents
+Active interactive states should inherit the current vault tier color wherever possible:
+- chamber edge glow
+- selected lock-zone glow
+- button fill
+- button active border
+- reveal accents
+- focused scan details
+
+### Glow Guidance
+- use glows as contained system energy
+- keep glow close to edges, borders, scan points, and focal zones
+- avoid broad soft bloom that makes the UI feel blurry or washed out
+
+## UI Cleanup Rules
+
+### Reduce Redundant Overlay Chrome
+- remove labels, wrappers, and micro-panels that duplicate what art, position, color, or surrounding context already communicates
+
+### Prioritize Scale
+- make the primary interaction larger by removing unnecessary container layers
+- when in doubt, increase the actual interactive content instead of adding another frame around it
+
+### Immersion Rule
+UI should feel like one connected vault system:
+- chamber
+- reel
+- scan zone
+- action bar
+- glow states
+
+All parts should look designed from the same hardware family.
+
+## Core Rollout Scope
+
+### Included in first pass
+- global theme and utilities in `src/index.css`
+- shared top rail and tabs
+- vault cards and vault open / reveal surfaces
+- locker / collection cards and modals
+- marketplace cards and tab rail
+- wallet header and ledger surfaces
+
+### Deferred to later pass
+- landing marketing sections
+- hero illustrations and phone mockup framing
+- deep arena combat and forge-specific layouts
+
+## Implementation Notes
+- preserve existing logic and handler behavior while replacing wrapper-heavy visual structure
+- prefer utility-driven restyling over introducing new wrapper components
+- keep tier-aware accents contextual rather than global
+- use the on-disk Platinum header filename `platium_vl_header.png` unless the asset is renamed

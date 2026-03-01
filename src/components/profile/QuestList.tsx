@@ -38,7 +38,7 @@ export function QuestList() {
       {activeQuests.length > 0 && (
         <div>
           <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight mb-3 sm:mb-4">
-            Active <span className="text-neon-cyan">Quests</span>
+            Active <span className="text-accent">Quests</span>
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {activeQuests.map((quest) => (

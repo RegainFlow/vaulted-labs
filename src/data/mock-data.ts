@@ -11,6 +11,8 @@ function makeItem(
     status: "held",
     acquiredAt: Date.now() - Math.floor(Math.random() * 86400000),
     isEquipped: false,
+    fundingSource: "marketplace",
+    shippingEligible: true,
     stats,
     ...overrides
   };

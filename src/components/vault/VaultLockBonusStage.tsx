@@ -10,6 +10,7 @@ import {
 import { VaultIcon } from "./VaultIcons";
 import { JACKPOT_CELEBRATION } from "../../lib/motion-presets";
 import { OPEN_TUTORIAL_BONUS_JACKPOT_EVENT } from "../../lib/tutorial-events";
+import { playSfx } from "../../lib/audio";
 
 const PRESTIGE_THEMES: Record<number, { primary: string; secondary: string }> = {
   0: { primary: "#ff2d95", secondary: "#00f0ff" },
@@ -319,6 +320,7 @@ export function VaultLockBonusStage({
   useEffect(() => () => clearTimers(), [clearTimers]);
 
   const handleLock = useCallback(() => {
+    playSfx("bonus_round_tick");
     if (phase === "spin-1") {
       setLockedResults((prev) => [landings[0], prev[1], prev[2]]);
       setPhase("lock-1");
@@ -379,7 +381,7 @@ export function VaultLockBonusStage({
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="text-center relative"
+          className="system-shell px-8 py-8 text-center relative sm:px-12"
         >
           <motion.div
             className="fixed inset-0 pointer-events-none z-50"
@@ -389,20 +391,20 @@ export function VaultLockBonusStage({
             style={{ backgroundColor: prestigeTheme.primary }}
           />
           <h2
-            className="text-5xl sm:text-7xl md:text-8xl font-black uppercase tracking-tighter italic text-white"
+            className="text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-[0.06em] text-white"
             style={{ textShadow: `0 0 30px ${prestigeTheme.secondary}` }}
           >
-            Bonus Round!
+            Bonus Scan
           </h2>
-          <p className="text-text-muted uppercase tracking-[0.35em] sm:tracking-[0.5em] text-[10px] sm:text-xs mt-2">
-            Vault Lock
+          <p className="text-text-muted uppercase tracking-[0.35em] sm:tracking-[0.5em] text-[10px] sm:text-xs mt-3">
+            Lock Sequence Armed
           </p>
         </motion.div>
       )}
 
       {/* Spinners */}
       {showSpinners && (
-        <div className="flex flex-col items-center gap-6 sm:gap-8">
+        <div className="system-shell flex w-full max-w-5xl flex-col items-center gap-6 px-4 py-6 sm:gap-8 sm:px-6 sm:py-8">
           {/* Title */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -410,10 +412,10 @@ export function VaultLockBonusStage({
             className="text-center"
           >
             <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.28em] text-text-dim mb-1">
-              Vault Lock
+              Bonus Scan
             </p>
             <h3 className="text-base sm:text-lg md:text-xl font-black uppercase tracking-wider text-white">
-              Match 3 to Win Shards
+              Lock 3 Channels to Win Shards
             </h3>
           </motion.div>
 
@@ -458,12 +460,12 @@ export function VaultLockBonusStage({
                   : { type: "spring", damping: 15 }
               }
               onClick={handleLock}
-              className="px-10 sm:px-14 py-3 sm:py-4 rounded-2xl text-sm sm:text-base font-black uppercase tracking-[0.25em] border-2 transition-all cursor-pointer"
+              className="command-button min-w-[220px] px-10 py-3.5 text-sm font-black uppercase tracking-[0.28em] sm:min-w-[260px] sm:px-14 sm:py-4 sm:text-base"
               style={{
                 borderColor: `${lockButtonColor}70`,
                 color: lockButtonColor,
-                backgroundColor: `${lockButtonColor}15`,
-                boxShadow: `0 0 ${(escalation + 1) * 12}px ${lockButtonColor}30`
+                background: `linear-gradient(180deg, ${lockButtonColor}18 0%, rgba(13,17,26,0.94) 100%)`,
+                boxShadow: `0 0 ${(escalation + 1) * 14}px ${lockButtonColor}30`
               }}
             >
               Lock
@@ -519,7 +521,7 @@ export function VaultLockBonusStage({
                     </motion.p>
                   </div>
                 ) : matchCount === 2 ? (
-                  <div className="bg-white/5 backdrop-blur-xl border border-white/10 px-8 py-5 rounded-3xl">
+                  <div className="module-card px-8 py-5">
                     <h3 className="text-2xl sm:text-3xl font-black uppercase tracking-widest text-vault-gold">
                       So Close!
                     </h3>
@@ -528,7 +530,7 @@ export function VaultLockBonusStage({
                     </p>
                   </div>
                 ) : (
-                  <div className="bg-white/5 backdrop-blur-xl border border-white/10 px-8 py-5 rounded-3xl">
+                  <div className="module-card px-8 py-5">
                     <h3 className="text-xl sm:text-2xl font-black uppercase tracking-widest text-text-muted">
                       No Match
                     </h3>

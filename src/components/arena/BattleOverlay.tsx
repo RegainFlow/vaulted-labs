@@ -5,6 +5,7 @@ import type { Collectible } from "../../types/collectible";
 import { simulateCombat, getPrestigeBattleStats } from "../../data/gamification";
 import { BossIcon } from "../../assets/boss-icons";
 import { BATTLE_ANIMATION } from "../../lib/motion-presets";
+import { playSfx } from "../../lib/audio";
 
 type BattlePhase = "intro" | "combat" | "result";
 
@@ -71,6 +72,10 @@ export function BattleOverlay({
     setCombatResult(result);
   }, [result]);
 
+  useEffect(() => {
+    playSfx("battle_enter");
+  }, []);
+
   // Phase progression
   useEffect(() => {
     const schedule = (fn: () => void, delay: number) => {
@@ -107,10 +112,20 @@ export function BattleOverlay({
     return () => clearTimeout(t);
   }, [phase, currentExchangeIndex, combatResult, prefersReducedMotion]);
 
+  useEffect(() => {
+    if (phase !== "result" || !combatResult) return;
+    playSfx(combatResult.victory ? "battle_win" : "battle_loss");
+  }, [combatResult, phase]);
+
   const currentExchange: CombatExchange | null =
     combatResult && currentExchangeIndex > 0 && currentExchangeIndex <= combatResult.exchanges.length
       ? combatResult.exchanges[currentExchangeIndex - 1]
       : null;
+
+  useEffect(() => {
+    if (!currentExchange) return;
+    playSfx("battle_hit");
+  }, [currentExchange]);
 
   // HP values for display
   const displaySquadHp = currentExchange ? currentExchange.squadHpAfter : 120;

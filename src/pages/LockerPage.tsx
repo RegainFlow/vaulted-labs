@@ -9,9 +9,17 @@ import { LockerMarketView } from "../components/locker/LockerMarketView";
 import { LockerArenaHome } from "../components/locker/LockerArenaHome";
 import { LockedOverlay } from "../components/shared/LockedOverlay";
 import { useGame } from "../context/GameContext";
-import { LOCKER_TUTORIAL_STEPS } from "../data/tutorial";
+import {
+  LOCKER_TUTORIAL_STEPS,
+  LOCKER_TUTORIAL_STORAGE_KEY,
+} from "../data/tutorial";
 import { trackEvent, AnalyticsEvents } from "../lib/analytics";
+import {
+  isTutorialCompleted,
+  setTutorialCompleted,
+} from "../lib/tutorial-storage";
 import { isFeatureUnlocked, type UnlockFeatureKey } from "../lib/unlocks";
+import type { TutorialHostCommand } from "../types/tutorial";
 
 type LockerSection = "inventory" | "market" | "arena";
 
@@ -33,6 +41,7 @@ export function LockerPage() {
     setHasSeenCollectionTutorial
   } = useGame();
   const initialTutorialActive =
+    !isTutorialCompleted(LOCKER_TUTORIAL_STORAGE_KEY) &&
     !hasSeenCollectionTutorial &&
     isFeatureUnlocked("market", xp) &&
     isFeatureUnlocked("arena", xp);
@@ -48,6 +57,11 @@ export function LockerPage() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    if (!hasSeenCollectionTutorial) return;
+    setTutorialCompleted(LOCKER_TUTORIAL_STORAGE_KEY, true);
+  }, [hasSeenCollectionTutorial]);
 
   const currentSection: LockerSection = useMemo(() => {
     if (!section || !SECTIONS.includes(section as LockerSection)) return "inventory";
@@ -101,17 +115,12 @@ export function LockerPage() {
     navigate(`/arena/${featureKey}`);
   };
 
-  const applyTutorialSectionByStep = (stepIndex: number) => {
-    const stepId = LOCKER_TUTORIAL_STEPS[stepIndex]?.id ?? "";
-    if (stepId.includes("market")) {
-      setTutorialSection("market");
+  const handleTutorialCommand = (command: TutorialHostCommand) => {
+    if (command.type !== "locker:set-section") {
       return;
     }
-    if (stepId.includes("arena")) {
-      setTutorialSection("arena");
-      return;
-    }
-    setTutorialSection("inventory");
+
+    setTutorialSection(command.section);
   };
 
   return (
@@ -181,12 +190,11 @@ export function LockerPage() {
         pageKey="locker"
         steps={LOCKER_TUTORIAL_STEPS}
         isActive={tutorialActive}
-        onStepChange={(index) => {
-          applyTutorialSectionByStep(index);
-        }}
+        onCommand={handleTutorialCommand}
         onComplete={() => {
           setTutorialActive(false);
           setTutorialSection(null);
+          setTutorialCompleted(LOCKER_TUTORIAL_STORAGE_KEY, true);
           setHasSeenCollectionTutorial(true);
         }}
       />
@@ -194,7 +202,7 @@ export function LockerPage() {
         <TutorialHelpButton
           onClick={() => {
             setTutorialActive(true);
-            applyTutorialSectionByStep(0);
+            setTutorialSection("inventory");
           }}
         />
       )}
