@@ -29,6 +29,11 @@ const HUD_TOOLTIPS: Record<string, { title: string; text: string; color: string;
 
 type HudTooltipKey = keyof typeof HUD_TOOLTIPS;
 
+interface TooltipAnchor {
+  top: number;
+  left: number;
+}
+
 export function Navbar({
   showHUD = false,
   balance = 0,
@@ -44,10 +49,26 @@ export function Navbar({
   const navigate = useNavigate();
   const [showLockerLocked, setShowLockerLocked] = useState(false);
   const [activeTooltip, setActiveTooltip] = useState<HudTooltipKey | null>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [tooltipAnchor, setTooltipAnchor] = useState<TooltipAnchor | null>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
+  const tooltipTargetRef = useRef<HTMLElement | null>(null);
 
-  const toggleTooltip = useCallback((key: HudTooltipKey) => {
-    setActiveTooltip((prev) => (prev === key ? null : key));
+  const toggleTooltip = useCallback((key: HudTooltipKey, element: HTMLElement) => {
+    setActiveTooltip((prev) => {
+      if (prev === key) {
+        tooltipTargetRef.current = null;
+        setTooltipAnchor(null);
+        return null;
+      }
+
+      tooltipTargetRef.current = element;
+      const rect = element.getBoundingClientRect();
+      setTooltipAnchor({
+        top: rect.bottom + 18,
+        left: rect.left + rect.width / 2,
+      });
+      return key;
+    });
   }, []);
 
   useEffect(() => {
@@ -55,10 +76,34 @@ export function Navbar({
     const handleClickOutside = (e: MouseEvent) => {
       if (tooltipRef.current && !tooltipRef.current.contains(e.target as Node)) {
         setActiveTooltip(null);
+        setTooltipAnchor(null);
+        tooltipTargetRef.current = null;
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [activeTooltip]);
+
+  useEffect(() => {
+    if (!activeTooltip) return;
+
+    const updateAnchor = () => {
+      const element = tooltipTargetRef.current;
+      if (!element) return;
+      const rect = element.getBoundingClientRect();
+      setTooltipAnchor({
+        top: rect.bottom + 18,
+        left: rect.left + rect.width / 2,
+      });
+    };
+
+    updateAnchor();
+    window.addEventListener("resize", updateAnchor);
+    window.addEventListener("scroll", updateAnchor, true);
+    return () => {
+      window.removeEventListener("resize", updateAnchor);
+      window.removeEventListener("scroll", updateAnchor, true);
+    };
   }, [activeTooltip]);
 
   const scrollToWaitlist = () => {
@@ -93,13 +138,13 @@ export function Navbar({
   );
 
   const DOCK_COLORS = {
-    wallet: { active: "bg-vault-gold/15 border-vault-gold/40 text-vault-gold", hover: "hover:text-vault-gold" },
-    vaults: { active: "bg-accent/15 border-accent/40 text-accent", hover: "hover:text-accent" },
-    locker: { active: "bg-neon-cyan/15 border-neon-cyan/40 text-neon-cyan", hover: "hover:text-neon-cyan" }
+    wallet: { active: "border-vault-gold/35 text-vault-gold bg-vault-gold/[0.08]", hover: "hover:text-vault-gold" },
+    vaults: { active: "border-accent/35 text-white bg-accent/[0.10]", hover: "hover:text-white" },
+    locker: { active: "border-white/14 text-white bg-white/[0.06]", hover: "hover:text-accent" }
   } as const;
 
   const dockLinkClass = (isActive: boolean, route: "wallet" | "vaults" | "locker") =>
-    `flex-1 flex flex-col items-center justify-center gap-1 py-3 rounded-lg border transition-all cursor-pointer ${
+    `command-segment flex-1 flex flex-col items-center justify-center gap-1 py-3 ${
       isActive
         ? DOCK_COLORS[route].active
         : `bg-transparent border-transparent text-text-muted ${DOCK_COLORS[route].hover}`
@@ -170,14 +215,15 @@ export function Navbar({
 
   return (
     <>
-      <motion.nav
+      <div ref={tooltipRef}>
+        <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-bg/90 border-b border-white/5"
+        className="fixed top-0 left-0 right-0 z-50 border-b border-white/6 bg-bg/92 backdrop-blur-xl shadow-[0_18px_42px_rgba(0,0,0,0.32)]"
       >
         <div
-          className={`flex h-14 md:h-20 items-center px-4 md:px-6 relative ${
+          className={`relative flex h-16 md:h-20 items-center px-4 md:px-6 ${
             showHUD ? "justify-center md:justify-between" : "justify-between"
           }`}
         >
@@ -187,25 +233,29 @@ export function Navbar({
             }
           >
             <Link to="/" className="flex items-center gap-2">
-              <span className="text-xl sm:text-2xl md:text-2xl font-black tracking-tighter text-white uppercase italic">
+              <span className="text-xl sm:text-2xl md:text-2xl font-black tracking-[0.08em] text-white uppercase">
                 Vaulted
-                <span className="text-accent text-glow-magenta">Labs</span>
+                <span
+                  className="ml-1 text-accent"
+                  style={{ textShadow: "0 0 18px rgba(255,45,149,0.32)" }}
+                >
+                  Labs
+                </span>
               </span>
             </Link>
           </div>
 
           {showHUD ? (
             <div
-              className="hidden md:flex items-center gap-2 rounded-xl border border-white/10 bg-surface/70 px-2 py-1.5 relative"
+              className="system-rail relative hidden items-center gap-2 px-2.5 py-2 md:flex"
               data-tutorial="hud-desktop"
-              ref={tooltipRef}
             >
               <button
                 type="button"
-                onClick={() => toggleTooltip("credits")}
-                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={(event) => toggleTooltip("credits", event.currentTarget)}
+                className="command-segment flex items-center gap-1.5 px-3 py-2 cursor-pointer"
               >
-                <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim">
+                <span className="system-kicker">
                   Credits
                 </span>
                 <span
@@ -218,8 +268,8 @@ export function Navbar({
 
               <button
                 type="button"
-                onClick={() => toggleTooltip("shards")}
-                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={(event) => toggleTooltip("shards", event.currentTarget)}
+                className="command-segment flex items-center gap-1.5 px-3 py-2 cursor-pointer"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-rarity-rare shrink-0">
                   <path d="M12 2L4 12l8 10 8-10L12 2z" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1.5" />
@@ -234,8 +284,8 @@ export function Navbar({
 
               <button
                 type="button"
-                onClick={() => toggleTooltip("level")}
-                className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={(event) => toggleTooltip("level", event.currentTarget)}
+                className="command-segment flex items-center gap-1.5 px-3 py-2 cursor-pointer"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" className="text-accent shrink-0">
                   <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4l-6.4 4.8 2.4-7.2-6-4.8h7.6z" fill="currentColor" stroke="currentColor" strokeWidth="1" />
@@ -245,29 +295,11 @@ export function Navbar({
                 </span>
               </button>
 
-              <AnimatePresence>
-                {activeTooltip && (() => {
-                  const tip = HUD_TOOLTIPS[activeTooltip];
-                  return (
-                    <motion.div
-                      key={activeTooltip}
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -4 }}
-                      transition={{ duration: 0.15 }}
-                      className={`absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-surface-elevated border border-white/10 border-l-2 ${tip.borderColor} rounded-lg px-3.5 py-3 max-w-[240px] z-[60] shadow-[0_8px_32px_rgba(0,0,0,0.5)]`}
-                    >
-                      <p className={`text-[10px] font-black uppercase tracking-wider ${tip.color} mb-1`}>{tip.title}</p>
-                      <p className="text-[11px] text-text-muted leading-relaxed">{tip.text}</p>
-                    </motion.div>
-                  );
-                })()}
-              </AnimatePresence>
             </div>
           ) : (
             <button
               onClick={scrollToWaitlist}
-              className="relative overflow-hidden rounded-lg bg-accent/10 border border-accent/30 text-accent px-4 py-2 font-black uppercase tracking-widest text-[10px] transition-all hover:bg-accent hover:text-white cursor-pointer"
+              className="system-rail relative overflow-hidden border-accent/30 px-4 py-2 font-black uppercase tracking-[0.28em] text-[10px] text-accent transition-all hover:text-white cursor-pointer"
             >
               Join
             </button>
@@ -279,13 +311,13 @@ export function Navbar({
             className="md:hidden flex items-center justify-center gap-1 px-3 pb-2"
             data-tutorial="hud"
           >
-            <div className="grid grid-cols-3 gap-1.5 w-full rounded-lg border border-white/10 bg-surface/65 p-1.5">
+            <div className="system-rail grid w-full grid-cols-3 gap-1.5 p-1.5">
               <button
                 type="button"
-                onClick={() => toggleTooltip("credits")}
-                className="rounded-md px-2 py-1.5 text-center hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={(event) => toggleTooltip("credits", event.currentTarget)}
+                className="command-segment px-2 py-1.5 text-center cursor-pointer"
               >
-                <p className="text-[8px] font-bold uppercase tracking-wider text-text-dim">
+                <p className="system-kicker">
                   Credits
                 </p>
                 <p
@@ -298,10 +330,10 @@ export function Navbar({
 
               <button
                 type="button"
-                onClick={() => toggleTooltip("shards")}
-                className="rounded-md px-2 py-1.5 text-center hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={(event) => toggleTooltip("shards", event.currentTarget)}
+                className="command-segment px-2 py-1.5 text-center cursor-pointer"
               >
-                <p className="text-[8px] font-bold uppercase tracking-wider text-text-dim">
+                <p className="system-kicker">
                   Shards / Spins
                 </p>
                 <p className="text-[10px] font-mono font-bold">
@@ -313,10 +345,10 @@ export function Navbar({
 
               <button
                 type="button"
-                onClick={() => toggleTooltip("level")}
-                className="rounded-md px-2 py-1.5 text-center hover:bg-white/5 transition-colors cursor-pointer"
+                onClick={(event) => toggleTooltip("level", event.currentTarget)}
+                className="command-segment px-2 py-1.5 text-center cursor-pointer"
               >
-                <p className="text-[8px] font-bold uppercase tracking-wider text-text-dim">
+                <p className="system-kicker">
                   Level
                 </p>
                 <p className="text-[10px] font-mono font-bold text-accent">
@@ -325,27 +357,52 @@ export function Navbar({
               </button>
             </div>
 
-            <AnimatePresence>
-              {activeTooltip && (() => {
-                const tip = HUD_TOOLTIPS[activeTooltip];
-                return (
-                  <motion.div
-                    key={`mobile-${activeTooltip}`}
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.15 }}
-                    className={`absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-surface-elevated border border-white/10 border-l-2 ${tip.borderColor} rounded-lg px-3.5 py-3 max-w-[240px] z-[60] shadow-[0_8px_32px_rgba(0,0,0,0.5)]`}
-                  >
-                    <p className={`text-[10px] font-black uppercase tracking-wider ${tip.color} mb-1`}>{tip.title}</p>
-                    <p className="text-[11px] text-text-muted leading-relaxed">{tip.text}</p>
-                  </motion.div>
-                );
-              })()}
-            </AnimatePresence>
           </div>
         )}
       </motion.nav>
+        <AnimatePresence>
+          {activeTooltip && tooltipAnchor && (() => {
+            const tip = HUD_TOOLTIPS[activeTooltip];
+            const viewportWidth =
+              typeof window !== "undefined" ? window.innerWidth : 1280;
+            const tooltipWidth = Math.min(
+              viewportWidth - 24,
+              viewportWidth < 640 ? 260 : 320
+            );
+            const left = Math.max(
+              12,
+              Math.min(
+                tooltipAnchor.left - tooltipWidth / 2,
+                viewportWidth - tooltipWidth - 12
+              )
+            );
+
+            return (
+              <motion.div
+                key={`hud-tooltip-${activeTooltip}`}
+                initial={{ opacity: 0, y: -8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                transition={{ duration: 0.16 }}
+                className={`fixed z-[80] ${tip.borderColor}`}
+                style={{
+                  top: tooltipAnchor.top,
+                  left,
+                  width: tooltipWidth,
+                }}
+              >
+                <div className="pointer-events-none absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 border-l border-t border-white/10 bg-[#080d1b]/96 shadow-[0_0_24px_rgba(255,45,149,0.12)]" />
+                <div className="module-card relative border-l-2 px-3.5 py-3">
+                  <p className={`mb-1 text-[10px] font-black uppercase tracking-wider ${tip.color}`}>
+                    {tip.title}
+                  </p>
+                  <p className="text-[11px] leading-relaxed text-text-muted">{tip.text}</p>
+                </div>
+              </motion.div>
+            );
+          })()}
+        </AnimatePresence>
+      </div>
 
       {showHUD && !hideDock && !tutorialActive && (
         <>
@@ -353,12 +410,12 @@ export function Navbar({
             className="fixed bottom-0 left-0 right-0 z-[45] sm:hidden"
             data-tutorial="dashboard-nav-mobile"
           >
-            <div className="flex items-center gap-1 border-t border-white/15 bg-surface/95 backdrop-blur-xl px-2 py-2 shadow-[0_-10px_20px_rgba(0,0,0,0.35)]">
+            <div className="system-rail flex items-center gap-1 rounded-none border-x-0 border-b-0 px-2 py-2">
               {dockButtons}
             </div>
           </div>
           <div className="hidden sm:block fixed bottom-3 left-1/2 -translate-x-1/2 w-[calc(100%-24px)] max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl z-[45]">
-            <div className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-surface/90 backdrop-blur-xl p-1.5 shadow-[0_0_24px_rgba(0,0,0,0.45)]">
+            <div className="system-rail flex items-center gap-1.5 p-1.5">
               {dockButtons}
             </div>
           </div>

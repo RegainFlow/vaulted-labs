@@ -22,9 +22,9 @@ export function WalletHeader() {
     {
       label: "Earned",
       value: earnedTotal,
-      color: "text-neon-cyan",
-      borderColor: "border-neon-cyan/20",
-      bgColor: "bg-neon-cyan/5"
+      color: "text-accent",
+      borderColor: "border-accent/20",
+      bgColor: "bg-accent/5"
     },
     {
       label: "Incentive",
@@ -48,41 +48,40 @@ export function WalletHeader() {
       animate={{ opacity: 1, y: 0 }}
       className="mb-6 sm:mb-8"
     >
-      {/* Main balance */}
-      <div className="text-center mb-6" data-tutorial="wallet-balance">
-        <p className="text-[10px] font-bold text-text-dim uppercase tracking-widest mb-2">
-          Available Balance
-        </p>
-        <p className="text-4xl sm:text-5xl md:text-6xl font-mono font-black text-vault-gold animate-hud-shimmer">
-          $
-          {balance.toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2
-          })}
-        </p>
-      </div>
+      <div className="system-shell px-4 py-5 sm:px-6 sm:py-6">
+        <div className="relative z-10 text-center" data-tutorial="wallet-balance">
+          <p className="system-kicker mb-2">Balance Ledger</p>
+          <p className="text-4xl sm:text-5xl md:text-6xl font-mono font-black text-vault-gold animate-hud-shimmer">
+            $
+            {balance.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}
+          </p>
+        </div>
 
-      {/* Breakdown cards */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-4" data-tutorial="wallet-breakdown">
-        {breakdownCards.map((card) => (
-          <div
-            key={card.label}
-            className={`text-center px-2 sm:px-4 py-3 sm:py-4 rounded-xl border ${card.borderColor} ${card.bgColor}`}
-          >
-            <p
-              className={`text-base sm:text-xl font-mono font-black ${card.color}`}
+        <div
+          className="relative z-10 mt-5 grid grid-cols-3 gap-2 sm:gap-4"
+          data-tutorial="wallet-breakdown"
+        >
+          {breakdownCards.map((card) => (
+            <div
+              key={card.label}
+              className={`module-card px-2.5 py-3 text-center sm:px-4 sm:py-4 ${card.borderColor} ${card.bgColor}`}
             >
-              $
-              {card.value.toLocaleString(undefined, {
-                minimumFractionDigits: 0,
-                maximumFractionDigits: 0
-              })}
-            </p>
-            <p className="text-[8px] sm:text-[9px] font-bold text-text-dim uppercase tracking-wider mt-1">
-              {card.label}
-            </p>
-          </div>
-        ))}
+              <p
+                className={`text-base sm:text-xl font-mono font-black ${card.color}`}
+              >
+                $
+                {card.value.toLocaleString(undefined, {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0
+                })}
+              </p>
+              <p className="system-label mt-2">{card.label}</p>
+            </div>
+          ))}
+        </div>
       </div>
     </motion.div>
   );

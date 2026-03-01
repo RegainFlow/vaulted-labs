@@ -19,8 +19,10 @@ import { useGame } from "../../context/GameContext";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
 import {
   OPEN_TUTORIAL_BONUS_SHOWN_EVENT,
+  OPEN_TUTORIAL_RESULT_CHOSEN_EVENT,
   OPEN_TUTORIAL_REVEAL_READY_EVENT,
-  OPEN_TUTORIAL_SPIN_STARTED_EVENT,
+  OPEN_TUTORIAL_SCAN_STARTED_EVENT,
+  OPEN_TUTORIAL_VAULT_SELECTED_EVENT,
 } from "../../lib/tutorial-events";
 import {
   FEATURE_UNLOCK_LABEL,
@@ -35,15 +37,16 @@ import type {
   VaultGridProps,
   VaultTierName,
 } from "../../types/vault";
-import type { TutorialStep } from "../../types/tutorial";
 import { VaultLockBonusStage } from "./VaultLockBonusStage";
-import { ItemSpinner } from "./ItemSpinner";
+import { VaultOverrideTrack } from "./VaultOverrideTrack";
 import { LegendaryHypeOverlay } from "./LegendaryHypeOverlay";
+import { playSfx } from "../../lib/audio";
 import {
   RARITY_CELEBRATION,
   RARITY_TEXT_CONFIG,
   CELEBRATION_SPRINGS,
 } from "../../lib/motion-presets";
+import type { ItemAcquisitionMeta } from "../../types/collectible";
 
 /* â”€â”€â”€ Constants & Types â”€â”€â”€ */
 
@@ -55,7 +58,7 @@ interface VaultOverlayProps {
   balance: number;
   category: string | null;
   onClose: () => void;
-  onPurchase: (vaultName: string, price: number) => boolean;
+  onPurchase: (vaultName: string, price: number) => ItemAcquisitionMeta | null;
   onClaim: (amount: number) => void;
   onEquip: (
     product: string,
@@ -63,7 +66,8 @@ interface VaultOverlayProps {
     rarity: Rarity,
     value: number,
     funkoId?: string,
-    funkoName?: string
+    funkoName?: string,
+    acquisitionMeta?: ItemAcquisitionMeta
   ) => void;
   onShip: (
     product: string,
@@ -71,18 +75,19 @@ interface VaultOverlayProps {
     rarity: Rarity,
     value: number,
     funkoId?: string,
-    funkoName?: string
-  ) => void;
-  isTutorial?: boolean;
-  tutorialStep?: TutorialStep | null;
-  onTutorialAdvance?: (step: TutorialStep) => void;
-  onTutorialPurchase?: (vaultName: string, price: number) => void;
-  onTutorialSetAction?: (action: string) => void;
+    funkoName?: string,
+    acquisitionMeta?: ItemAcquisitionMeta
+  ) => boolean;
   prestigeLevel?: number;
-  onUseFreeSpinForVault?: (vaultName: string, price: number) => boolean;
+  onUseFreeSpinForVault?: (
+    vaultName: string,
+    price: number
+  ) => ItemAcquisitionMeta | null;
   onBonusShards?: (count: number) => void;
   freeSpins?: number;
   microTutorialActive?: boolean;
+  tutorialMode?: "demo" | null;
+  onTutorialResultAction?: () => void;
 }
 
 interface ClaimParticle {
@@ -119,70 +124,35 @@ const seededUnit = (seed: number) => {
   return x - Math.floor(x);
 };
 
-function OptionCard({
-  title,
-  desc,
-  icon,
-  action,
+function ResultActionButton({
+  label,
   onClick,
-  tierColor,
-  tutorialActive = false,
+  accentColor,
+  tutorialId,
   disabled = false,
 }: {
-  title: string;
-  desc: string;
-  icon: React.ReactNode;
-  action: string;
+  label: string;
   onClick: () => void;
-  tierColor?: string;
-  tutorialActive?: boolean;
+  accentColor: string;
+  tutorialId?: string;
   disabled?: boolean;
 }) {
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`p-3 sm:p-4 md:p-5 rounded-2xl sm:rounded-3xl border-2 text-left transition-all duration-300 flex flex-col h-full backdrop-blur-sm group ${disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer hover:scale-[1.03] active:scale-[0.98]"} ${tutorialActive ? "scale-[1.02] animate-pulse" : ""}`}
-      style={
-        tutorialActive
-          ? {
-              borderColor: "#ff2d95",
-              boxShadow: "0 0 25px rgba(255,45,149,0.4)",
-              backgroundColor: "rgba(255,45,149,0.08)",
-            }
-          : {
-              borderColor: `${tierColor}40`,
-              boxShadow: `0 0 20px ${tierColor}08`,
-              backgroundColor: `${tierColor}08`,
-            }
-      }
+      {...(tutorialId ? { "data-tutorial": tutorialId } : {})}
+      className={`system-rail min-w-[110px] px-4 py-3 text-center text-[10px] font-black uppercase tracking-[0.24em] transition-all duration-200 sm:min-w-[132px] sm:px-5 ${disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:-translate-y-0.5 hover:text-white"}`}
+      style={{
+        borderColor: `${accentColor}36`,
+        color: disabled ? "rgba(149,167,187,0.8)" : accentColor,
+        background: disabled
+          ? "linear-gradient(180deg, rgba(14,22,31,0.96) 0%, rgba(10,16,24,0.98) 100%)"
+          : `linear-gradient(180deg, ${accentColor}12 0%, rgba(10,16,24,0.96) 100%)`,
+        boxShadow: disabled ? undefined : `0 0 18px ${accentColor}14`,
+      }}
     >
-      <div
-        className="text-xl sm:text-2xl md:text-3xl mb-2 sm:mb-3 group-hover:scale-110 transition-transform origin-left w-9 h-9 sm:w-10 sm:h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center"
-        style={{ backgroundColor: `${tierColor}15` }}
-      >
-        {icon}
-      </div>
-      <h4
-        className="text-xs sm:text-sm md:text-base font-black mb-1 uppercase tracking-wide"
-        style={{ color: tierColor }}
-      >
-        {title}
-      </h4>
-      <p className="text-text-muted text-[10px] sm:text-xs md:text-sm leading-relaxed mb-3 sm:mb-4 flex-1">
-        {desc}
-      </p>
-      <div
-        className="mt-auto pt-2 sm:pt-3 border-t w-full"
-        style={{ borderColor: `${tierColor}20` }}
-      >
-        <span
-          className="text-[10px] sm:text-[11px] md:text-xs font-black uppercase tracking-widest"
-          style={{ color: tierColor }}
-        >
-          {action} &rarr;
-        </span>
-      </div>
+      {label}
     </button>
   );
 }
@@ -322,17 +292,15 @@ function VaultOverlay({
   onClaim,
   onEquip,
   onShip,
-  isTutorial = false,
-  tutorialStep,
-  onTutorialAdvance,
-  onTutorialPurchase,
-  onTutorialSetAction,
   prestigeLevel: overlayPrestigeLevel = 0,
   onUseFreeSpinForVault,
   onBonusShards,
   freeSpins = 0,
   microTutorialActive: isMicroTutorial = false,
+  tutorialMode = null,
+  onTutorialResultAction,
 }: VaultOverlayProps) {
+  const isTutorialDemo = tutorialMode === "demo";
   const [stage, setStage] = useState<Stage>("idle");
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
   const [spinLanded, setSpinLanded] = useState(false);
@@ -341,11 +309,17 @@ function VaultOverlay({
   const [cashoutComplete, setCashoutComplete] = useState(false);
   const [claimParticles, setClaimParticles] = useState<ClaimParticle[]>([]);
   const [bonusTriggered, setBonusTriggered] = useState(false);
+  const [overrideCharge, setOverrideCharge] = useState(0);
+  const [isChargingOverride, setIsChargingOverride] = useState(false);
+  const [acquisitionMeta, setAcquisitionMeta] =
+    useState<ItemAcquisitionMeta | null>(null);
   const timeoutIdsRef = useRef<number[]>([]);
+  const chargeRafRef = useRef<number | null>(null);
+  const chargeStartRef = useRef<number | null>(null);
   const lastOutcomeRef = useRef<SpinOutcome | null>(null);
   const effectiveOdds = useMemo(
-    () => getPrestigeOdds(tier.rarities, isTutorial ? 0 : overlayPrestigeLevel),
-    [tier, isTutorial, overlayPrestigeLevel]
+    () => getPrestigeOdds(tier.rarities, overlayPrestigeLevel),
+    [tier, overlayPrestigeLevel]
   );
   const buildOutcome = useCallback((): SpinOutcome => {
     const rarity = pickRarity(effectiveOdds) as Rarity;
@@ -390,6 +364,21 @@ function VaultOverlay({
   const wonFunko = outcome.funko;
   const rarityConfig = RARITY_CONFIG[wonRarity as keyof typeof RARITY_CONFIG];
   const [usedFreeSpin, setUsedFreeSpin] = useState(false);
+  const resultAcquisitionMeta =
+    acquisitionMeta ??
+    (usedFreeSpin
+      ? {
+          fundingSource: "free_spin" as const,
+          shippingEligible: false,
+          shippingLockReason:
+            "Free Spin prizes can be held, equipped, listed, or cashed out, but cannot be shipped yet.",
+        }
+      : {
+          fundingSource: "earned" as const,
+          shippingEligible: true,
+        });
+  const shippingLocked =
+    !isTutorialDemo && !resultAcquisitionMeta.shippingEligible;
 
   const [landingFlash, setLandingFlash] = useState(false);
   const [purchasedBalance, setPurchasedBalance] = useState<number | null>(null);
@@ -397,9 +386,11 @@ function VaultOverlay({
   const postBalance = usedFreeSpin
     ? preBalance + resultValue
     : preBalance - tier.price + resultValue;
+  const scanAccent = "#ff2d95";
 
-  const SPIN_LAND_DELAY = 5000;
-  const POST_LAND_HOLD_DELAY = 2200;
+  const OVERRIDE_CHARGE_DURATION = 1150;
+  const OVERRIDE_SPIN_DURATION_MS = 9600;
+  const POST_LAND_HOLD_DELAY = 900;
 
   const scheduleTimeout = useCallback((callback: () => void, delay: number) => {
     const timeoutId = window.setTimeout(callback, delay);
@@ -411,20 +402,48 @@ function VaultOverlay({
     return () => {
       timeoutIdsRef.current.forEach((id) => window.clearTimeout(id));
       timeoutIdsRef.current = [];
+      if (chargeRafRef.current) {
+        window.cancelAnimationFrame(chargeRafRef.current);
+      }
     };
   }, []);
+
+  const stopChargeLoop = useCallback(() => {
+    if (chargeRafRef.current) {
+      window.cancelAnimationFrame(chargeRafRef.current);
+      chargeRafRef.current = null;
+    }
+    chargeStartRef.current = null;
+  }, []);
+
+  const resetOverrideCharge = useCallback(() => {
+    stopChargeLoop();
+    setIsChargingOverride(false);
+    setOverrideCharge(0);
+  }, [stopChargeLoop]);
 
   const handleSpinLand = useCallback(() => {
     setSpinLanded(true);
     setLandingFlash(true);
+    playSfx("vault_lock");
     scheduleTimeout(() => setLandingFlash(false), 500);
   }, [scheduleTimeout]);
 
   useEffect(() => {
     if (stage === "bonus-spinning") {
+      playSfx("bonus_round_enter");
       window.dispatchEvent(new CustomEvent(OPEN_TUTORIAL_BONUS_SHOWN_EVENT));
     }
     if (stage === "result") {
+      playSfx(
+        wonRarity === "legendary"
+          ? "vault_win_legendary"
+          : wonRarity === "rare"
+            ? "vault_win_rare"
+            : wonRarity === "uncommon"
+              ? "vault_win_uncommon"
+              : "vault_win_common"
+      );
       trackEvent(AnalyticsEvents.VAULT_RESULT, {
         vault_tier: tier.name,
         rarity: wonRarity,
@@ -462,21 +481,23 @@ function VaultOverlay({
     setPurchasedBalance(null);
     setBonusTriggered(false);
     setUsedFreeSpin(false);
-  }, []);
+    setAcquisitionMeta(null);
+    resetOverrideCharge();
+  }, [resetOverrideCharge]);
 
   const handleSpin = useCallback(() => {
+    resetOverrideCharge();
     const nextOutcome = rollOutcome();
     const nextWonRarity = nextOutcome.rarity;
     const shouldTriggerBonus =
-      isTutorial ||
-      isMicroTutorial ||
-      Math.random() < (PREMIUM_BONUS_CHANCE[tier.name] ?? 0);
+      isMicroTutorial || Math.random() < (PREMIUM_BONUS_CHANCE[tier.name] ?? 0);
     trackEvent(AnalyticsEvents.SPIN_STARTED, {
       vault_tier: tier.name,
       vault_price: tier.price,
       free_spins_available: freeSpins,
+      interaction: "vault_override",
     });
-    window.dispatchEvent(new CustomEvent(OPEN_TUTORIAL_SPIN_STARTED_EVENT));
+    window.dispatchEvent(new CustomEvent(OPEN_TUTORIAL_SCAN_STARTED_EVENT));
     setOutcome(nextOutcome);
     setBonusTriggered(shouldTriggerBonus);
     setSpinLanded(false);
@@ -484,28 +505,14 @@ function VaultOverlay({
     setIsResolvingAction(false);
     setCashoutComplete(false);
     setClaimParticles([]);
-    if (isTutorial) {
-      onTutorialPurchase?.(tier.name, tier.price);
-      setPurchasedBalance(balance);
-      setPurchaseError(null);
-      trackEvent(AnalyticsEvents.VAULT_OPENED, {
-        vault_tier: tier.name,
-        vault_price: tier.price,
-        is_tutorial: true,
-      });
-      setStage("spinning");
-      setBonusTriggered(true);
-      scheduleTimeout(() => handleSpinLand(), SPIN_LAND_DELAY);
-      scheduleTimeout(
-        () => setStage("bonus-spinning"),
-        SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY
-      );
-      return;
-    }
     // Try free spin first
-    if (onUseFreeSpinForVault?.(tier.name, tier.price)) {
+    const freeSpinMeta = isTutorialDemo
+      ? null
+      : (onUseFreeSpinForVault?.(tier.name, tier.price) ?? null);
+    if (freeSpinMeta) {
       setUsedFreeSpin(true);
       setPurchasedBalance(balance);
+      setAcquisitionMeta(freeSpinMeta);
       setPurchaseError(null);
       trackEvent(AnalyticsEvents.FREE_SPIN_USED, {
         vault_tier: tier.name,
@@ -519,7 +526,7 @@ function VaultOverlay({
         free_spin: true,
       });
       setStage("spinning");
-      scheduleTimeout(() => handleSpinLand(), SPIN_LAND_DELAY);
+      scheduleTimeout(() => handleSpinLand(), OVERRIDE_SPIN_DURATION_MS);
       if (shouldTriggerBonus) {
         trackEvent(AnalyticsEvents.BONUS_SPIN_TRIGGERED, {
           vault_tier: tier.name,
@@ -528,70 +535,128 @@ function VaultOverlay({
         });
         scheduleTimeout(
           () => setStage("bonus-spinning"),
-          SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY
+          OVERRIDE_SPIN_DURATION_MS + POST_LAND_HOLD_DELAY
         );
       } else {
         scheduleTimeout(
           () => setStage("result"),
-          SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY
+          OVERRIDE_SPIN_DURATION_MS + POST_LAND_HOLD_DELAY
         );
       }
       return;
     }
-    if (!onPurchase(tier.name, tier.price)) {
-      setPurchaseError(`Insufficient credits.`);
-      return;
+    if (isTutorialDemo) {
+      setPurchasedBalance(balance);
+      setAcquisitionMeta({
+        fundingSource: "earned",
+        shippingEligible: true,
+      });
+    } else {
+      const nextAcquisitionMeta = onPurchase(tier.name, tier.price);
+      if (!nextAcquisitionMeta) {
+        setPurchaseError(`Insufficient credits.`);
+        return;
+      }
+      setPurchasedBalance(balance);
+      setAcquisitionMeta(nextAcquisitionMeta);
     }
-    setPurchasedBalance(balance);
     setPurchaseError(null);
     trackEvent(AnalyticsEvents.VAULT_OPENED, {
       vault_tier: tier.name,
       vault_price: tier.price,
     });
     setStage("spinning");
-    scheduleTimeout(() => handleSpinLand(), SPIN_LAND_DELAY);
+    scheduleTimeout(() => handleSpinLand(), OVERRIDE_SPIN_DURATION_MS);
     if (shouldTriggerBonus) {
       trackEvent(AnalyticsEvents.BONUS_SPIN_TRIGGERED, {
         vault_tier: tier.name,
         vault_price: tier.price,
         first_rarity: nextWonRarity,
       });
-      scheduleTimeout(
-        () => setStage("bonus-spinning"),
-        SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY
-      );
-    } else {
-      scheduleTimeout(
-        () => setStage("result"),
-        SPIN_LAND_DELAY + POST_LAND_HOLD_DELAY
-      );
-    }
+        scheduleTimeout(
+          () => setStage("bonus-spinning"),
+          OVERRIDE_SPIN_DURATION_MS + POST_LAND_HOLD_DELAY
+        );
+      } else {
+        scheduleTimeout(
+          () => setStage("result"),
+          OVERRIDE_SPIN_DURATION_MS + POST_LAND_HOLD_DELAY
+        );
+      }
   }, [
-    SPIN_LAND_DELAY,
+    OVERRIDE_SPIN_DURATION_MS,
     POST_LAND_HOLD_DELAY,
     balance,
     freeSpins,
     handleSpinLand,
-    isTutorial,
     isMicroTutorial,
+    isTutorialDemo,
     onPurchase,
-    onTutorialAdvance,
-    onTutorialPurchase,
     onUseFreeSpinForVault,
+    resetOverrideCharge,
     rollOutcome,
     scheduleTimeout,
     tier.name,
     tier.price,
   ]);
 
-  const handleClaimLocal = () => {
-    if (isResolvingAction || cashoutComplete) return;
-    if (isTutorial) {
-      onTutorialSetAction?.("cashed out");
-      onTutorialAdvance?.("complete");
-      onClose();
+  const isLoss = !usedFreeSpin && resultValue < tier.price;
+  const canSpinAgain = isTutorialDemo || freeSpins > 0 || balance >= tier.price;
+  const canStartSpin = isTutorialDemo || freeSpins > 0 || balance >= tier.price;
+
+  const beginOverrideCharge = useCallback(() => {
+    if (!canStartSpin || stage !== "idle" || isChargingOverride) return;
+
+    setPurchaseError(null);
+    setIsChargingOverride(true);
+    playSfx("vault_scan_start");
+    chargeStartRef.current = null;
+
+    const tick = (timestamp: number) => {
+      if (chargeStartRef.current == null) {
+        chargeStartRef.current = timestamp;
+      }
+
+      const elapsed = timestamp - chargeStartRef.current;
+      const nextProgress = Math.min(elapsed / OVERRIDE_CHARGE_DURATION, 1);
+      setOverrideCharge(nextProgress);
+
+      if (nextProgress < 1) {
+        chargeRafRef.current = window.requestAnimationFrame(tick);
+      } else {
+        chargeRafRef.current = null;
+      }
+    };
+
+    stopChargeLoop();
+    chargeRafRef.current = window.requestAnimationFrame(tick);
+  }, [
+    OVERRIDE_CHARGE_DURATION,
+    canStartSpin,
+    isChargingOverride,
+    stage,
+    stopChargeLoop,
+  ]);
+
+  const endOverrideCharge = useCallback(() => {
+    if (!isChargingOverride) return;
+
+    const isCharged = overrideCharge >= 0.999;
+    stopChargeLoop();
+    setIsChargingOverride(false);
+
+    if (isCharged) {
+      setOverrideCharge(1);
+      handleSpin();
       return;
     }
+
+    setOverrideCharge(0);
+  }, [handleSpin, isChargingOverride, overrideCharge, stopChargeLoop]);
+
+  const handleClaimLocal = () => {
+    if (isResolvingAction || cashoutComplete) return;
+    onTutorialResultAction?.();
     setIsResolvingAction(true);
     const viewportHeight =
       typeof window !== "undefined" ? window.innerHeight : 900;
@@ -625,6 +690,7 @@ function VaultOverlay({
       free_spin: usedFreeSpin,
     });
     setIsClaiming(true);
+    playSfx("cashout");
     onClaim(resultValue);
     scheduleTimeout(() => {
       setIsClaiming(false);
@@ -635,12 +701,7 @@ function VaultOverlay({
 
   const handleEquip = () => {
     if (isResolvingAction) return;
-    if (isTutorial) {
-      onTutorialSetAction?.("equipped");
-      onTutorialAdvance?.("complete");
-      onClose();
-      return;
-    }
+    onTutorialResultAction?.();
     setIsResolvingAction(true);
     trackEvent(AnalyticsEvents.ITEM_ACTION, {
       action: "equip",
@@ -663,18 +724,17 @@ function VaultOverlay({
       wonRarity as Rarity,
       resultValue,
       wonFunko.id,
-      wonFunko.name
+      wonFunko.name,
+      resultAcquisitionMeta
     );
   };
 
   const handleShip = () => {
-    if (isResolvingAction) return;
-    if (isTutorial) {
-      onTutorialSetAction?.("shipped");
-      onTutorialAdvance?.("complete");
-      onClose();
+    if (isResolvingAction || shippingLocked) {
+      if (shippingLocked) playSfx("ui_locked");
       return;
     }
+    onTutorialResultAction?.();
     setIsResolvingAction(true);
     trackEvent(AnalyticsEvents.ITEM_ACTION, {
       action: "ship",
@@ -691,14 +751,18 @@ function VaultOverlay({
       vault_price: tier.price,
       free_spin: usedFreeSpin,
     });
-    onShip(
+    const shipped = onShip(
       product,
       tier.name as VaultTierName,
       wonRarity as Rarity,
       resultValue,
       wonFunko.id,
-      wonFunko.name
+      wonFunko.name,
+      resultAcquisitionMeta
     );
+    if (!shipped) {
+      setIsResolvingAction(false);
+    }
   };
 
   const handleBonusComplete = useCallback(
@@ -708,12 +772,11 @@ function VaultOverlay({
         shards_awarded: shardsAwarded,
         awarded: shardsAwarded > 0,
       });
-      if (!isTutorial && !isMicroTutorial && shardsAwarded > 0)
-        onBonusShards?.(shardsAwarded);
+      if (!isMicroTutorial && shardsAwarded > 0) onBonusShards?.(shardsAwarded);
+      if (shardsAwarded > 0) playSfx("bonus_round_win");
       setStage("result");
-      if (isTutorial) onTutorialAdvance?.("result-cashout");
     },
-    [isTutorial, isMicroTutorial, onTutorialAdvance, onBonusShards, tier.name]
+    [isMicroTutorial, onBonusShards, tier.name]
   );
 
   const handleSpinAgain = () => {
@@ -722,76 +785,9 @@ function VaultOverlay({
       return;
     }
     resetForNextSpin();
+    playSfx("ui_select");
     scheduleTimeout(() => handleSpin(), 50);
   };
-
-  const storeIcon = (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      className="text-neon-cyan"
-    >
-      <path
-        d="M21 8V21H3V8"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M23 3H1V8H23V3Z"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M10 12H14"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-  const shipIcon = (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-    >
-      <rect x="1" y="3" width="15" height="13" />
-      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
-      <circle cx="5.5" cy="18.5" r="2.5" />
-      <circle cx="18.5" cy="18.5" r="2.5" />
-    </svg>
-  );
-  const cashoutIcon = (
-    <svg
-      width="20"
-      height="20"
-      viewBox="0 0 24 24"
-      fill="none"
-      className="text-vault-gold"
-    >
-      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
-      <path
-        d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5s-2 .5-2 1.5 1 1.5 2 2 2 1 2 2-1 1.5-2 1.5-2-.5-2.5-1.5M12 7v1m0 8v1"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-
-  const isLoss = !usedFreeSpin && resultValue < tier.price;
-  const canSpinAgain = freeSpins > 0 || balance >= tier.price;
-  const canStartSpin = isTutorial || freeSpins > 0 || balance >= tier.price;
 
   return (
     <motion.div
@@ -880,132 +876,211 @@ function VaultOverlay({
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: -20, opacity: 0 }}
-              className="space-y-6 w-full max-w-sm relative px-4 my-auto"
+              className="relative my-auto w-full max-w-[88rem] px-2 pt-14 sm:px-4 sm:pt-6 lg:px-5"
             >
-              {!isTutorial && (
-                <button
-                  onClick={onClose}
-                  className="absolute -top-2 md:-top-3 right-0 md:-right-2 p-2.5 rounded-xl bg-error/10 border border-error/30 text-error hover:bg-error/20 hover:border-error/50 transition-all cursor-pointer z-20"
+              <button
+                onClick={onClose}
+                type="button"
+                aria-label="Close"
+                className="system-close"
+                style={{
+                  position: "fixed",
+                  top: 18,
+                  right: 18,
+                }}
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
                 >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                  >
-                    <path d="M18 6L6 18M6 6l12 12" />
-                  </svg>
-                </button>
-              )}
-              <div className="space-y-2 sm:space-y-3 text-center">
-                {!isTutorial && freeSpins > 0 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-neon-green/10 border border-neon-green/40 mb-2"
-                  >
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      className="text-neon-green"
-                    >
-                      <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                    </svg>
-                    <span className="text-xs font-black uppercase tracking-widest text-neon-green">
-                      Free Spin!
-                    </span>
-                  </motion.div>
-                )}
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white uppercase tracking-tight">
-                  {tier.name} Vault
-                </h2>
-                <p className="text-text-muted max-w-lg mx-auto text-xs sm:text-sm">
-                  {isTutorial ? (
-                    <>Tap SPIN to continue.</>
-                  ) : freeSpins > 0 ? (
-                    <>
-                      Spin the reel.{" "}
-                      <span className="font-bold text-neon-green">Free!</span>
-                    </>
-                  ) : (
-                    <>
-                      Spin the reel.{" "}
-                      <span className="font-bold" style={{ color: tier.color }}>
-                        ${tier.price}
-                      </span>{" "}
-                      per spin.
-                    </>
-                  )}
-                </p>
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+              <div className="relative z-10 flex flex-col gap-4">
+                <div className="flex flex-col gap-3 pr-14 sm:pr-16 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    {freeSpins > 0 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-3 inline-flex items-center gap-2 rounded-full border border-neon-green/40 bg-neon-green/10 px-3 py-1.5"
+                      >
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          className="text-neon-green"
+                        >
+                          <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                        </svg>
+                        <span className="text-[10px] font-black uppercase tracking-[0.24em] text-neon-green">
+                          Free Scan Ready
+                        </span>
+                      </motion.div>
+                    )}
+                  </div>
+                </div>
+
                 {purchaseError && (
-                  <p className="text-error text-sm font-bold">
+                  <p className="text-sm font-bold text-error">
                     {purchaseError}
                   </p>
                 )}
-              </div>
 
-              <div data-tutorial="spin-stage" className="space-y-5">
-                {/* Item Spinner preview (static) */}
-                <ItemSpinner
-                  vaultTier={tier.name as VaultTierName}
-                  wonFunko={wonFunko}
-                  spinning={false}
-                  landed={false}
-                  accentColor={tier.color}
-                />
+                <div data-tutorial="override-stage" className="space-y-5">
+                  <VaultOverrideTrack
+                    vaultTier={tier.name as VaultTierName}
+                    wonFunko={wonFunko}
+                    extracting={false}
+                    locked={false}
+                    spinDurationMs={OVERRIDE_SPIN_DURATION_MS}
+                    chargeProgress={overrideCharge}
+                  />
 
-                {/* SPIN button */}
-                <div className="flex justify-center">
-                  <button
-                    onClick={handleSpin}
-                    disabled={!canStartSpin}
-                    data-tutorial="spin-button"
-                    className={`group/spin relative rounded-2xl border-none p-0 outline-none ${canStartSpin ? "cursor-pointer" : "cursor-not-allowed opacity-60"} ${isTutorial && tutorialStep === "spin-reel" ? "animate-pulse" : ""}`}
-                    style={{
-                      background:
-                        freeSpins > 0 && !isTutorial
-                          ? "rgba(57,255,20,0.25)"
-                          : `${tier.color}25`,
-                    }}
-                  >
-                    <span
-                      className="relative block px-12 sm:px-16 py-3.5 sm:py-4 rounded-2xl text-base sm:text-lg font-black uppercase tracking-[0.2em] translate-y-[-4px] group-active/spin:translate-y-[-2px] transition-transform duration-[250ms] ease-[cubic-bezier(0.3,0.7,0.4,1)] border-b-4"
+                  <div className="mx-auto w-full max-w-5xl">
+                    <button
+                      onPointerDown={beginOverrideCharge}
+                      onPointerUp={endOverrideCharge}
+                      onPointerLeave={endOverrideCharge}
+                      onPointerCancel={endOverrideCharge}
+                      onKeyDown={(event) => {
+                        if (
+                          (event.key === "Enter" || event.key === " ") &&
+                          !event.repeat
+                        ) {
+                          event.preventDefault();
+                          beginOverrideCharge();
+                        }
+                      }}
+                      onKeyUp={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          endOverrideCharge();
+                        }
+                      }}
+                      onContextMenu={(event) => event.preventDefault()}
+                      disabled={!canStartSpin}
+                      data-tutorial="scan-button"
+                      className={`group relative w-full overflow-hidden rounded-[28px] border px-5 py-5 text-center transition-transform duration-200 ease-out outline-none ${
+                        canStartSpin
+                          ? "cursor-pointer active:translate-y-[2px]"
+                          : "cursor-not-allowed opacity-60"
+                      }`}
                       style={{
-                        backgroundColor:
-                          freeSpins > 0 && !isTutorial
-                            ? "rgba(57,255,20,0.15)"
-                            : `${tier.color}15`,
-                        borderColor:
-                          freeSpins > 0 && !isTutorial
-                            ? "rgba(57,255,20,0.5)"
-                            : `${tier.color}50`,
-                        color:
-                          freeSpins > 0 && !isTutorial ? "#39ff14" : tier.color,
-                        boxShadow: `0 0 30px ${freeSpins > 0 && !isTutorial ? "rgba(57,255,20,0.2)" : `${tier.color}20`}`,
+                        borderColor: `${scanAccent}${overrideCharge >= 0.999 ? "d0" : "7a"}`,
+                        background:
+                          "linear-gradient(180deg, rgba(7,12,20,0.96) 0%, rgba(7,12,20,0.9) 100%)",
+                        boxShadow:
+                          overrideCharge >= 0.999
+                            ? `0 0 48px ${scanAccent}42, inset 0 0 24px ${scanAccent}24, 0 0 18px ${tier.color}26`
+                            : `0 0 ${28 + overrideCharge * 30}px ${scanAccent}${Math.round(
+                                24 + overrideCharge * 40
+                              )
+                                .toString(16)
+                                .padStart(
+                                  2,
+                                  "0"
+                                )}, inset 0 0 22px rgba(255,255,255,0.04)`,
                       }}
                     >
-                      {freeSpins > 0 && !isTutorial ? "FREE SPIN!" : "SPIN"}
-                    </span>
-                  </button>
+                      <motion.div
+                        className="absolute inset-y-0 left-0 overflow-hidden rounded-[27px]"
+                        animate={{ width: `${overrideCharge * 100}%` }}
+                        transition={{
+                          type: "spring",
+                          stiffness: 190,
+                          damping: 24,
+                        }}
+                        style={{
+                          background: `linear-gradient(90deg, rgba(255,45,149,0.18) 0%, rgba(255,45,149,0.58) 48%, rgba(255,135,206,0.94) 100%)`,
+                        }}
+                      >
+                        <div
+                          className="absolute inset-0 opacity-80"
+                          style={{
+                            background:
+                              "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.02) 28%, rgba(255,255,255,0) 100%)",
+                          }}
+                        />
+                        <motion.div
+                          className="absolute inset-y-0 w-24"
+                          animate={{
+                            x: isChargingOverride ? ["-20%", "170%"] : "30%",
+                            opacity:
+                              isChargingOverride || overrideCharge >= 0.999
+                                ? 0.95
+                                : 0.35,
+                          }}
+                          transition={{
+                            duration: 1.25,
+                            repeat: Infinity,
+                            ease: "linear",
+                          }}
+                          style={{
+                            background:
+                              "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.46) 48%, transparent 100%)",
+                            filter: "blur(2px)",
+                          }}
+                        />
+                      </motion.div>
+                      <div
+                        className="absolute inset-0 opacity-40"
+                        style={{
+                          background:
+                            "linear-gradient(120deg, rgba(255,255,255,0.14) 0%, transparent 24%, transparent 72%, rgba(255,255,255,0.08) 100%)",
+                        }}
+                      />
+                      <div
+                        className="absolute inset-x-6 top-2 h-px opacity-80"
+                        style={{
+                          background: `linear-gradient(90deg, transparent 0%, ${scanAccent} 50%, transparent 100%)`,
+                        }}
+                      />
+                      <motion.div
+                        className="pointer-events-none absolute inset-0"
+                        animate={{
+                          opacity:
+                            isChargingOverride || overrideCharge >= 0.999
+                              ? [0.18, 0.34, 0.18]
+                              : 0.12,
+                        }}
+                        transition={{
+                          duration: 1.2,
+                          repeat:
+                            isChargingOverride || overrideCharge >= 0.999
+                              ? Infinity
+                              : 0,
+                          ease: "easeInOut",
+                        }}
+                        style={{
+                          background:
+                            "radial-gradient(circle at 50% 50%, rgba(255,45,149,0.22) 0%, transparent 58%)",
+                        }}
+                      />
+                      <div className="relative z-10 flex min-h-[62px] items-center justify-center">
+                        <span
+                          className="text-lg font-black uppercase tracking-[0.34em] text-white sm:text-xl"
+                          style={{
+                            textShadow:
+                              overrideCharge > 0.15
+                                ? `0 0 22px ${scanAccent}`
+                                : "0 0 10px rgba(255,255,255,0.16)",
+                          }}
+                        >
+                          SCAN
+                        </span>
+                      </div>
+                    </button>
+                  </div>
                 </div>
               </div>
-
-              {isTutorial && tutorialStep === "spin-reel" && (
-                <div className="mx-auto max-w-xs rounded-xl border border-accent/35 bg-surface-elevated/90 p-3 text-center shadow-[0_0_22px_rgba(255,45,149,0.22)]">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-accent mb-1">
-                    Spin Step
-                  </p>
-                  <p className="text-[11px] text-text-muted leading-relaxed">
-                    Press SPIN once to continue the reveal sequence.
-                  </p>
-                </div>
-              )}
             </motion.div>
           )}
 
@@ -1016,26 +1091,24 @@ function VaultOverlay({
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -14, scale: 0.97, filter: "blur(4px)" }}
               transition={{ duration: 0.72, ease: [0.22, 1, 0.36, 1] }}
-              className="flex flex-col items-center justify-center w-full max-w-sm px-4 my-auto"
+              className="my-auto flex w-full max-w-[88rem] flex-col justify-center px-2 sm:px-4 lg:px-5"
             >
-              <div className="text-center mb-5 sm:mb-6">
-                <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.28em] text-text-dim mb-2">
-                  {tier.name} Vault
-                </p>
-                <h3 className="text-base sm:text-lg md:text-xl font-black uppercase tracking-wider text-white">
-                  {spinLanded ? "Locked In!" : "Spinning..."}
+              <div className="mb-4 text-center sm:mb-5">
+                <h3 className="text-lg font-black uppercase tracking-[0.22em] text-white sm:text-xl md:text-2xl">
+                  {spinLanded ? "Funko Acquired" : "Scan In Progress"}
                 </h3>
               </div>
-              <ItemSpinner
+              <VaultOverrideTrack
                 vaultTier={tier.name as VaultTierName}
                 wonFunko={wonFunko}
-                spinning={!spinLanded}
-                landed={spinLanded}
-                accentColor={tier.color}
+                extracting={!spinLanded}
+                locked={spinLanded}
+                spinDurationMs={OVERRIDE_SPIN_DURATION_MS}
+                chargeProgress={1}
               />
-              <div className="mt-5 sm:mt-6 text-[10px] sm:text-xs font-mono text-text-dim uppercase tracking-[0.22em]">
-                {spinLanded ? wonFunko.name : "Locking your pull..."}
-              </div>
+              <p className="mt-4 text-center text-[11px] font-mono uppercase tracking-[0.28em] text-white/45 sm:text-xs">
+                {spinLanded ? wonFunko.name : "Resolving Target Lock"}
+              </p>
             </motion.div>
           )}
 
@@ -1047,9 +1120,7 @@ function VaultOverlay({
                 onComplete={(shardsAwarded) =>
                   handleBonusComplete(shardsAwarded)
                 }
-                forcedLandings={
-                  isTutorial || isMicroTutorial ? "jackpot" : undefined
-                }
+                forcedLandings={isMicroTutorial ? "jackpot" : undefined}
               />
             </div>
           )}
@@ -1083,60 +1154,102 @@ function VaultOverlay({
                     stiffness: spring.stiffness,
                     delay: textConfig.entranceDelay,
                   }}
-                  className="space-y-5 sm:space-y-6 md:space-y-8 relative w-full max-w-[96rem] flex flex-col items-center px-2 sm:px-4 lg:px-8 my-auto"
+                  className="relative my-auto flex w-full max-w-[96rem] flex-col items-center space-y-4 px-2 sm:px-4 sm:space-y-5 md:space-y-6 lg:px-8"
                 >
                   <ConfettiParticles
                     color={rarityConfig.color}
                     rarity={isLoss ? undefined : wonRarity}
                     count={isLoss ? 8 : undefined}
                   />
-                  <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/10 bg-surface/45 px-3 py-3 sm:px-6 sm:py-6 backdrop-blur-md overflow-hidden">
-                    <div className="text-center mb-2 sm:mb-3">
+                  <div className="system-shell relative z-10 w-full max-w-3xl px-4 py-4 sm:px-6 sm:py-6">
+                    <div
+                      className="pointer-events-none absolute inset-0"
+                      style={{
+                        background: `radial-gradient(circle at 50% 24%, ${rarityConfig.color}22 0%, transparent 54%)`,
+                      }}
+                    />
+                    <div className="relative z-10 text-center">
                       <span
-                        className="inline-block max-w-full px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg border-2 text-[9px] sm:text-xs md:text-sm font-black uppercase tracking-wide truncate"
+                        className="inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.28em] sm:px-4 sm:py-2 sm:text-xs"
                         style={{
-                          borderColor: `${rarityConfig.color}60`,
+                          borderColor: `${rarityConfig.color}55`,
                           color: rarityConfig.color,
+                          backgroundColor: `${rarityConfig.color}10`,
+                        }}
+                      >
+                        Lock Acquired
+                      </span>
+                      <div className="mt-4 flex items-center justify-center">
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.78, y: 18 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          transition={{
+                            type: "spring",
+                            damping: spring.damping,
+                            stiffness: spring.stiffness,
+                            delay: textConfig.entranceDelay + 0.2,
+                          }}
+                          className="specimen-frame relative w-full max-w-[188px] p-3 sm:max-w-[214px]"
+                          style={{
+                            borderColor: `${rarityConfig.color}55`,
+                            background: `linear-gradient(180deg, ${rarityConfig.color}12 0%, rgba(8,12,20,0.92) 100%)`,
+                            boxShadow: `0 0 34px ${rarityConfig.color}28`,
+                          }}
+                        >
+                          <div className="relative z-10">
+                            <FunkoImage
+                              name={wonFunko.name}
+                              imagePath={wonFunko.imagePath}
+                              rarity={wonRarity as Rarity}
+                              size="lg"
+                              showLabel={false}
+                              className="!h-[160px] !w-full sm:!h-[188px]"
+                            />
+                          </div>
+                        </motion.div>
+                      </div>
+                      <motion.h3
+                        className="mx-auto mt-4 max-w-[16ch] text-center text-xl font-black uppercase tracking-tight text-white sm:text-2xl"
+                        initial={{
+                          opacity: 0,
+                          scale: textConfig.entranceScale,
+                        }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{
+                          type: "spring",
+                          damping: spring.damping,
+                          stiffness: spring.stiffness,
+                          delay: textConfig.entranceDelay + 0.08,
                         }}
                       >
                         {wonFunko.name}
-                      </span>
+                      </motion.h3>
                     </div>
-                    <div className="flex justify-center">
-                      <FunkoImage
-                        name={wonFunko.name}
-                        rarity={wonRarity as Rarity}
-                        size="lg"
-                        className="!w-20 !h-20 sm:!w-36 sm:!h-36 md:!w-40 md:!h-40"
-                      />
-                    </div>
-                    <motion.h3
-                      className={`mx-auto mt-4 w-full max-w-[12ch] text-center leading-none break-words ${textConfig.titleSize} sm:${textConfig.titleSizeLg} font-black text-white uppercase tracking-tight`}
+                    <motion.p
+                      className="mt-3 text-center text-[11px] font-mono uppercase tracking-[0.3em]"
                       initial={{ opacity: 0, scale: textConfig.entranceScale }}
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{
                         type: "spring",
                         damping: spring.damping,
                         stiffness: spring.stiffness,
-                        delay: textConfig.entranceDelay + 0.1,
+                        delay: textConfig.entranceDelay + 0.12,
                       }}
-                      style={{
-                        textShadow:
-                          textConfig.textShadow !== "none"
-                            ? `${textConfig.textShadow} ${rarityConfig.color}`
-                            : "none",
-                      }}
+                      style={{ color: rarityConfig.color }}
                     >
                       {rarityConfig.label}
-                    </motion.h3>
+                    </motion.p>
+                    <p className="mt-2 text-center text-xs font-mono uppercase tracking-[0.28em] text-white/45 sm:text-sm">
+                      Prize Acquired
+                    </p>
                     {isLoss ? (
-                      <p className="text-center text-sm sm:text-xl md:text-2xl text-text-muted">
-                        <span className="font-black text-neon-cyan">
+                      <p className="mt-2 text-center text-sm sm:text-xl md:text-2xl text-text-muted">
+                        <span className="font-black text-accent">
                           {recoveryPercent}% Recovery
                         </span>
                       </p>
                     ) : useCounter ? (
-                      <p className="text-center text-sm sm:text-xl md:text-2xl text-text-muted">
+                      <p className="mt-2 text-center text-sm sm:text-xl md:text-2xl text-text-muted">
                         Value:{" "}
                         <AnimatedValue
                           value={resultValue}
@@ -1145,7 +1258,7 @@ function VaultOverlay({
                         />
                       </p>
                     ) : (
-                      <p className="text-center text-sm sm:text-xl md:text-2xl text-text-muted">
+                      <p className="mt-2 text-center text-sm sm:text-xl md:text-2xl text-text-muted">
                         Value:{" "}
                         <span
                           className="font-black"
@@ -1155,79 +1268,69 @@ function VaultOverlay({
                         </span>
                       </p>
                     )}
-                  </div>
-
-                  <div className="z-10 w-full max-w-xs sm:max-w-sm md:max-w-md bg-surface/80 rounded-xl p-3 sm:p-4 md:p-5 font-mono text-[10px] sm:text-xs md:text-sm border border-white/10">
-                    <div className="flex justify-between py-1">
-                      <span className="text-text-dim">Credits</span>
-                      <span className="text-white">
-                        ${preBalance.toFixed(2)}
-                      </span>
-                    </div>
-                    {usedFreeSpin ? (
-                      <div className="flex justify-between py-1">
-                        <span className="text-text-dim">{tier.name} Vault</span>
-                        <span className="text-neon-green">Free Spin!</span>
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+                      <div className="system-readout px-3 py-2 text-center">
+                        <p className="system-label">Vault</p>
+                        <p className="mt-1 text-[11px] font-black uppercase tracking-[0.18em] text-white">
+                          {usedFreeSpin ? "Free" : `$${tier.price}`}
+                        </p>
                       </div>
-                    ) : (
-                      <div className="flex justify-between py-1">
-                        <span className="text-text-dim">{tier.name} Vault</span>
-                        <span className="text-error">
-                          -${tier.price.toFixed(2)}
-                        </span>
+                      <div className="system-readout px-3 py-2 text-center">
+                        <p className="system-label">Value</p>
+                        <p
+                          className="mt-1 text-[11px] font-black uppercase tracking-[0.18em]"
+                          style={{ color: rarityConfig.color }}
+                        >
+                          ${resultValue}
+                        </p>
                       </div>
-                    )}
-                    <div className="flex justify-between py-1">
-                      <span className="text-text-dim">
-                        {product}{" "}
-                        <span style={{ color: rarityConfig.color }}>
-                          ({rarityConfig.label})
-                        </span>
-                      </span>
-                      <span style={{ color: rarityConfig.color }}>
-                        +${resultValue.toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="border-t border-white/10 mt-1 pt-2 flex justify-between font-bold">
-                      <span className="text-text-muted">Balance</span>
-                      <span className="text-white">
-                        ${postBalance.toFixed(2)}
-                      </span>
+                      <div className="system-readout px-3 py-2 text-center">
+                        <p className="system-label">Balance</p>
+                        <p className="mt-1 text-[11px] font-black uppercase tracking-[0.18em] text-white">
+                          ${postBalance.toFixed(0)}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
                   {!cashoutComplete && (
                     <div
                       data-tutorial="reveal-actions"
-                      className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 md:gap-4 w-full max-w-md sm:max-w-2xl md:max-w-4xl z-10"
+                      className="z-10 flex w-full max-w-2xl flex-wrap items-center justify-center gap-2 sm:gap-3"
                     >
-                      <OptionCard
-                        title="Cashout"
-                        desc="Convert this result into credits."
-                        icon={cashoutIcon}
-                        action={isClaiming ? "Claiming..." : `$${resultValue}`}
+                      <ResultActionButton
+                        label={isClaiming ? "Processing" : "Cashout"}
                         onClick={handleClaimLocal}
-                        tierColor="#ffd700"
+                        accentColor="#ffd700"
+                        tutorialId="reveal-cashout"
                         disabled={isResolvingAction}
                       />
-                      <OptionCard
-                        title="Equip"
-                        desc="Save and equip this collectible."
-                        icon={storeIcon}
-                        action="Save + Equip"
+                      <ResultActionButton
+                        label="Equip"
                         onClick={handleEquip}
-                        tierColor="#00f0ff"
+                        accentColor="#ff2d95"
+                        tutorialId="reveal-equip"
                         disabled={isResolvingAction}
                       />
-                      <OptionCard
-                        title="Ship"
-                        desc="Ship the physical collectible."
-                        icon={shipIcon}
-                        action="Start Shipping"
+                      <ResultActionButton
+                        label="Ship"
                         onClick={handleShip}
-                        tierColor={tier.color}
-                        disabled={isResolvingAction}
+                        accentColor={tier.color}
+                        tutorialId="reveal-ship"
+                        disabled={isResolvingAction || shippingLocked}
                       />
+                    </div>
+                  )}
+
+                  {!cashoutComplete && shippingLocked && !isTutorialDemo && (
+                    <div className="module-card z-10 w-full max-w-2xl px-4 py-3 text-center">
+                      <p className="text-[10px] font-black uppercase tracking-[0.24em] text-neon-green">
+                        Shipping Locked
+                      </p>
+                      <p className="mt-2 text-xs text-text-muted">
+                        {resultAcquisitionMeta.shippingLockReason ||
+                          "This collectible can be held, equipped, listed, or cashed out, but it cannot ship yet."}
+                      </p>
                     </div>
                   )}
 
@@ -1235,10 +1338,11 @@ function VaultOverlay({
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="z-10 w-full max-w-md rounded-2xl border border-vault-gold/35 bg-vault-gold/10 p-4 sm:p-5 text-center"
+                      className="module-card z-10 w-full max-w-md p-4 text-center sm:p-5"
+                      style={{ borderColor: "rgba(255,215,0,0.35)" }}
                     >
                       <p className="text-sm sm:text-base font-black uppercase tracking-wide text-white">
-                        Cashout complete
+                        Sale complete
                       </p>
                       <p className="text-xs sm:text-sm text-text-muted mt-2">
                         Credits added and +{ACTION_XP_REWARD} XP awarded.
@@ -1246,20 +1350,20 @@ function VaultOverlay({
                       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <button
                           onClick={onClose}
-                          className="px-4 py-2.5 rounded-xl bg-surface border border-white/20 text-white text-[10px] font-black uppercase tracking-widest hover:border-white/35 transition-colors cursor-pointer"
+                          className="system-rail px-4 py-2.5 text-white text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer"
                         >
-                          Open Another Vault
+                          Return to Vaults
                         </button>
                         <button
                           onClick={handleSpinAgain}
                           disabled={!canSpinAgain}
-                          className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${
+                          className={`text-[10px] font-black uppercase tracking-widest transition-colors ${
                             canSpinAgain
-                              ? "bg-accent text-white hover:bg-accent-hover cursor-pointer"
-                              : "bg-surface border border-white/20 text-text-dim cursor-not-allowed"
+                              ? "system-rail text-white hover:text-accent cursor-pointer"
+                              : "system-rail text-text-dim cursor-not-allowed"
                           }`}
                         >
-                          Spin Again
+                          Scan Again
                         </button>
                       </div>
                     </motion.div>
@@ -1276,22 +1380,20 @@ function VaultOverlay({
 /* â”€â”€â”€ Exported Main Component â”€â”€â”€ */
 
 export function VaultGrid({
-  tutorialStep,
-  onTutorialAdvance,
-  onTutorialSetAction,
   onOverlayChange,
   microTutorialActive = false,
+  tutorialStepId = null,
+  tutorialMode = null,
 }: VaultGridProps & { onOverlayChange?: (isOpen: boolean) => void }) {
+  const isTutorialDemo = tutorialMode === "demo";
   const primaryCategoryKey = `${PRODUCT_TYPES[0]}-0`;
   const {
     balance,
     xp,
     purchaseVault,
-    tutorialOpenVault,
     claimCreditsFromReveal,
-    addItem,
     addAndEquipItem,
-    shipItem,
+    addAndShipItem,
     awardXP,
     prestigeLevel,
     freeSpins,
@@ -1307,6 +1409,7 @@ export function VaultGrid({
     funkoName: string;
     value: number;
   } | null>(null);
+  const [tutorialResultPending, setTutorialResultPending] = useState(false);
   const [equipLockedNotice, setEquipLockedNotice] = useState<string | null>(
     null
   );
@@ -1318,28 +1421,21 @@ export function VaultGrid({
     onOverlayChange?.(selectedVault != null);
   }, [selectedVault, onOverlayChange]);
 
-  const isTutorialActive = tutorialStep != null;
+  useEffect(() => {
+    if (!tutorialResultPending || selectedVault) return;
+    window.dispatchEvent(new CustomEvent(OPEN_TUTORIAL_RESULT_CHOSEN_EVENT));
+    setTutorialResultPending(false);
+  }, [selectedVault, tutorialResultPending]);
   const isPrimaryCategory = activeCategoryKey === primaryCategoryKey;
   const selectedCategory = isPrimaryCategory ? PRODUCT_TYPES[0] : null;
 
   const handleSelect = (vault: Vault) => {
-    if (tutorialStep === "open-vault") {
-      if (vault.name !== "Diamond") return;
-      trackEvent(AnalyticsEvents.VAULT_OPEN_STARTED, {
-        vault_tier: vault.name,
-        vault_price: vault.price,
-        source: "tutorial",
-      });
-      trackEvent(AnalyticsEvents.VAULT_OVERLAY_OPENED, {
-        vault_tier: vault.name,
-        vault_price: vault.price,
-      });
-      setOverlayKey((prev) => prev + 1);
-      setSelectedVault(vault);
-      onTutorialAdvance?.("spin-reel");
+    if (microTutorialActive && tutorialStepId !== "vault-open") {
       return;
     }
-    if (balance < vault.price && freeSpins <= 0) return;
+    if (!isTutorialDemo && balance < vault.price && freeSpins <= 0) return;
+    window.dispatchEvent(new CustomEvent(OPEN_TUTORIAL_VAULT_SELECTED_EVENT));
+    playSfx("vault_open");
     trackEvent(AnalyticsEvents.VAULT_OPEN_STARTED, {
       vault_tier: vault.name,
       vault_price: vault.price,
@@ -1353,6 +1449,7 @@ export function VaultGrid({
   };
 
   const handleCloseOverlay = () => {
+    playSfx("ui_close");
     if (selectedVault)
       trackEvent(AnalyticsEvents.VAULT_OVERLAY_CLOSED, {
         vault_tier: selectedVault.name,
@@ -1370,9 +1467,18 @@ export function VaultGrid({
     rarity: Rarity,
     value: number,
     funkoId?: string,
-    funkoName?: string
+    funkoName?: string,
+    acquisitionMeta?: ItemAcquisitionMeta
   ) => {
-    addAndEquipItem(product, vaultTier, rarity, value, funkoId, funkoName);
+    addAndEquipItem(
+      product,
+      vaultTier,
+      rarity,
+      value,
+      funkoId,
+      funkoName,
+      acquisitionMeta
+    );
     awardXP(ACTION_XP_REWARD, "vault_equip");
     setSelectedVault(null);
 
@@ -1403,21 +1509,38 @@ export function VaultGrid({
     rarity: Rarity,
     value: number,
     funkoId?: string,
-    funkoName?: string
+    funkoName?: string,
+    acquisitionMeta?: ItemAcquisitionMeta
   ) => {
-    const item = addItem(product, vaultTier, rarity, value, funkoId, funkoName);
-    shipItem(item.id);
+    const item = addAndShipItem(
+      product,
+      vaultTier,
+      rarity,
+      value,
+      funkoId,
+      funkoName,
+      acquisitionMeta
+    );
+    if (!item) {
+      setEquipLockedNotice(
+        acquisitionMeta?.shippingLockReason ||
+          "This collectible can be held, equipped, listed, or cashed out, but it cannot ship yet."
+      );
+      return false;
+    }
     awardXP(ACTION_XP_REWARD, "vault_ship");
+    setEquipLockedNotice("Shipment request recorded.");
     setSelectedVault(null);
+    return true;
   };
 
   const minPrice = Math.min(...VAULTS.map((v) => v.price));
   const isBroke =
     isPrimaryCategory &&
+    !isTutorialDemo &&
     balance < minPrice &&
     freeSpins <= 0 &&
-    !selectedVault &&
-    !isTutorialActive;
+    !selectedVault;
   const categoryTabs = PRODUCT_TYPES.map((category, idx) => {
     const tabKey = `${category}-${idx}`;
     const isPrimary = idx === 0;
@@ -1457,7 +1580,7 @@ export function VaultGrid({
             Open Your <span className="text-accent">Vault</span>
           </h2>
           <p className="mx-auto max-w-2xl text-text-muted">
-            Pick your tier, spin the reel, reveal your collectible.
+            Pick your tier, charge the scan, and extract your collectible.
           </p>
         </div>
         <SegmentedTabs
@@ -1479,27 +1602,45 @@ export function VaultGrid({
             <div
               className={`relative transition-all duration-300 ${isBroke ? "blur-xl grayscale pointer-events-none scale-[0.97] opacity-20" : ""}`}
             >
-              <div
-                data-tutorial="vault-grid"
-                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 gap-y-6 sm:gap-y-8 max-w-6xl mx-auto"
-              >
-                {VAULTS.map((vault, index) => (
-                  <VaultCard
-                    key={vault.name}
-                    vault={vault}
-                    index={index}
-                    balance={balance}
-                    onSelect={handleSelect}
-                    disabled={isTutorialActive && vault.name !== "Diamond"}
-                    prestigeLevel={prestigeLevel}
-                  />
-                ))}
+              <div data-tutorial="vault-grid" className="mx-auto max-w-6xl">
+                <div className="scrollbar-none -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-3 md:hidden">
+                  {VAULTS.map((vault, index) => (
+                    <div
+                      key={vault.name}
+                      className="w-[min(84vw,340px)] max-w-[340px] min-w-[280px] flex-none snap-center"
+                    >
+                      <VaultCard
+                        vault={vault}
+                        index={index}
+                        balance={balance}
+                        onSelect={handleSelect}
+                        prestigeLevel={prestigeLevel}
+                        tutorialStepId={tutorialStepId}
+                        tutorialMode={tutorialMode}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="hidden gap-4 gap-y-6 md:grid md:grid-cols-2 md:gap-6 md:gap-y-8 lg:grid-cols-3">
+                  {VAULTS.map((vault, index) => (
+                    <VaultCard
+                      key={vault.name}
+                      vault={vault}
+                      index={index}
+                      balance={balance}
+                      onSelect={handleSelect}
+                      prestigeLevel={prestigeLevel}
+                      tutorialStepId={tutorialStepId}
+                      tutorialMode={tutorialMode}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
           ) : (
             <div className="flex justify-center">
-              <div className="w-full max-w-xl rounded-2xl border border-neon-cyan/30 bg-surface-elevated/70 backdrop-blur-xl px-5 py-6 sm:px-7 sm:py-7 text-center shadow-[0_0_40px_rgba(0,240,255,0.12)]">
-                <h3 className="text-lg sm:text-xl font-black uppercase tracking-widest text-neon-cyan">
+              <div className="w-full max-w-xl rounded-2xl border border-accent/30 bg-surface-elevated/70 px-5 py-6 text-center shadow-[0_0_40px_rgba(255,45,149,0.12)] backdrop-blur-xl sm:px-7 sm:py-7">
+                <h3 className="text-lg sm:text-xl font-black uppercase tracking-widest text-accent">
                   Coming Soon
                 </h3>
                 <p className="text-xs sm:text-sm text-text-muted mt-2">
@@ -1514,7 +1655,7 @@ export function VaultGrid({
                     });
                     navigate("/", { state: { scrollToWaitlist: true } });
                   }}
-                  className="mt-4 inline-flex items-center justify-center px-5 py-2.5 rounded-xl border border-neon-cyan/50 bg-neon-cyan/10 text-neon-cyan text-[10px] sm:text-xs font-black uppercase tracking-[0.18em] hover:bg-neon-cyan/18 transition-all cursor-pointer"
+                  className="mt-4 inline-flex items-center justify-center rounded-xl border border-accent/50 bg-accent/10 px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.18em] text-accent transition-all hover:bg-accent/18 cursor-pointer sm:text-xs"
                 >
                   Join Waitlist to Vote
                 </button>
@@ -1559,16 +1700,17 @@ export function VaultGrid({
             onClaim={handleClaim}
             onEquip={handleEquip}
             onShip={handleShip}
-            isTutorial={isTutorialActive}
-            tutorialStep={tutorialStep}
-            onTutorialAdvance={onTutorialAdvance}
-            onTutorialPurchase={tutorialOpenVault}
-            onTutorialSetAction={onTutorialSetAction}
             prestigeLevel={prestigeLevel}
             onUseFreeSpinForVault={useFreeSpinForVault}
             onBonusShards={grantBonusShards}
             freeSpins={freeSpins}
             microTutorialActive={microTutorialActive}
+            tutorialMode={tutorialMode}
+            onTutorialResultAction={() => {
+              if (microTutorialActive && tutorialStepId === "vault-reveal") {
+                setTutorialResultPending(true);
+              }
+            }}
           />
         )}
       </AnimatePresence>

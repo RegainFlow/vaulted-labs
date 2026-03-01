@@ -20,11 +20,11 @@ export function TransactionRow({ transaction, isLast }: TransactionRowProps) {
 
   return (
     <div
-      className={`flex items-center gap-3 px-3 sm:px-4 py-3 bg-surface-elevated/30 ${!isLast ? "border-b border-white/5" : ""}`}
+      className={`relative flex items-center gap-3 px-3 sm:px-4 py-3.5 sm:py-4 ${!isLast ? "border-b border-white/6" : ""}`}
     >
       {/* Type icon */}
       <div
-        className={`w-8 h-8 rounded-lg ${config.bgColor} flex items-center justify-center shrink-0`}
+        className={`system-readout flex h-9 w-9 items-center justify-center rounded-xl shrink-0 ${config.bgColor}`}
       >
         <span className={`text-sm font-black ${config.color}`}>
           {config.icon}
@@ -36,14 +36,14 @@ export function TransactionRow({ transaction, isLast }: TransactionRowProps) {
         <p className="text-xs sm:text-sm font-bold text-white truncate">
           {transaction.description}
         </p>
-        <p className="text-[10px] text-text-dim">
+        <p className="system-kicker mt-1">
           {formatTimestamp(transaction.timestamp)}
         </p>
       </div>
 
       {/* Amount */}
       <span
-        className={`text-sm sm:text-base font-mono font-black shrink-0 ${isPositive ? "text-neon-cyan" : "text-accent"}`}
+        className={`shrink-0 text-sm sm:text-base font-mono font-black ${isPositive ? "text-accent" : "text-error"}`}
       >
         {isPositive ? "+" : ""}${Math.abs(transaction.amount).toLocaleString()}
       </span>

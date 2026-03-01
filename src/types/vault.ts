@@ -1,5 +1,3 @@
-import type { TutorialStep } from "./tutorial";
-
 export type VaultTierName =
   | "Bronze"
   | "Silver"
@@ -22,7 +20,6 @@ export interface Vault {
   price: number;
   color: string;
   gradient: string;
-  tagline: string;
   rarities: RarityBreakdown;
 }
 
@@ -35,10 +32,9 @@ export interface VaultCardProps {
 }
 
 export interface VaultGridProps {
-  tutorialStep?: TutorialStep | null;
-  onTutorialAdvance?: (step: TutorialStep) => void;
-  onTutorialSetAction?: (action: string) => void;
   microTutorialActive?: boolean;
+  tutorialStepId?: string | null;
+  tutorialMode?: "demo" | null;
 }
 
 export interface VaultIconProps {

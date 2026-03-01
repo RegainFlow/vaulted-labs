@@ -7,6 +7,7 @@ Repository guidance for coding agents working on VaultedLabs.
 1. `README.md` (product + architecture + data model overview)
 2. `docs/` (design system, analytics events, image generation canon, marketing context)
 3. Code itself (`src/`, `supabase/`)
+4. ignore `/scripts` at the root dir
 
 ## Context7 Rule (Going Forward)
 - Use Context7 for third-party library/framework behavior before making non-trivial API changes.

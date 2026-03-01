@@ -1,48 +1,36 @@
 import { useEffect, useRef, useState } from "react";
 import { Navbar } from "../components/shared/Navbar";
 import { VaultGrid } from "../components/vault/VaultGrid";
-import { Tutorial } from "../components/Tutorial";
 import { TutorialHelpButton } from "../components/shared/TutorialHelpButton";
+import { OpenMicroTutorial } from "../components/vault/OpenMicroTutorial";
 import { useGame } from "../context/GameContext";
-import { useTutorial } from "../hooks/useTutorial";
-import { trackEvent, AnalyticsEvents } from "../lib/analytics";
 
 export function OpenPage() {
   const {
-    balance, inventory, xp, levelInfo, hasSeenTutorial, setHasSeenTutorial,
+    balance, inventory, xp, levelInfo, setHasSeenTutorial,
     prestigeLevel, freeSpins, cashoutFlashTimestamp, cashoutStreak,
     bossEnergy, maxBossEnergy, shards
   } = useGame();
-  const { step, advance, goTo, completedAction, setCompletedAction, reset } =
-    useTutorial(hasSeenTutorial);
   const [vaultOpen, setVaultOpen] = useState(false);
-  const tutorialStartedTrackedRef = useRef(false);
+  const [tutorialReplayNonce, setTutorialReplayNonce] = useState(0);
+  const [tutorialActive, setTutorialActive] = useState(false);
+  const [tutorialStepId, setTutorialStepId] = useState<string | null>(null);
+  const tutorialWasActiveRef = useRef(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
   useEffect(() => {
-    if (step === "welcome" && !tutorialStartedTrackedRef.current) {
-      tutorialStartedTrackedRef.current = true;
-      trackEvent(AnalyticsEvents.TUTORIAL_STARTED);
+    if (tutorialActive) {
+      tutorialWasActiveRef.current = true;
+      return;
     }
-  }, [step]);
-
-  const handleTutorialAdvance = () => {
-    if (step) {
-      trackEvent(AnalyticsEvents.TUTORIAL_STEP_COMPLETED, { step });
+    if (tutorialWasActiveRef.current) {
+      setHasSeenTutorial(true);
+      tutorialWasActiveRef.current = false;
     }
-    advance();
-  };
-
-  const handleTutorialComplete = () => {
-    trackEvent(AnalyticsEvents.TUTORIAL_COMPLETED, {
-      action: completedAction
-    });
-    setHasSeenTutorial(true);
-    reset();
-  };
+  }, [setHasSeenTutorial, tutorialActive]);
 
   return (
     <>
@@ -60,25 +48,27 @@ export function OpenPage() {
         maxBossEnergy={maxBossEnergy}
         shards={shards}
         hideDock={vaultOpen}
-        tutorialActive={step != null}
+        tutorialActive={tutorialActive}
       />
       <main>
         <VaultGrid
-          tutorialStep={step}
-          onTutorialAdvance={goTo}
-          onTutorialSetAction={setCompletedAction}
           onOverlayChange={setVaultOpen}
+          microTutorialActive={tutorialActive}
+          tutorialStepId={tutorialStepId}
+          tutorialMode={tutorialActive ? "demo" : null}
         />
       </main>
-      <Tutorial
-        step={step}
-        onAdvance={handleTutorialAdvance}
-        onComplete={handleTutorialComplete}
-        onSkip={handleTutorialComplete}
-        completedAction={completedAction}
+      <OpenMicroTutorial
+        key={`open-page-micro-${tutorialReplayNonce}`}
+        replayNonce={tutorialReplayNonce}
+        disabled={false}
+        onActiveChange={setTutorialActive}
+        onStepChange={setTutorialStepId}
       />
-      {hasSeenTutorial && !step && !vaultOpen && (
-        <TutorialHelpButton onClick={() => goTo("welcome")} />
+      {!vaultOpen && !tutorialActive && (
+        <TutorialHelpButton
+          onClick={() => setTutorialReplayNonce((prev) => prev + 1)}
+        />
       )}
     </>
   );

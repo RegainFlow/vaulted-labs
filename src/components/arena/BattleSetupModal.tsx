@@ -3,9 +3,9 @@ import { motion, AnimatePresence } from "motion/react";
 import type { Battle } from "../../types/gamification";
 import type { Collectible } from "../../types/collectible";
 import { useGame } from "../../context/GameContext";
+import { getFunkoById } from "../../data/funkos";
 import { CollectionModal } from "../shared/CollectionModal";
-import { FunkoImage } from "../shared/FunkoImage";
-import { RARITY_CONFIG } from "../../data/vaults";
+import { CollectibleDisplayCard } from "../shared/CollectibleDisplayCard";
 import { getPrestigeBattleStats } from "../../data/gamification";
 import { BossIcon } from "../../assets/boss-icons";
 
@@ -120,25 +120,34 @@ export function BattleSetupModal({
                 {[0, 1, 2].map((index) => {
                   const item = selectedItems[index];
                   if (item) {
-                    const rarityConfig = RARITY_CONFIG[item.rarity];
+                    const funko = item.funkoId ? getFunkoById(item.funkoId) : undefined;
                     return (
-                      <button
+                      <div
                         key={item.id}
-                        onClick={() => handleRemoveUnit(index)}
-                        className="rounded-xl border bg-surface/50 p-3 text-center transition-all hover:border-error/40 cursor-pointer group"
-                        style={{ borderColor: `${rarityConfig.color}40` }}
+                        className="h-full"
                       >
-                        <FunkoImage name={item.funkoName || item.product} rarity={item.rarity} size="xs" className="mx-auto mb-1" />
-                        <p className="text-[9px] font-bold text-white truncate">{item.funkoName || item.product}</p>
-                        <div className="flex justify-center gap-1 text-[8px] font-mono mt-1">
-                          <span className="text-error">{item.stats.atk}</span>
-                          <span className="text-neon-cyan">{item.stats.def}</span>
-                          <span className="text-neon-green">{item.stats.agi}</span>
-                        </div>
-                        <div className="opacity-0 group-hover:opacity-100 text-[8px] text-error font-bold mt-1 transition-opacity">
-                          Remove
-                        </div>
-                      </button>
+                        <CollectibleDisplayCard
+                          name={item.funkoName || item.product}
+                          rarity={item.rarity}
+                          imagePath={funko?.imagePath}
+                          stats={item.stats}
+                          metrics={[
+                            { label: "Value", value: `$${item.value}`, tone: "gold" },
+                            {
+                              label: "Market",
+                              value: funko ? `~$${funko.baseValue}` : "--",
+                            },
+                          ]}
+                          density="compact"
+                          actions={[
+                            {
+                              label: "Remove",
+                              onClick: () => handleRemoveUnit(index),
+                              tone: "danger",
+                            },
+                          ]}
+                        />
+                      </div>
                     );
                   }
                   return (

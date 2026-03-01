@@ -44,7 +44,7 @@ export function LegendaryHypeOverlay({ funkoName, value, onDismiss }: LegendaryH
     });
 
     // Copy share text to clipboard
-    const shareText = `I just pulled a LEGENDARY ${funkoName} worth $${value} on VaultedLabs!`;
+    const shareText = `I just acquired a LEGENDARY ${funkoName} worth $${value} on VaultedLabs!`;
     navigator.clipboard?.writeText(shareText).catch(() => {});
   };
 
@@ -136,7 +136,7 @@ export function LegendaryHypeOverlay({ funkoName, value, onDismiss }: LegendaryH
           className="mt-8 px-8 py-3 rounded-xl bg-rarity-legendary/15 border-2 border-rarity-legendary/50 text-rarity-legendary text-sm font-black uppercase tracking-widest hover:bg-rarity-legendary/25 transition-all cursor-pointer"
           style={{ boxShadow: "0 0 30px rgba(255,215,0,0.2)" }}
         >
-          Share Your Pull
+          Share Acquisition
         </motion.button>
 
         {/* Continue link */}

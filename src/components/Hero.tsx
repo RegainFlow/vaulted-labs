@@ -10,7 +10,7 @@ export function Hero() {
     const typed = new Typed(typedEl.current!, {
       strings: [
         "Visible odds on every vault. No hidden percentages.",
-        "Every reveal is your call: <span class='text-neon-cyan text-glow-cyan font-black'>Hold</span>, <span class='text-vault-gold font-black'>Ship</span>, or <span class='text-neon-green text-glow-green font-black'>Cashout</span>.",
+        "Every reveal is your call: <span class='text-accent text-glow-magenta font-black'>Hold</span>, <span class='text-vault-gold font-black'>Ship</span>, or <span class='text-neon-green text-glow-green font-black'>Cashout</span>.",
         "Collect what you want. Cash out what you don't.",
       ],
       typeSpeed: 34,
@@ -55,7 +55,7 @@ export function Hero() {
         {/* Floating Particles (CSS) */}
         <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-accent/10 rounded-full blur-[100px] animate-pulse" />
         <div
-          className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-neon-cyan/5 rounded-full blur-[100px] animate-pulse"
+          className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-accent/5 rounded-full blur-[100px] animate-pulse"
           style={{ animationDelay: "1s" }}
         />
       </div>
@@ -81,7 +81,7 @@ export function Hero() {
           delay: 1,
         }}
       >
-        <div className="w-9 h-9 md:w-10 md:h-10 border border-neon-cyan/20 rounded bg-surface/30 backdrop-blur-sm flex items-center justify-center shadow-[0_0_12px_rgba(0,240,255,0.15)]">
+        <div className="w-9 h-9 md:w-10 md:h-10 border border-accent/20 rounded bg-surface/30 backdrop-blur-sm flex items-center justify-center shadow-[0_0_12px_rgba(255,45,149,0.15)]">
           <svg
             width="18"
             height="18"
@@ -89,7 +89,7 @@ export function Hero() {
             fill="none"
             stroke="currentColor"
             strokeWidth="1.5"
-            className="text-neon-cyan/40"
+            className="text-accent/40"
           >
             <path d="M6 3h12l4 6-10 13L2 9z" />
           </svg>
@@ -133,7 +133,7 @@ export function Hero() {
             <span className="block text-transparent bg-clip-text bg-gradient-to-b from-white via-white to-white/60 filter drop-shadow-[0_0_26px_rgba(255,255,255,0.18)]">
               OPEN VAULTS
             </span>
-            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-accent via-neon-cyan to-accent animate-gradient bg-300% text-glow-magenta">
+            <span className="block text-transparent bg-clip-text bg-gradient-to-r from-accent via-white to-accent animate-gradient bg-300% text-glow-magenta">
               WIN REAL COLLECTIBLES
             </span>
             <span className="block text-neon-green text-glow-green text-2xl sm:text-3xl md:text-4xl lg:text-5xl">

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { RARITY_CONFIG, VAULT_COLORS } from "../../data/vaults";
-import { FunkoImage } from "./FunkoImage";
+import { getFunkoById } from "../../data/funkos";
 import type { Collectible } from "../../types/collectible";
+import { CollectibleDisplayCard } from "./CollectibleDisplayCard";
 
 interface CollectionModalProps {
   isOpen: boolean;
@@ -47,38 +47,38 @@ export function CollectionModal({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
             transition={{ type: "spring", damping: 20 }}
-            className="bg-surface-elevated border border-white/10 rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden"
+            className="system-shell w-full max-w-6xl max-h-[84vh] overflow-hidden"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
-              <h3 className="text-sm font-black uppercase tracking-widest text-white">
+            <button
+              type="button"
+              aria-label="Close"
+              onClick={handleClose}
+              className="system-close"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="relative z-10 border-b border-white/8 px-5 py-4 pr-14 sm:pr-16">
+              <h3 className="text-sm font-black uppercase tracking-[0.28em] text-white">
                 {title}
               </h3>
-              <button
-                onClick={handleClose}
-                className="p-2 rounded-lg bg-error/10 border border-error/30 text-error hover:bg-error/20 transition-colors cursor-pointer"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M18 6L6 18M6 6l12 12" />
-                </svg>
-              </button>
             </div>
 
-            {/* Content */}
-            <div className="p-4 overflow-y-auto max-h-[calc(80vh-64px)]">
+            <div className="relative z-10 max-h-[calc(84vh-72px)] overflow-y-auto p-4">
               {available.length === 0 ? (
-                <div className="text-center py-12">
+                <div className="module-card text-center py-12">
                   <p className="text-text-muted text-sm font-bold mb-1">No items available</p>
                   <p className="text-text-dim text-xs">
                     Open vaults to get collectibles for your squad or forge.
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {available.map((item) => {
-                    const rarityConfig = RARITY_CONFIG[item.rarity];
-                    const vaultColor = VAULT_COLORS[item.vaultTier] || "#ffffff";
+                    const funko = item.funkoId ? getFunkoById(item.funkoId) : undefined;
 
                     return (
                       <button
@@ -90,48 +90,36 @@ export function CollectionModal({
                           window.setTimeout(() => setSelectionLocked(false), 0);
                         }}
                         disabled={selectionLocked}
-                        className="group relative rounded-xl border bg-surface/50 p-3 text-left transition-all duration-200 hover:scale-[1.02] hover:border-accent/40 hover:shadow-lg cursor-pointer"
-                        style={{ borderColor: `${vaultColor}30` }}
+                        className="text-left"
                       >
-                        <div className="flex items-center gap-2 mb-2">
-                          <FunkoImage name={item.funkoName || item.product} rarity={item.rarity} size="xs" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-[10px] font-bold text-white truncate">
-                              {item.funkoName || item.product}
-                            </p>
-                            <p className="text-[9px] uppercase tracking-wider" style={{ color: vaultColor }}>
-                              {item.vaultTier}
-                            </p>
-                          </div>
-                        </div>
-
-                        {/* Rarity badge */}
-                        <span
-                          className="inline-block px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider border mb-2"
-                          style={{
-                            color: rarityConfig.color,
-                            borderColor: `${rarityConfig.color}40`,
-                            backgroundColor: `${rarityConfig.color}10`
-                          }}
-                        >
-                          {item.rarity}
-                        </span>
-
-                        {/* Stats */}
-                        <div className="flex gap-2 text-[9px] font-mono text-text-dim">
-                          <span className="text-error">ATK {item.stats.atk}</span>
-                          <span className="text-neon-cyan">DEF {item.stats.def}</span>
-                          <span className="text-neon-green">AGI {item.stats.agi}</span>
-                        </div>
-
-                        {/* Equipped indicator */}
-                        {item.isEquipped && (
-                          <div className="absolute top-1.5 right-1.5">
-                            <span className="px-1.5 py-0.5 rounded text-[7px] font-black uppercase bg-accent/20 border border-accent/40 text-accent">
-                              Equipped
-                            </span>
-                          </div>
-                        )}
+                        <CollectibleDisplayCard
+                          name={item.funkoName || item.product}
+                          rarity={item.rarity}
+                          imagePath={funko?.imagePath}
+                          stats={item.stats}
+                          metrics={[
+                            { label: "Value", value: `$${item.value}`, tone: "gold" },
+                            {
+                              label: "Market",
+                              value: funko ? `~$${funko.baseValue}` : "--",
+                            },
+                          ]}
+                          density="compact"
+                          topRightBadge={
+                            item.isEquipped ? (
+                              <span className="rounded-full border border-accent/35 bg-accent/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-accent">
+                                Equipped
+                              </span>
+                            ) : undefined
+                          }
+                          actionsSlot={
+                            <div className="system-rail px-3 py-2.5 text-center">
+                              <span className="text-[10px] font-black uppercase tracking-[0.22em] text-accent">
+                                Select
+                              </span>
+                            </div>
+                          }
+                        />
                       </button>
                     );
                   })}

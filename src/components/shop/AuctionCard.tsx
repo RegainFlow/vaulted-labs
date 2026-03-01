@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
-import { RARITY_CONFIG, VAULT_COLORS } from "../../data/vaults";
+import { getFunkoById } from "../../data/funkos";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
-import type { AuctionCardProps } from "../../types/marketplace";
-import { FunkoImage } from "../shared/FunkoImage";
 import { CYBER_TRANSITIONS } from "../../lib/motion-presets";
+import type { AuctionCardProps } from "../../types/marketplace";
+import { CollectibleDisplayCard } from "../shared/CollectibleDisplayCard";
 
 function formatTimeLeft(ms: number): string {
   if (ms <= 0) return "Ended";
@@ -16,10 +16,14 @@ function formatTimeLeft(ms: number): string {
   return `${seconds}s`;
 }
 
-export function AuctionCard({ auction, balance, onBid, isFirst = false }: AuctionCardProps & { isFirst?: boolean }) {
+export function AuctionCard({
+  auction,
+  balance,
+  onBid,
+  isFirst = false,
+}: AuctionCardProps & { isFirst?: boolean }) {
   const { item, sellerName, currentBid, currentBidder, endsAt } = auction;
-  const rarityConfig = RARITY_CONFIG[item.rarity];
-  const vaultColor = VAULT_COLORS[item.vaultTier] || "#ffffff";
+  const funko = item.funkoId ? getFunkoById(item.funkoId) : undefined;
 
   const [timeLeft, setTimeLeft] = useState(0);
   const [bidAmount, setBidAmount] = useState("");
@@ -34,15 +38,13 @@ export function AuctionCard({ auction, balance, onBid, isFirst = false }: Auctio
       setTimeLeft(endsAt - Date.now());
     };
     updateTimeLeft();
-    const interval = setInterval(() => {
-      updateTimeLeft();
-    }, 1000);
+    const interval = setInterval(updateTimeLeft, 1000);
     return () => clearInterval(interval);
   }, [endsAt]);
 
   const handleBid = () => {
     const amount = parseFloat(bidAmount);
-    if (isNaN(amount) || amount <= 0) {
+    if (Number.isNaN(amount) || amount <= 0) {
       setBidError("Enter a valid amount");
       return;
     }
@@ -59,7 +61,7 @@ export function AuctionCard({ auction, balance, onBid, isFirst = false }: Auctio
       bid_amount: amount,
       item_rarity: item.rarity,
       vault_tier: item.vaultTier,
-      current_bid: currentBid
+      current_bid: currentBid,
     });
     const success = onBid(auction.id, amount);
     if (success) {
@@ -73,146 +75,115 @@ export function AuctionCard({ auction, balance, onBid, isFirst = false }: Auctio
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={CYBER_TRANSITIONS.default}
-      className={`rounded-2xl border bg-surface-elevated/50 backdrop-blur-sm overflow-hidden transition-all duration-300 ${
-        isEnded
-          ? "opacity-50 grayscale"
-          : "hover:-translate-y-1 hover:shadow-xl"
-      }`}
-      style={{ borderColor: isWinning ? "#39ff1440" : `${vaultColor}20` }}
-      {...(isFirst ? { "data-tutorial": "shop-auction" } : {})}
     >
-      {/* Header gradient */}
-      <div
-        className="h-2 w-full"
-        style={{
-          background: `linear-gradient(90deg, ${vaultColor}40, ${vaultColor}10)`
-        }}
-      />
-
-      <div className="p-3 sm:p-4">
-        {/* Icon + info */}
-        <div className="flex items-center gap-2.5 sm:gap-3 mb-3">
-          <FunkoImage name={item.funkoName || item.product} rarity={item.rarity} size="sm" />
-          <div className="flex-1 min-w-0">
-            <p className="text-xs sm:text-sm font-bold text-white truncate">
-              {item.funkoName || item.product}
-            </p>
-            <p
-              className="text-[10px] font-bold uppercase tracking-wider"
-              style={{ color: vaultColor }}
+      <CollectibleDisplayCard
+        name={item.funkoName || item.product}
+        rarity={item.rarity}
+        imagePath={funko?.imagePath}
+        stats={item.stats}
+        subtitle={`Auction by @${sellerName}`}
+        metrics={[
+          { label: "Value", value: `$${item.value}`, tone: "gold" },
+          {
+            label: "Market",
+            value: funko ? `~$${funko.baseValue}` : "--",
+          },
+        ]}
+        detail={
+          <div className="space-y-2.5">
+            <div
+              {...(isFirst ? { "data-tutorial": "shop-timer" } : {})}
+              className={`system-rail flex items-center justify-between px-3 py-2.5 ${
+                isUrgent ? "animate-urgency-pulse" : isEnded ? "opacity-70" : ""
+              }`}
+              style={
+                isUrgent ? { borderColor: "rgba(255,59,92,0.35)" } : undefined
+              }
             >
-              {item.vaultTier} Vault
-            </p>
+              <span className="system-label">Time Left</span>
+              <span
+                className={`text-sm font-mono font-bold ${
+                  isUrgent
+                    ? "text-error"
+                    : isEnded
+                      ? "text-text-dim"
+                      : "text-white"
+                }`}
+              >
+                {formatTimeLeft(timeLeft)}
+              </span>
+            </div>
+
+            {isWinning && !isEnded && (
+              <div
+                className="rounded-[16px] border px-3 py-2 text-center"
+                style={{
+                  borderColor: "rgba(105,231,160,0.3)",
+                  backgroundColor: "rgba(105,231,160,0.08)",
+                }}
+              >
+                <span className="text-[10px] font-black uppercase tracking-[0.22em] text-neon-green">
+                  You&apos;re winning
+                </span>
+              </div>
+            )}
           </div>
-        </div>
-
-        {/* Rarity + seller */}
-        <div className="flex items-center justify-between mb-3">
-          <span
-            className="px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border"
-            style={{
-              color: rarityConfig.color,
-              borderColor: `${rarityConfig.color}40`,
-              backgroundColor: `${rarityConfig.color}10`
-            }}
-          >
-            {item.rarity}
-          </span>
-          <span className="text-[10px] text-text-dim">@{sellerName}</span>
-        </div>
-
-        {/* Timer */}
-        <div
-          {...(isFirst ? { "data-tutorial": "shop-timer" } : {})}
-          className={`flex items-center justify-between mb-3 px-3 py-2 rounded-lg border ${
-            isUrgent
-              ? "bg-error/10 border-error/30 animate-urgency-pulse"
-              : isEnded
-                ? "bg-white/5 border-white/10"
-                : "bg-surface border-white/10"
-          }`}
-        >
-          <span className="text-[10px] font-bold uppercase tracking-wider text-text-dim">
-            Time Left
-          </span>
-          <span
-            className={`text-sm font-mono font-bold ${isUrgent ? "text-error" : isEnded ? "text-text-dim" : "text-white"}`}
-          >
-            {formatTimeLeft(timeLeft)}
-          </span>
-        </div>
-
-        {/* Current bid */}
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-text-dim">
-            Current Bid
-          </span>
-          <div className="flex items-center gap-2">
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              className="text-vault-gold"
+        }
+        actionsSlot={
+          isEnded ? (
+            <div className="system-rail px-3 py-3 text-center">
+              <span className="text-[10px] font-black uppercase tracking-[0.22em] text-text-dim">
+                Auction Ended
+              </span>
+            </div>
+          ) : (
+            <div
+              className="system-rail space-y-2.5 p-3"
+              {...(isFirst ? { "data-tutorial": "shop-bid" } : {})}
             >
-              <circle
-                cx="12"
-                cy="12"
-                r="10"
-                stroke="currentColor"
-                strokeWidth="1.5"
-              />
-              <path
-                d="M14.5 9.5c-.5-1-1.5-1.5-2.5-1.5s-2 .5-2 1.5 1 1.5 2 2 2 1 2 2-1 1.5-2 1.5-2-.5-2.5-1.5M12 7v1m0 8v1"
-                stroke="currentColor"
-                strokeWidth="1.5"
-                strokeLinecap="round"
-              />
-            </svg>
-            <span className="text-lg font-mono font-black text-vault-gold">
-              ${currentBid}
-            </span>
-          </div>
-        </div>
-
-        {/* Winning indicator */}
-        {isWinning && !isEnded && (
-          <div className="mb-3 px-3 py-2 rounded-lg bg-neon-green/10 border border-neon-green/30 text-center">
-            <span className="text-[10px] font-black uppercase tracking-widest text-neon-green">
-              You're winning!
-            </span>
-          </div>
-        )}
-
-        {/* Bid input */}
-        {!isEnded && (
-          <div className="pt-3 border-t border-white/5" {...(isFirst ? { "data-tutorial": "shop-bid" } : {})}>
-            <div className="flex gap-2">
+              <div className="flex items-end justify-between gap-3">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-[0.22em] text-text-dim">
+                    Current Bid
+                  </p>
+                  <p className="mt-1 text-lg font-mono font-black text-vault-gold">
+                    ${currentBid}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleBid}
+                  className="command-segment min-h-[44px] shrink-0 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-accent cursor-pointer"
+                >
+                  Bid
+                </button>
+              </div>
               <input
                 type="number"
                 value={bidAmount}
-                onChange={(e) => {
-                  setBidAmount(e.target.value);
+                onChange={(event) => {
+                  setBidAmount(event.target.value);
                   setBidError("");
                 }}
                 placeholder={`Min $${currentBid + 1}`}
-                className="flex-1 min-w-0 px-2.5 sm:px-3 py-2 rounded-lg bg-surface border border-white/10 text-white text-xs sm:text-sm font-mono placeholder:text-text-dim focus:outline-none focus:border-neon-cyan/50 transition-colors"
+                className="system-input w-full px-3 py-2.5 text-sm font-mono text-white placeholder:text-text-dim"
               />
-              <button
-                onClick={handleBid}
-                className="px-3 sm:px-4 py-2 rounded-lg text-[9px] sm:text-[10px] font-black uppercase tracking-widest bg-accent/10 border border-accent/30 text-accent hover:bg-accent hover:text-white transition-all cursor-pointer shrink-0"
-              >
-                Bid
-              </button>
+              {bidError && (
+                <p className="text-[10px] font-bold text-error">{bidError}</p>
+              )}
             </div>
-            {bidError && (
-              <p className="text-[10px] text-error mt-1.5 font-bold">
-                {bidError}
-              </p>
-            )}
-          </div>
-        )}
-      </div>
+          )
+        }
+        topRightBadge={
+          isEnded ? (
+            <span className="rounded-full border border-white/12 bg-white/[0.06] px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white/70">
+              Ended
+            </span>
+          ) : undefined
+        }
+        tutorialId={isFirst ? "shop-auction" : undefined}
+        dimmed={isEnded}
+      />
     </motion.div>
   );
 }

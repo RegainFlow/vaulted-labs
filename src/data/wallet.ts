@@ -11,8 +11,8 @@ export const TYPE_CONFIG: Record<
   string,
   { icon: string; color: string; bgColor: string }
 > = {
-  earned: { icon: "+", color: "text-neon-cyan", bgColor: "bg-neon-cyan/10" },
-  spent: { icon: "-", color: "text-accent", bgColor: "bg-accent/10" },
+  earned: { icon: "+", color: "text-accent", bgColor: "bg-accent/10" },
+  spent: { icon: "-", color: "text-error", bgColor: "bg-error/10" },
   incentive: {
     icon: "+",
     color: "text-vault-gold",

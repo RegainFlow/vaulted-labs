@@ -1,6 +1,17 @@
 import type { VaultTierName, Rarity } from "./vault";
 
 export type ItemStatus = "held" | "listed" | "shipped" | "cashed_out";
+export type ItemFundingSource =
+  | "incentive"
+  | "earned"
+  | "free_spin"
+  | "marketplace";
+
+export interface ItemAcquisitionMeta {
+  fundingSource: ItemFundingSource;
+  shippingEligible: boolean;
+  shippingLockReason?: string;
+}
 
 export interface ItemStats {
   atk: number;
@@ -21,6 +32,9 @@ export interface Collectible {
   funkoName?: string;
   stats: ItemStats;
   isEquipped: boolean;
+  fundingSource: ItemFundingSource;
+  shippingEligible: boolean;
+  shippingLockReason?: string;
 }
 
 /** @deprecated Use Collectible instead */

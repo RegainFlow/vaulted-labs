@@ -1,23 +1,17 @@
-export type TutorialStep =
-  | "welcome"
-  | "hud"
-  | "categories"
-  | "odds"
-  | "contents"
-  | "open-vault"
-  | "spin-reel"
-  | "result-store"
-  | "result-ship"
-  | "result-cashout"
-  | "complete";
+export type TutorialId =
+  | "vaults"
+  | "locker"
+  | "wallet"
+  | "collection"
+  | "arena";
 
-export interface TutorialProps {
-  step: TutorialStep | null;
-  onAdvance: () => void;
-  onComplete: () => void;
-  completedAction: string | null;
-  onSkip?: () => void;
-}
+export type TutorialStep = string;
+
+export type TutorialStepKind = "intro" | "spotlight" | "rail" | "complete";
+
+export type TutorialPlacement = "auto" | "top" | "bottom";
+
+export type TutorialAccent = "accent" | "neon-green" | "neon-cyan";
 
 export interface TargetRect {
   top: number;
@@ -26,25 +20,55 @@ export interface TargetRect {
   height: number;
 }
 
-export interface PageTutorialStepConfig {
-  id: string;
-  type: "welcome" | "spotlight" | "hint" | "complete";
+export interface TutorialTargetConfig {
   selector?: string;
-  title: string;
-  description: string;
-  position?: "top" | "bottom";
-  /** Short one-liner for the hint pill (falls back to `description`). */
-  hint?: string;
-  /** Pill/ring accent theme. Default: "accent" (magenta). */
-  accentColor?: "accent" | "neon-green" | "neon-cyan";
-  /** Render a pulsing border ring on the selector target (no dark overlay). */
+  selectors?: string[];
+  fallbackSelectors?: string[];
+  padding?: number;
+  radius?: number;
   showRing?: boolean;
+  requireAll?: boolean;
+}
+
+export interface TutorialAdvanceTrigger {
+  type: "next" | "event" | "target-click";
+  eventName?: string;
+  nextStepId?: string;
+}
+
+export type TutorialHostCommand =
+  | { type: "none" }
+  | { type: "locker:set-section"; section: "inventory" | "market" | "arena" }
+  | { type: "collection:set-tab"; tab: "my-collection" | "market" | "auctions" }
+  | { type: "arena:set-section"; section: "battles" | "forge" | "quests" };
+
+export interface TutorialStepDefinition {
+  id: string;
+  kind: TutorialStepKind;
+  title: string;
+  body: string;
+  kicker?: string;
+  hint?: string;
+  placement?: TutorialPlacement;
+  accentColor?: TutorialAccent;
+  compact?: boolean;
+  target?: TutorialTargetConfig;
+  advanceOn?: TutorialAdvanceTrigger[];
+  command?: TutorialHostCommand;
+  actionLabel?: string;
+}
+
+export interface TutorialDefinition {
+  id: TutorialId;
+  storageKey?: string;
+  steps: TutorialStepDefinition[];
 }
 
 export interface PageTutorialProps {
   pageKey: string;
-  steps: PageTutorialStepConfig[];
+  steps: TutorialStepDefinition[];
   isActive: boolean;
   onComplete: () => void;
-  onStepChange?: (index: number) => void;
+  onStepChange?: (index: number, step: TutorialStepDefinition) => void;
+  onCommand?: (command: TutorialHostCommand, step: TutorialStepDefinition) => void;
 }
