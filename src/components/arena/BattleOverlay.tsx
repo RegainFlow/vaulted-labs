@@ -167,9 +167,9 @@ export function BattleOverlay({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[80] overflow-hidden bg-bg/95 px-2 py-2 backdrop-blur-xl sm:px-3 sm:py-3"
+      className="fixed inset-0 z-[80] overflow-y-auto bg-bg/95 px-2 py-2 backdrop-blur-xl sm:px-3 sm:py-3"
     >
-      <div className="relative mx-auto flex h-full w-full max-w-6xl items-center justify-center">
+      <div className="relative mx-auto flex min-h-full w-full max-w-6xl items-start justify-center py-2 sm:items-center">
         {flashSide ? (
           <motion.div
             key={flashSide}

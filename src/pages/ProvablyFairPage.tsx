@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Navbar } from "../components/shared/Navbar";
 import { PROVABLY_FAIR_ALGORITHM_VERSION } from "../lib/provably-fair-core";
 
@@ -30,6 +30,8 @@ return hmacSha256Hex(serverSeed, message);`,
 ];
 
 export function ProvablyFairPage() {
+  const navigate = useNavigate();
+
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
@@ -37,8 +39,24 @@ export function ProvablyFairPage() {
   return (
     <>
       <Navbar />
-      <main className="min-h-screen bg-bg px-4 pb-16 pt-28 sm:px-6 md:pt-32">
-        <div className="mx-auto max-w-5xl">
+      <main className="app-page-shell bg-bg px-4 sm:px-6">
+        <div className="mx-auto flex max-w-5xl flex-col gap-4">
+          <button
+            type="button"
+            onClick={() => {
+              if (window.history.length > 1) {
+                navigate(-1);
+                return;
+              }
+              navigate("/");
+            }}
+            className="app-back-button self-start"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+            Back
+          </button>
           <div className="system-shell px-6 py-8 sm:px-8 sm:py-10">
             <p className="text-[10px] font-black uppercase tracking-[0.24em] text-accent">
               Legal / Transparency

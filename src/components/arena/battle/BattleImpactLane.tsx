@@ -42,9 +42,9 @@ export function CombatArena({
   const bossDamage = currentFrame?.exchange.squadDamage ?? 0;
 
   return (
-    <div className="rounded-[26px] border border-white/10 bg-black/18 px-3 py-3 sm:px-4 sm:py-4 backdrop-blur-md">
-      <div className="grid gap-3 sm:gap-4 lg:grid-cols-[minmax(170px,0.9fr)_minmax(180px,1fr)_minmax(220px,1.1fr)] lg:items-center">
-        <div className="order-3 flex flex-col items-center gap-3 lg:order-1">
+    <div className="rounded-[22px] border border-white/10 bg-black/18 px-2.5 py-2.5 sm:px-4 sm:py-4 backdrop-blur-md">
+      <div className="flex flex-col gap-2.5 sm:gap-3 lg:grid lg:grid-cols-[minmax(170px,0.9fr)_minmax(180px,1fr)_minmax(220px,1.1fr)] lg:items-center">
+        <div className="order-2 flex flex-col items-center gap-2.5 lg:order-1">
           {activeItem ? (
             <CharacterAvatar
               item={activeItem}
@@ -56,8 +56,8 @@ export function CombatArena({
           ) : null}
         </div>
 
-        <div className="order-2 lg:order-2">
-          <div className="relative flex min-h-[118px] items-center justify-center overflow-hidden rounded-[20px] border border-white/10 bg-black/22 sm:min-h-[220px] sm:rounded-[24px]">
+        <div className="order-3 lg:order-2">
+          <div className="relative flex min-h-[88px] items-center justify-center overflow-hidden rounded-[18px] border border-white/10 bg-black/22 sm:min-h-[220px] sm:rounded-[24px]">
             <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-[linear-gradient(180deg,transparent_0%,rgba(255,255,255,0.18)_20%,rgba(255,255,255,0.18)_80%,transparent_100%)]" />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,43,214,0.08)_0%,transparent_46%)]" />
 
@@ -80,7 +80,7 @@ export function CombatArena({
                           : { opacity: [0.76, 1, 0.82] }
                     }
                     transition={{ duration: 0.35 }}
-                    className={`rounded-full border px-4 py-2 text-sm font-black uppercase tracking-[0.2em] ${
+                    className={`rounded-full border px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.18em] sm:px-4 sm:py-2 sm:text-sm ${
                       currentFrame.crit
                         ? "border-vault-gold/35 bg-vault-gold/10 text-vault-gold"
                         : "border-white/10 bg-black/24 text-white/72"
@@ -89,10 +89,10 @@ export function CombatArena({
                     {currentFrame.crit ? "Critical" : `${currentFrame.playerAbility.label} Clash`}
                   </motion.div>
 
-                  <div className="absolute left-[10%] top-1/2 -translate-y-1/2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-cyan-200 shadow-[0_0_16px_rgba(0,234,255,0.12)]">
+                  <div className="absolute left-[4%] top-1/2 -translate-y-1/2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em] text-cyan-200 shadow-[0_0_16px_rgba(0,234,255,0.12)] sm:left-[10%] sm:px-3 sm:text-[10px]">
                     -{playerDamage}
                   </div>
-                  <div className="absolute right-[10%] top-1/2 -translate-y-1/2 rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-accent shadow-[0_0_16px_rgba(255,43,214,0.12)]">
+                  <div className="absolute right-[4%] top-1/2 -translate-y-1/2 rounded-full border border-accent/20 bg-accent/10 px-2 py-1 text-[8px] font-black uppercase tracking-[0.14em] text-accent shadow-[0_0_16px_rgba(255,43,214,0.12)] sm:right-[10%] sm:px-3 sm:text-[10px]">
                     -{bossDamage}
                   </div>
                 </motion.div>

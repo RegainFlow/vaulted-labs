@@ -50,7 +50,7 @@ export function BattleScreen({
 
   return (
     <div
-      className="system-shell-strong relative h-[calc(100dvh-2rem)] max-h-[820px] overflow-hidden px-3 py-3 sm:px-4 sm:py-4"
+      className="system-shell-strong relative overflow-hidden px-2.5 py-2.5 sm:px-4 sm:py-4 lg:h-[calc(100dvh-2rem)] lg:max-h-[820px]"
       style={{
         boxShadow:
           "0 34px 80px rgba(0,0,0,0.48), 0 0 42px rgba(255,43,214,0.12), 0 0 52px rgba(0,234,255,0.08)",
@@ -60,12 +60,12 @@ export function BattleScreen({
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.04)_0%,transparent_24%,transparent_78%,rgba(255,255,255,0.02)_100%)]" />
       <div className="absolute inset-0 opacity-[0.1]" style={{ backgroundImage: "repeating-linear-gradient(180deg, rgba(255,255,255,0.6) 0px, transparent 2px, transparent 8px)" }} />
 
-      <div className="relative z-10 grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)_auto] gap-3">
+      <div className="relative z-10 flex min-h-0 flex-col gap-2.5 lg:h-full lg:grid lg:grid-rows-[auto_minmax(0,1fr)_auto] lg:gap-3">
         <div
-          className="rounded-[22px] border border-white/10 px-3 py-3 sm:px-4"
+          className="rounded-[20px] border border-white/10 px-3 py-2.5 sm:px-4 sm:py-3"
           style={{ background: profile.hudGradient }}
         >
-          <div className="grid gap-3 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
+          <div className="grid gap-2.5 lg:grid-cols-[1fr_auto_1fr] lg:items-center">
             <HealthBar
               label="Player HP"
               current={currentSquadHp}
@@ -77,7 +77,7 @@ export function BattleScreen({
               <div className="text-[9px] font-black uppercase tracking-[0.24em] text-white/42">
                 Battle State
               </div>
-              <div className="mt-1 text-xl font-black uppercase tracking-[0.08em] text-white sm:text-2xl">
+              <div className="mt-1 text-lg font-black uppercase tracking-[0.08em] text-white sm:text-2xl">
                 {currentFrame ? `Round ${currentFrame.round}` : "YOU VS BOSS"}
               </div>
             </div>
@@ -92,7 +92,7 @@ export function BattleScreen({
           </div>
         </div>
 
-        <div className="min-h-0">
+        <div className="min-h-0 lg:min-h-0">
           <CombatArena
             battle={battle}
             squadItems={squadItems}
@@ -103,9 +103,9 @@ export function BattleScreen({
           />
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
-          <div className="rounded-[20px] border border-white/10 bg-black/18 px-3 py-3 backdrop-blur-md">
-            <div className="text-[9px] font-black uppercase tracking-[0.24em] text-white/40">
+        <div className="grid shrink-0 gap-2.5 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center">
+          <div className="rounded-[18px] border border-white/10 bg-black/18 px-3 py-2.5 backdrop-blur-md">
+            <div className="text-[8px] font-black uppercase tracking-[0.22em] text-white/40">
               Squad
             </div>
             <div className="mt-2 flex items-center gap-2">
@@ -115,7 +115,7 @@ export function BattleScreen({
                 return (
                   <div
                     key={item.id}
-                    className={`relative h-11 w-11 overflow-hidden rounded-full border ${
+                    className={`relative h-10 w-10 overflow-hidden rounded-full border sm:h-11 sm:w-11 ${
                       active
                         ? "border-cyan-300/45 bg-cyan-400/12"
                         : "border-white/10 bg-black/22 opacity-70"

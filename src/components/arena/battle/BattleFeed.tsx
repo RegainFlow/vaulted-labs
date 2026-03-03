@@ -17,7 +17,7 @@ export function CombatFeed({ entries }: CombatFeedProps) {
   const visibleEntries = entries.slice(-3).reverse();
 
   return (
-    <div className="rounded-[20px] border border-white/10 bg-black/18 px-3 py-3 backdrop-blur-md">
+    <div className="rounded-[18px] border border-white/10 bg-black/18 px-3 py-2.5 backdrop-blur-md">
       <div className="flex items-center justify-between gap-3">
         <div className="text-[9px] font-black uppercase tracking-[0.26em] text-white/40">
           Combat Feed
@@ -27,7 +27,7 @@ export function CombatFeed({ entries }: CombatFeedProps) {
         </div>
       </div>
 
-      <div className="mt-2.5 space-y-1.5">
+      <div className="mt-2 space-y-1.5">
         <AnimatePresence initial={false}>
           {visibleEntries.map((entry, index) => (
             <motion.div
@@ -36,7 +36,7 @@ export function CombatFeed({ entries }: CombatFeedProps) {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1], delay: index * 0.02 }}
-              className="flex items-center gap-2.5 rounded-[14px] border border-white/8 bg-black/18 px-3 py-2"
+              className="flex items-center gap-2 rounded-[12px] border border-white/8 bg-black/18 px-2.5 py-1.5"
             >
               <div
                 className="h-2 w-2 rounded-full"
@@ -54,7 +54,7 @@ export function CombatFeed({ entries }: CombatFeedProps) {
                 }}
               />
               <div
-                className={`truncate text-[11px] font-black uppercase tracking-[0.12em] ${FEED_TONE_CLASS[entry.tone] ?? FEED_TONE_CLASS.neutral}`}
+                className={`truncate text-[10px] font-black uppercase tracking-[0.1em] ${FEED_TONE_CLASS[entry.tone] ?? FEED_TONE_CLASS.neutral}`}
               >
                 {entry.text}
               </div>

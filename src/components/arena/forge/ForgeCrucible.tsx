@@ -20,12 +20,12 @@ export function ForgeCrucible({
             : "Awaiting inputs";
 
   return (
-    <div className="module-card relative flex h-[180px] w-full flex-col items-center justify-center overflow-hidden px-4 py-4 sm:h-[192px]">
+    <div className="module-card relative flex h-[156px] w-full flex-col items-center justify-center overflow-hidden px-4 py-3.5 sm:h-[192px]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_32%,rgba(255,43,214,0.2)_0%,transparent_42%),radial-gradient(circle_at_50%_68%,rgba(0,234,255,0.14)_0%,transparent_46%)]" />
       <div className="absolute inset-x-6 top-1/2 h-px -translate-y-1/2 bg-[linear-gradient(90deg,transparent_0%,rgba(0,234,255,0.28)_30%,rgba(255,43,214,0.3)_70%,transparent_100%)]" />
       <div className="absolute inset-x-10 top-[30%] h-px bg-[linear-gradient(90deg,transparent_0%,rgba(255,255,255,0.08)_50%,transparent_100%)]" />
       <motion.div
-        className="relative z-10 flex h-28 w-28 items-center justify-center rounded-full border border-accent/25 bg-[radial-gradient(circle_at_50%_45%,rgba(255,255,255,0.16)_0%,rgba(255,43,214,0.12)_22%,rgba(0,0,0,0.32)_62%,rgba(0,0,0,0.64)_100%)] shadow-[0_0_32px_rgba(255,43,214,0.18),0_0_48px_rgba(0,234,255,0.12)] sm:h-32 sm:w-32"
+        className="relative z-10 flex h-24 w-24 items-center justify-center rounded-full border border-accent/25 bg-[radial-gradient(circle_at_50%_45%,rgba(255,255,255,0.16)_0%,rgba(255,43,214,0.12)_22%,rgba(0,0,0,0.32)_62%,rgba(0,0,0,0.64)_100%)] shadow-[0_0_32px_rgba(255,43,214,0.18),0_0_48px_rgba(0,234,255,0.12)] sm:h-32 sm:w-32"
         animate={
           reducedMotion
             ? undefined
@@ -47,7 +47,7 @@ export function ForgeCrucible({
         </svg>
       </motion.div>
 
-      <div className="relative z-10 mt-3 text-center">
+      <div className="relative z-10 mt-2.5 text-center">
         <div className="text-[10px] font-black uppercase tracking-[0.28em] text-white/42">
           Crucible Status
         </div>

@@ -14,12 +14,12 @@ export function ForgeBoostRail({
   onIncrease: () => void;
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
       <div className="max-w-xl">
         <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/45">
           Boost Spins
         </div>
-        <div className="mt-1.5 text-sm leading-6 text-white/60">
+        <div className="mt-1 text-[13px] leading-5 text-white/60 sm:text-sm sm:leading-6">
           {allSelected
             ? maxBoosts > 0
               ? "Reduce common odds and lift stronger outcomes."
@@ -28,8 +28,8 @@ export function ForgeBoostRail({
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-3 self-start sm:self-auto">
-        <div className="rounded-[14px] border border-white/10 bg-black/20 px-3 py-2.5 text-center">
+      <div className="flex flex-wrap items-center gap-2.5 self-start sm:self-auto">
+        <div className="rounded-[14px] border border-white/10 bg-black/20 px-3 py-2 text-center">
           <div className="text-[8px] font-black uppercase tracking-[0.2em] text-white/45">
             Available
           </div>
@@ -37,7 +37,7 @@ export function ForgeBoostRail({
             {freeSpins}
           </div>
         </div>
-        <div className="flex items-center gap-2 rounded-[14px] border border-white/10 bg-black/25 px-2.5 py-2.5">
+        <div className="flex items-center gap-2 rounded-[14px] border border-white/10 bg-black/25 px-2.5 py-2">
           <button
             type="button"
             onClick={onDecrease}

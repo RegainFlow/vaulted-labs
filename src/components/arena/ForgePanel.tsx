@@ -175,9 +175,9 @@ export function ForgePanel() {
   };
 
   return (
-    <div data-tutorial="arena-forge" className="system-shell-strong relative overflow-hidden px-4 py-4 sm:px-5 sm:py-5">
+    <div data-tutorial="arena-forge" className="system-shell-strong relative overflow-hidden px-3 py-3 sm:px-5 sm:py-5">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(255,43,214,0.1)_0%,transparent_30%),radial-gradient(circle_at_85%_0%,rgba(0,234,255,0.08)_0%,transparent_28%)]" />
-      <div className="relative z-10 space-y-3">
+      <div className="relative z-10 space-y-2.5 sm:space-y-3">
         <ForgeHud
           selectedCount={selectedCount}
           freeSpins={freeSpins}

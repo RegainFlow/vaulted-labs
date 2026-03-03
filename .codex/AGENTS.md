@@ -64,6 +64,7 @@ Repository guidance for coding agents working on VaultedLabs.
 - Labs section switching uses the shared segmented tab pattern.
 - Arena tutorial is wired and replayable from help button, covering resources, section tabs, battles, forge, quests, and rank-up.
 - Arena resource/status decks now include Prestige alongside Energy, Shards, Level, and Free Spins; use that shared deck instead of separate one-off prestige widgets.
+- On mobile, keep the Prestige card collapsed by default unless the user explicitly expands the detailed odds panel.
 - Bonus spin percentage UI is premium-only: Platinum, Obsidian, Diamond.
 
 ## Current Implementation Notes (2026-02-24)
@@ -76,6 +77,7 @@ Repository guidance for coding agents working on VaultedLabs.
 - HUD is informational only: Credits, Energy, XP/Lv (no navigation actions).
 - Inventory defaults to active items only (status `held`); non-held history is surfaced via wallet/market flows.
 - Open reveal layout is constrained for mobile to prevent legendary overflow and floating rarity tags.
+- Mobile vault rails must allow natural page scrolling while still snapping horizontally; do not reintroduce nested vertical scroll behavior or horizontal-only touch locks.
 - Tutorial spotlight utilities now auto-scroll and clamp tooltips to safe viewport areas across desktop/mobile.
 ## Product Notes
 

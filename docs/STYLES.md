@@ -184,6 +184,12 @@ Defined in `src/index.css`:
 - Prestige should appear as a dedicated status card, not a detached button below the page
 - Prestige cards should explain the concrete vault-odds shift
 - visible product language should be `Prestige` even if internal compatibility names remain `prestige*`
+- on mobile, Prestige should default to a collapsed summary + CTA; detailed odds should only appear after an explicit expand action
+- Arena Battles and Arena Quests should not repeat the full status deck above the primary page content
+
+### Mobile Vault Browsing
+- mobile vault browsing should use a horizontal snap rail with no nested vertical scrolling inside the rail
+- do not use horizontal-only touch locking that prevents natural page scroll when a gesture starts on a vault card
 
 ### Battle Presentation
 - Arena battles should read as a combat scene, not a stats dashboard

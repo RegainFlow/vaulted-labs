@@ -26,7 +26,7 @@ export function CharacterAvatar({
         scale: active ? 1.015 : 0.985,
       }}
       transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-      className="relative mx-auto w-full max-w-[170px] sm:max-w-[210px]"
+      className="relative mx-auto w-full max-w-[150px] sm:max-w-[210px]"
     >
       <div
         className="module-card relative overflow-hidden px-3 py-3"
@@ -52,8 +52,8 @@ export function CharacterAvatar({
           </span>
         </div>
 
-        <div className="mt-3 rounded-[20px] border border-white/10 bg-black/25 p-2 sm:p-2.5">
-          <div className="mx-auto h-[108px] w-full max-w-[124px] sm:h-[132px] sm:max-w-[150px]">
+        <div className="mt-2.5 rounded-[18px] border border-white/10 bg-black/25 p-2 sm:p-2.5">
+          <div className="mx-auto h-[78px] w-full max-w-[100px] sm:h-[132px] sm:max-w-[150px]">
             <FunkoImage
               name={item.funkoName || item.product}
               rarity={item.rarity}
@@ -64,8 +64,8 @@ export function CharacterAvatar({
           </div>
         </div>
 
-        <div className="mt-3 space-y-1.5">
-          <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-[0.22em] text-white/55">
+        <div className="mt-2.5 space-y-1.5">
+          <div className="flex items-center justify-between text-[8px] font-black uppercase tracking-[0.2em] text-white/55">
             <span>Integrity</span>
             <span className="font-mono text-white/90">
               {hpCurrent}/{hpMax}

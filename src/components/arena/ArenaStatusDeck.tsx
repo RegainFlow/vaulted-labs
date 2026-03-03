@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { SHARD_CONFIG } from "../../data/gamification";
 import { getPrestigeShiftBreakdown } from "../../data/vaults";
 import type { LevelInfo } from "../../types/gamification";
@@ -149,6 +149,7 @@ export function ArenaStatusDeck({
   rankupTutorialId,
   variant = "default",
 }: ArenaStatusDeckProps) {
+  const [showMobilePrestigeDetails, setShowMobilePrestigeDetails] = useState(false);
   const xpIntoLevel = Math.max(0, levelInfo.currentXP - levelInfo.xpForCurrentLevel);
   const xpNeeded = Math.max(1, levelInfo.xpForNextLevel - levelInfo.xpForCurrentLevel);
   const xpRemaining = Math.max(0, levelInfo.xpForNextLevel - levelInfo.currentXP);
@@ -421,8 +422,11 @@ export function ArenaStatusDeck({
               <p className="mt-1 text-[10px] font-mono uppercase tracking-[0.18em] text-text-dim">
                 {rankSummary}
               </p>
+              <p className="mt-2 text-[10px] font-mono uppercase tracking-[0.18em] text-text-dim sm:hidden">
+                Vault odds bonus
+              </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+            <div className="hidden flex-wrap items-center gap-2 sm:justify-end sm:flex">
               <span className="rounded-full border border-accent/20 bg-accent/8 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-accent">
                 All Vaults
               </span>
@@ -432,7 +436,21 @@ export function ArenaStatusDeck({
             </div>
           </div>
 
-          <div className="rounded-[18px] border border-white/8 bg-black/15 px-4 py-4">
+          <div className="sm:hidden">
+            <button
+              type="button"
+              onClick={() => setShowMobilePrestigeDetails((current) => !current)}
+              className="system-rail inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.18em] text-accent"
+            >
+              {showMobilePrestigeDetails ? "Hide bonus details" : "View bonus details"}
+            </button>
+          </div>
+
+          <div
+            className={`rounded-[18px] border border-white/8 bg-black/15 px-4 py-4 ${
+              showMobilePrestigeDetails ? "block" : "hidden"
+            } sm:block`}
+          >
             <div className="mb-3 flex items-center justify-between gap-2">
               <span className="text-[10px] font-black uppercase tracking-[0.18em] text-white">
                 {rankOddsLabel}
@@ -478,7 +496,7 @@ export function ArenaStatusDeck({
           </div>
 
           <div className="flex flex-col gap-3 border-t border-white/6 pt-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-text-dim">
+            <p className="hidden text-[10px] font-mono uppercase tracking-[0.18em] text-text-dim sm:block">
               Prestige applies across every vault tier and stacks up to Prestige 3.
             </p>
             <ArcadeButton

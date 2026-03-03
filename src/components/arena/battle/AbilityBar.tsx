@@ -80,7 +80,7 @@ export function AbilityBar({
   currentRound,
 }: AbilityBarProps) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-[20px] border border-white/10 bg-black/18 px-3 py-3 backdrop-blur-md">
+    <div className="flex flex-col gap-2.5 rounded-[18px] border border-white/10 bg-black/18 px-3 py-2.5 backdrop-blur-md sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-2">
         {profile.playerAbilities.map((ability, index) => {
           const active = ability.id === activePlayerAbilityId;
@@ -89,7 +89,7 @@ export function AbilityBar({
               key={ability.id}
               aria-label={ability.label}
               title={ability.label}
-              className={`relative flex h-11 w-11 items-center justify-center rounded-full border ${
+              className={`relative flex h-10 w-10 items-center justify-center rounded-full border sm:h-11 sm:w-11 ${
                 active
                   ? "border-accent/40 bg-accent/12"
                   : "border-white/10 bg-black/20"
@@ -113,15 +113,15 @@ export function AbilityBar({
         })}
       </div>
 
-      <div className="flex items-center gap-2.5 rounded-full border border-accent/18 bg-accent/8 px-3 py-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full border border-accent/22 bg-black/22">
+      <div className="flex items-center gap-2 rounded-full border border-accent/18 bg-accent/8 px-2.5 py-2">
+        <div className="flex h-7 w-7 items-center justify-center rounded-full border border-accent/22 bg-black/22 sm:h-8 sm:w-8">
           <AbilityIcon icon={activeBossAbility.icon} tone={activeBossAbility.tone} />
         </div>
         <div className="min-w-0">
           <div className="text-[8px] font-black uppercase tracking-[0.22em] text-white/38">
             Threat
           </div>
-          <div className="truncate text-[10px] font-black uppercase tracking-[0.16em] text-white">
+          <div className="truncate text-[9px] font-black uppercase tracking-[0.14em] text-white sm:text-[10px]">
             {activeBossAbility.label}
           </div>
         </div>

@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "../components/shared/Navbar";
-import { ResourceBar } from "../components/arena/ResourceBar";
 import { QuestList } from "../components/profile/QuestList";
 import { LockedOverlay } from "../components/shared/LockedOverlay";
 import { useGame } from "../context/GameContext";
@@ -48,25 +47,18 @@ export function ArenaQuestsPage() {
         maxBossEnergy={maxBossEnergy}
         shards={shards}
       />
-      <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-36 md:pt-28 pb-28 sm:pb-28 md:pb-24">
-        <div className="max-w-6xl mx-auto">
+      <main className="app-page-shell-compact bg-bg px-3 sm:px-4 md:px-6">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4">
           <button
             onClick={() => navigate("/locker/arena")}
-            className="mb-4 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-surface border border-white/15 text-text-muted hover:text-white hover:border-white/30 transition-colors cursor-pointer"
+            className="app-back-button self-start"
           >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
             Back to Arena Home
           </button>
 
-          <div className="system-shell mb-6 px-5 py-5 text-center sm:mb-8 sm:px-6 sm:py-6">
-            <h1 className="text-xl sm:text-3xl md:text-5xl font-black uppercase tracking-tight text-white mb-1 sm:mb-2">
-              <span className="text-accent">Quests</span>
-            </h1>
-            <p className="text-text-muted text-xs sm:text-sm max-w-xl mx-auto">
-              Track your quest line and stack consistent XP gains.
-            </p>
-          </div>
-
-          <ResourceBar />
           {!locked && <QuestList />}
         </div>
       </main>

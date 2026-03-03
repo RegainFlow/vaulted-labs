@@ -129,15 +129,6 @@ export function LockerArenaHome({
 }: LockerArenaHomeProps) {
   return (
     <div className="space-y-6 sm:space-y-7">
-      <div className="system-shell mx-auto max-w-3xl px-5 py-5 text-center sm:px-6 sm:py-6">
-        <h2 className="text-xl font-black uppercase tracking-[0.08em] text-white sm:text-3xl">
-          Arena Home
-        </h2>
-        <p className="mt-2 text-xs text-text-muted sm:text-sm">
-          Choose your next arena objective.
-        </p>
-      </div>
-
       <ArenaStatusDeck
         bossEnergy={bossEnergy}
         maxBossEnergy={maxBossEnergy}

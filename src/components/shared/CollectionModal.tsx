@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "motion/react";
 import type { Collectible } from "../../types/collectible";
 import { useOverlayScrollLock } from "../../hooks/useOverlayScrollLock";
@@ -160,17 +161,21 @@ export function CollectionModal({
     );
   };
 
-  return (
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] overflow-y-auto bg-black/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[120] overflow-y-auto bg-black/80 p-4 pt-28 backdrop-blur-sm sm:p-4 sm:pt-4"
           onClick={handleClose}
         >
-          <div className="flex min-h-full items-start justify-center py-4 sm:py-6">
+          <div className="flex min-h-full items-start justify-center py-0 sm:py-6">
             <motion.div
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
@@ -240,6 +245,7 @@ export function CollectionModal({
           </div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

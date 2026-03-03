@@ -40,6 +40,8 @@ Legacy redirects:
 - Global primary nav: fixed bottom dock (`Wallet`, `Vaults`, `Labs`) on all breakpoints.
 - Dock auto-hides during full-screen overlays/modals (e.g. vault open flow, arena battle flow).
 - HUD is informational only (Credits, Energy, XP/Lv), not navigation. Arena resource decks surface Prestige as the progression action.
+- On mobile, vault browsing should stay a horizontal snap rail without trapping vertical page scroll when the gesture starts on a vault card.
+- On mobile, the Prestige card should collapse to a summary + CTA first, with detailed odds hidden behind an explicit expand action.
 
 ## Tutorials
 

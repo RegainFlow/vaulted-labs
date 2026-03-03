@@ -170,7 +170,7 @@ export function LockerPage() {
         hideDock={showRankUpOverlay}
         tutorialActive={tutorialActive}
       />
-      <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-36 md:pt-28 pb-28 sm:pb-28 md:pb-24">
+      <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-44 md:pt-28 pb-28 sm:pb-28 md:pb-24">
         <div className="mx-auto max-w-5xl">
           <div className="mb-6 sm:mb-8 text-center">
             <h1 className="text-xl sm:text-3xl md:text-5xl font-black uppercase tracking-tight text-white mb-1 sm:mb-2">
