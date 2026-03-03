@@ -14,12 +14,12 @@ export function ForgeOddsStrip({
 }) {
   if (!odds) {
     return (
-      <div className="system-rail flex items-center justify-between gap-3 rounded-[20px] px-3 py-3">
+      <div className="system-rail flex items-center justify-between gap-3 rounded-[20px] px-4 py-4">
         <div>
           <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/45">
             Forge Odds
           </div>
-          <div className="mt-1 text-xs text-white/58 sm:text-sm">
+          <div className="mt-1.5 text-sm text-white/58">
             Link three collectibles to view rarity outcome percentages.
           </div>
         </div>
@@ -28,7 +28,7 @@ export function ForgeOddsStrip({
   }
 
   return (
-    <div className="system-rail rounded-[20px] px-3 py-3">
+    <div className="system-rail rounded-[20px] px-4 py-4">
       <div className="flex items-center justify-between gap-3">
         <div className="text-[10px] font-black uppercase tracking-[0.24em] text-white/45">
           Outcome Bias
@@ -37,7 +37,7 @@ export function ForgeOddsStrip({
           Recipe-weighted
         </div>
       </div>
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="mt-3 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
         {(Object.keys(odds) as Rarity[]).map((rarity) => (
           <div
             key={rarity}

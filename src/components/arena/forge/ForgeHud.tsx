@@ -31,9 +31,6 @@ export function ForgeHud({
           <h3 className="mt-1.5 text-lg font-black uppercase tracking-[0.06em] text-white sm:text-xl">
             Forge Chamber
           </h3>
-          <p className="mt-1 text-xs text-white/58 sm:text-sm">
-            Link three collectibles, compress their value, and forge a stronger outcome.
-          </p>
         </div>
 
         <div className="grid gap-2 sm:grid-cols-3 xl:min-w-[28rem]">

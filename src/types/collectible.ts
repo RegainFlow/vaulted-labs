@@ -30,6 +30,7 @@ export interface Collectible {
   acquiredAt: number;
   funkoId?: string;
   funkoName?: string;
+  imagePath?: string;
   stats: ItemStats;
   isEquipped: boolean;
   fundingSource: ItemFundingSource;

@@ -194,7 +194,7 @@ export function ForgePanel() {
           reducedMotion={Boolean(prefersReducedMotion)}
         />
 
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <div className="space-y-3">
           <ForgeOddsStrip odds={odds} />
           <ForgeActionRail
             allSelected={allSelected}

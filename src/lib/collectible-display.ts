@@ -32,5 +32,5 @@ export function resolveCollectibleCatalogEntry(
 export function resolveCollectibleImagePath(
   item: Collectible
 ): string | undefined {
-  return resolveCollectibleCatalogEntry(item)?.imagePath;
+  return item.imagePath ?? resolveCollectibleCatalogEntry(item)?.imagePath;
 }

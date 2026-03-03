@@ -47,6 +47,10 @@ import {
   clearPendingVaultReveal,
   loadPendingVaultReveal,
 } from "../lib/pending-vault-reveal";
+import {
+  resolveCollectibleCatalogEntry,
+  resolveCollectibleImagePath,
+} from "../lib/collectible-display";
 import type {
   ProvablyFairCommitState,
   ProvablyFairReceipt,
@@ -1522,6 +1526,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         receiptId?: string;
         funkoId?: string;
         funkoName?: string;
+        imagePath?: string;
       }
     ): Collectible | null => {
       const items = itemIds.map((id) =>
@@ -1556,10 +1561,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
       const rarityConfig = RARITY_CONFIG[resultRarity];
       const avgPrice = validItems.reduce((sum, i) => sum + i.value, 0) / 3;
       const resultValue = fairResult?.value ?? pickValue(avgPrice, rarityConfig);
+      const visualSource =
+        validItems.find((item) => item.rarity === resultRarity) ??
+        [...validItems].sort((a, b) => b.value - a.value)[0];
+      const visualCatalogEntry = visualSource
+        ? resolveCollectibleCatalogEntry(visualSource)
+        : undefined;
+      const imagePath =
+        fairResult?.imagePath ??
+        (visualSource ? resolveCollectibleImagePath(visualSource) : undefined);
+      const funkoId = fairResult?.funkoId ?? visualCatalogEntry?.id;
+      const funkoName =
+        fairResult?.funkoName ??
+        visualCatalogEntry?.name ??
+        visualSource?.funkoName ??
+        undefined;
+      const product =
+        fairResult?.product ??
+        funkoName ??
+        visualSource?.product ??
+        pickProduct();
 
       const newItem: Collectible = {
         id: uid("item"),
-        product: fairResult?.product ?? pickProduct(),
+        product,
         vaultTier: highestTier,
         rarity: resultRarity,
         value: resultValue,
@@ -1568,8 +1593,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
         stats: fairResult?.stats ?? generateItemStats(resultRarity, highestTier),
         isEquipped: false,
         provablyFairReceiptId: fairResult?.receiptId,
-        ...(fairResult?.funkoId ? { funkoId: fairResult.funkoId } : {}),
-        ...(fairResult?.funkoName ? { funkoName: fairResult.funkoName } : {}),
+        ...(funkoId ? { funkoId } : {}),
+        ...(funkoName ? { funkoName } : {}),
+        ...(imagePath ? { imagePath } : {}),
         ...mergeItemMeta(validItems)
       };
 
