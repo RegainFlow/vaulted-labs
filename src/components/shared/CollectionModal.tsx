@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { getFunkoById } from "../../data/funkos";
 import type { Collectible } from "../../types/collectible";
-import { CollectibleDisplayCard } from "./CollectibleDisplayCard";
 import { useOverlayScrollLock } from "../../hooks/useOverlayScrollLock";
+import { resolveCollectibleCatalogEntry, resolveCollectibleImagePath } from "../../lib/collectible-display";
+import { FunkoImage } from "./FunkoImage";
 
 interface CollectionModalProps {
   isOpen: boolean;
@@ -35,7 +35,8 @@ export function CollectionModal({
   };
 
   const renderItemCard = (item: Collectible) => {
-    const funko = item.funkoId ? getFunkoById(item.funkoId) : undefined;
+    const funko = resolveCollectibleCatalogEntry(item);
+    const imagePath = resolveCollectibleImagePath(item);
 
     return (
       <button
@@ -49,38 +50,112 @@ export function CollectionModal({
         disabled={selectionLocked}
         className="w-full text-left"
       >
-        <CollectibleDisplayCard
-          name={item.funkoName || item.product}
-          rarity={item.rarity}
-          imagePath={funko?.imagePath}
-          stats={item.stats}
-          metrics={[
-            {
-              label: "Value",
-              value: `$${item.value}`,
-              tone: "gold",
-            },
-            {
-              label: "Market",
-              value: funko ? `~$${funko.baseValue}` : "--",
-            },
-          ]}
-          variant="selection"
-          topRightBadge={
-            item.isEquipped ? (
-              <span className="rounded-full border border-accent/35 bg-accent/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-accent">
-                Equipped
+        <div className="module-card flex h-full min-h-[430px] flex-col overflow-hidden transition-transform duration-300 hover:-translate-y-1">
+          <div className="relative overflow-hidden border-b border-white/8 px-4 pb-4 pt-14">
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `radial-gradient(circle at 50% 14%, ${item.rarity === "legendary" ? "rgba(255,215,0,0.14)" : item.rarity === "rare" ? "rgba(168,85,247,0.16)" : item.rarity === "uncommon" ? "rgba(0,234,255,0.14)" : "rgba(255,255,255,0.08)"} 0%, rgba(8,12,20,0.98) 64%)`,
+              }}
+            />
+            <div className="pointer-events-none absolute left-4 top-4 z-20">
+              <span className="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] backdrop-blur-sm"
+                style={{
+                  color:
+                    item.rarity === "legendary"
+                      ? "#ffd84a"
+                      : item.rarity === "rare"
+                        ? "#b96fff"
+                        : item.rarity === "uncommon"
+                          ? "#00eaff"
+                          : "#a8b0c0",
+                  borderColor:
+                    item.rarity === "legendary"
+                      ? "rgba(255,216,74,0.3)"
+                      : item.rarity === "rare"
+                        ? "rgba(185,111,255,0.32)"
+                        : item.rarity === "uncommon"
+                          ? "rgba(0,234,255,0.28)"
+                          : "rgba(168,176,192,0.24)",
+                  backgroundColor: "rgba(10,16,24,0.82)",
+                }}
+              >
+                {item.rarity}
               </span>
-            ) : undefined
-          }
-          detail={
-            <div className="flex items-center  justify-center">
+            </div>
+            {item.isEquipped ? (
+              <div className="pointer-events-none absolute right-4 top-4 z-20">
+                <span className="rounded-full border border-accent/35 bg-accent/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-accent">
+                  Equipped
+                </span>
+              </div>
+            ) : null}
+            <div className="relative z-10 rounded-[28px] border border-white/10 bg-black/20 p-3">
+              <div className="h-[220px]">
+                <FunkoImage
+                  name={item.funkoName || item.product}
+                  rarity={item.rarity}
+                  imagePath={imagePath}
+                  size="hero"
+                  showLabel={false}
+                  className="!h-full !w-full !rounded-[24px]"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-1 flex-col px-4 pb-4 pt-4">
+            <h3 className="truncate text-lg font-black uppercase tracking-[0.08em] text-white">
+              {item.funkoName || item.product}
+            </h3>
+
+            <div className="mt-4 grid grid-cols-3 gap-2.5">
+              <div className="rounded-[16px] border border-white/10 bg-black/20 px-3 py-2 text-center">
+                <p className="text-[9px] font-black uppercase tracking-[0.22em] text-text-dim">
+                  ATK
+                </p>
+                <p className="mt-1 text-sm font-mono font-bold text-error">{item.stats.atk}</p>
+              </div>
+              <div className="rounded-[16px] border border-white/10 bg-black/20 px-3 py-2 text-center">
+                <p className="text-[9px] font-black uppercase tracking-[0.22em] text-text-dim">
+                  DEF
+                </p>
+                <p className="mt-1 text-sm font-mono font-bold text-accent">{item.stats.def}</p>
+              </div>
+              <div className="rounded-[16px] border border-white/10 bg-black/20 px-3 py-2 text-center">
+                <p className="text-[9px] font-black uppercase tracking-[0.22em] text-text-dim">
+                  AGI
+                </p>
+                <p className="mt-1 text-sm font-mono font-bold text-neon-green">{item.stats.agi}</p>
+              </div>
+            </div>
+
+            <div className="mt-3 grid grid-cols-2 gap-2.5">
+              <div className="rounded-[16px] border border-white/10 bg-black/20 px-3 py-2.5">
+                <p className="text-[9px] font-black uppercase tracking-[0.22em] text-text-dim">
+                  Value
+                </p>
+                <p className="mt-1 text-sm font-mono font-bold text-vault-gold">
+                  ${item.value}
+                </p>
+              </div>
+              <div className="rounded-[16px] border border-white/10 bg-black/20 px-3 py-2.5">
+                <p className="text-[9px] font-black uppercase tracking-[0.22em] text-text-dim">
+                  Market
+                </p>
+                <p className="mt-1 text-sm font-mono font-bold text-white">
+                  {funko ? `~$${funko.baseValue}` : "--"}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-auto pt-4 text-center">
               <span className="text-[10px] font-black uppercase tracking-[0.22em] text-accent">
                 Select
               </span>
             </div>
-          }
-        />
+          </div>
+        </div>
       </button>
     );
   };
@@ -144,14 +219,14 @@ export function CollectionModal({
                       {available.map((item) => (
                         <div
                           key={item.id}
-                          className="w-[min(82vw,21rem)] flex-none snap-center"
+                          className="w-[min(78vw,18rem)] flex-none snap-center"
                         >
                           {renderItemCard(item)}
                         </div>
                       ))}
                     </div>
 
-                    <div className="mx-auto hidden max-w-6xl grid-cols-2 gap-6 sm:grid lg:grid-cols-3 xl:grid-cols-4">
+                    <div className="mx-auto hidden max-w-6xl grid-cols-2 gap-4 sm:grid lg:grid-cols-3 xl:grid-cols-4">
                       {available.map((item) => (
                         <div key={item.id} className="min-w-0">
                           {renderItemCard(item)}

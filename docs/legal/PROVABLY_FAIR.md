@@ -12,6 +12,8 @@ The current receipt system covers:
 - forge outcome rolls
 - battle simulation variance and reward rolls
 
+Battle overlays may present those results through richer authored combat UI, including ability names, status labels, and battle-feed messaging. Those presentation details are derived from the resolved battle receipt and do not change combat outcome in the current version.
+
 Excluded from the receipt model:
 
 - decorative particles
@@ -79,6 +81,14 @@ Current wallet proof surfaces:
 - vault, forge, battle, and bonus result surfaces
 - wallet header proof module
 - wallet transaction proof pills
+
+Forge-specific note:
+
+- the forge chamber, linked-input layout, and result overlay are presentation-only layers over the existing resolved `forge_roll` receipt
+- no forge UI surface is allowed to introduce new randomness or alter the receipt-backed result without a fairness-model update
+
+- the in-combat HUD and ability bar are cinematic presentation layers over the resolved `battle_sim` receipt
+- no client-side battle UI element is allowed to add new RNG or alter exchange values without a corresponding fairness-model update
 
 ## Vault Candidate Pool Note
 

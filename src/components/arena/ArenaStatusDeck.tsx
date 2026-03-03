@@ -17,6 +17,7 @@ interface ArenaStatusDeckProps {
   className?: string;
   tutorialId?: string;
   rankupTutorialId?: string;
+  variant?: "default" | "compact";
 }
 
 function EnergyIcon() {
@@ -146,6 +147,7 @@ export function ArenaStatusDeck({
   className = "",
   tutorialId,
   rankupTutorialId,
+  variant = "default",
 }: ArenaStatusDeckProps) {
   const xpIntoLevel = Math.max(0, levelInfo.currentXP - levelInfo.xpForCurrentLevel);
   const xpNeeded = Math.max(1, levelInfo.xpForNextLevel - levelInfo.xpForCurrentLevel);
@@ -164,6 +166,95 @@ export function ArenaStatusDeck({
       ? "Lv 10 reached"
       : "Reach Lv 10";
   const rankOddsLabel = activeRank > 0 ? "Vault Odds Bonus" : "Next Rank Bonus";
+
+  if (variant === "compact") {
+    return (
+      <div
+        className={`system-rail grid gap-2 rounded-[24px] px-3 py-3 sm:grid-cols-2 xl:grid-cols-[repeat(4,minmax(0,1fr))_auto] ${className}`.trim()}
+        {...(tutorialId ? { "data-tutorial": tutorialId } : {})}
+      >
+        <div className="rounded-[18px] border border-white/10 bg-black/18 px-3 py-2.5">
+          <div className="text-[9px] font-black uppercase tracking-[0.22em] text-neon-green">Energy</div>
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <div className="flex flex-1 gap-1.5">
+              {Array.from({ length: maxBossEnergy }).map((_, index) => (
+                <div
+                  key={index}
+                  className={`h-2 flex-1 rounded-full ${
+                    index < bossEnergy ? "bg-neon-green shadow-[0_0_10px_rgba(105,231,160,0.32)]" : "bg-white/8"
+                  }`}
+                />
+              ))}
+            </div>
+            <span className="text-sm font-mono font-bold text-white">
+              {bossEnergy}/{maxBossEnergy}
+            </span>
+          </div>
+        </div>
+
+        <div className="rounded-[18px] border border-white/10 bg-black/18 px-3 py-2.5">
+          <div className="text-[9px] font-black uppercase tracking-[0.22em] text-rarity-rare">Shards</div>
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <span className="text-lg font-mono font-black text-rarity-rare">{shards}</span>
+            <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-text-dim">
+              {canConvert ? "Ready to convert" : "7 -> Spin"}
+            </span>
+          </div>
+        </div>
+
+        <div className="rounded-[18px] border border-white/10 bg-black/18 px-3 py-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[9px] font-black uppercase tracking-[0.22em] text-accent">Level</span>
+            <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-text-dim">
+              {xpRemaining} to next
+            </span>
+          </div>
+          <div className="mt-1.5 text-lg font-mono font-black text-accent">Lv {levelInfo.level}</div>
+          <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+            <div
+              className="level-progress-fill h-full rounded-full"
+              style={{ width: `${levelInfo.progressPercent}%` }}
+            />
+          </div>
+        </div>
+
+        <div className="rounded-[18px] border border-white/10 bg-black/18 px-3 py-2.5">
+          <div className="text-[9px] font-black uppercase tracking-[0.22em] text-vault-gold">Free Spins</div>
+          <div className="mt-1.5 flex items-center justify-between gap-2">
+            <span className="text-lg font-mono font-black text-vault-gold">{freeSpins}</span>
+            <span className="text-[10px] font-mono uppercase tracking-[0.18em] text-text-dim">
+              Vault reward
+            </span>
+          </div>
+        </div>
+
+        <div
+          className="rounded-[18px] border border-accent/16 bg-accent/[0.05] px-3 py-2.5"
+          {...(rankupTutorialId ? { "data-tutorial": rankupTutorialId } : {})}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <div className="text-[9px] font-black uppercase tracking-[0.22em] text-accent">Rank</div>
+              <div className="mt-1 text-base font-mono font-black text-accent">{activeRank}</div>
+              <div className="mt-1 text-[10px] font-mono uppercase tracking-[0.18em] text-text-dim">
+                {rankSummary}
+              </div>
+            </div>
+            <ArcadeButton
+              onClick={canRankUp && !isMaxRank ? onRankUp : undefined}
+              disabled={!canRankUp || isMaxRank}
+              tone={!canRankUp || isMaxRank ? "neutral" : "accent"}
+              size="compact"
+              fillMode="center"
+              className="min-w-[11rem]"
+            >
+              {rankButtonLabel}
+            </ArcadeButton>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -266,7 +357,7 @@ export function ArenaStatusDeck({
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
               <div
-                className="h-full rounded-full bg-accent"
+                className="level-progress-fill h-full rounded-full"
                 style={{ width: `${levelInfo.progressPercent}%` }}
               />
             </div>

@@ -445,6 +445,8 @@ interface GameContextValue {
       value: number;
       stats: Collectible["stats"];
       receiptId?: string;
+      funkoId?: string;
+      funkoName?: string;
     }
   ) => Collectible | null;
   completeBattle: (bossId: string, result: CombatResult, receiptId?: string) => void;
@@ -1472,6 +1474,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         value: number;
         stats: Collectible["stats"];
         receiptId?: string;
+        funkoId?: string;
+        funkoName?: string;
       }
     ): Collectible | null => {
       const items = itemIds.map((id) =>
@@ -1518,6 +1522,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
         stats: fairResult?.stats ?? generateItemStats(resultRarity, highestTier),
         isEquipped: false,
         provablyFairReceiptId: fairResult?.receiptId,
+        ...(fairResult?.funkoId ? { funkoId: fairResult.funkoId } : {}),
+        ...(fairResult?.funkoName ? { funkoName: fairResult.funkoName } : {}),
         ...mergeItemMeta(validItems)
       };
 

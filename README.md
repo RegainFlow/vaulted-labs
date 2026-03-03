@@ -8,6 +8,7 @@ VaultedLabs is a gamified commerce demo where players open vaults, reveal collec
 - Reveal outcomes with 3 actions: Cashout, Equip, Ship.
 - Locker hub with Inventory, Market (with Auctions inside), and Arena Home.
 - Arena loop with Battles, Forge, Quests, energy/shard economy, XP progression, and Rank Up odds bonuses.
+- Battles now use a cinematic `YOU vs BOSS` presentation layer that replays the already-resolved combat result with authored boss profiles, battle feed, and ability-bar visuals.
 - Wallet with typed credit history (earned, incentive, spent).
 - Waitlist and prelaunch incentive flow on landing page.
 
@@ -128,6 +129,13 @@ VaultedLabs now routes outcome RNG through a wallet-scoped provably fair flow ba
 - Bonus Lock channel resolution
 - Forge outcome rolls
 - Battle simulation variance and reward rolls
+
+### Battle presentation note
+
+- The battle overlay can show boss-specific abilities, combat feed entries, impact flashes, and animated HUD events.
+- Those battle visuals are representational only in the current version.
+- Actual battle outcome, exchange values, and rewards still come from the existing provably fair `battle_sim` result.
+- If battle abilities ever become real player inputs, that must be treated as a fairness-model and contract change.
 
 Decorative particles, filler strip order, and other non-outcome visuals are not part of the receipt model.
 

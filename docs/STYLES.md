@@ -185,6 +185,59 @@ Defined in `src/index.css`:
 - Rank Up cards should explain the concrete vault-odds shift, not vague prestige wording
 - visible product language should be `Rank Up` / `Rank` even if internal compatibility names remain `prestige*`
 
+### Battle Presentation
+- Arena battles should read as a combat scene, not a stats dashboard
+- desktop battle layout:
+  - squad cards left
+  - impact lane and battle feed center
+  - dominant boss card right
+- mobile battle layout:
+  - top HUD
+  - boss
+  - impact lane
+  - squad cards
+  - battle feed
+  - ability bar
+- player combat cards and boss cards should use the same hardware family as the rest of the app, but they are not inventory cards
+- boss visuals should be larger and more dominant than squad visuals
+- use authored battle presentation profiles for boss-specific accents, status labels, and ability names
+- battle ability bars are cinematic in the current system:
+  - they visualize the already-resolved combat result
+  - they do not imply real player choice unless the fairness model and combat logic are explicitly versioned to support it
+- combat feedback should include:
+  - floating damage numbers
+  - crit emphasis
+  - contained side flashes
+  - animated battle feed entries
+- HP bars should use contained neon gradients:
+  - squad = cyan
+  - boss = magenta / red
+- keep motion transform and opacity based; do not use expensive layout-shifting effects inside combat overlays
+
+### Forge Presentation
+- Forge should read as a compact crucible chamber, not a three-column form
+- use one dominant center-stage forge core with compact linked input slots in an aligned row beneath it
+- input slots should be smaller than inventory cards:
+  - enough image presence to identify the collectible
+  - compact stat strip
+  - minimal remove action
+- odds should appear in a compact rarity outcome strip, not a large table module
+- boost controls should live in a low-height control rail near the main forge CTA
+- forge should fit on standard desktop heights without page scroll whenever possible
+- the forge CTA should use the shared arcade-button family and feel like a chamber command
+- forge result states should resolve in a centered overlay card with:
+  - forged item hero
+  - rarity/result headline
+  - core stats
+  - value/market
+  - proof access
+- forge and battle should feel like adjacent systems in the same Arena hardware family:
+  - compact HUDs
+  - central focal chambers
+  - reduced panel density
+  - clear bottom action rails
+- Arena sub-pages may use a compact resource-rail mode when the full status deck would compete with the primary chamber
+
 ## Color & Glow System
 
 ### Tier-Synced Accents
@@ -264,4 +317,6 @@ All parts should look designed from the same hardware family.
   - roll trace
   - local verification result
 - Fairness browse cards should stay clean. Put proof access near the action flow or the recorded result, not on list/grid cards.
+- Battle overlays may introduce richer authored combat visuals, but they must derive from the resolved `CombatResult` rather than adding client-side randomness.
+- If battle abilities ever become real gameplay inputs, that is a fairness-versioning change and must update the battle result contract, verification docs, and receipt expectations in the same pass.
 - If RNG/fairness architecture changes, update this guide with the new proof touchpoints and states in the same pass as the implementation.

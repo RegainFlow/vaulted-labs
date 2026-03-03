@@ -447,7 +447,7 @@ export function Navbar({
                     </div>
                     <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-white/8">
                       <div
-                        className="h-full rounded-full bg-accent"
+                        className="level-progress-fill h-full rounded-full"
                         style={{ width: `${levelInfo.progressPercent}%` }}
                       />
                     </div>
@@ -514,7 +514,7 @@ export function Navbar({
                   </p>
                   <div className="mt-0.5 h-1.5 w-full overflow-hidden rounded-full bg-white/8">
                     <div
-                      className="h-full rounded-full bg-accent"
+                      className="level-progress-fill h-full rounded-full"
                       style={{ width: `${levelInfo.progressPercent}%` }}
                     />
                   </div>

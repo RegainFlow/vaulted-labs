@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "../components/shared/Navbar";
-import { ResourceBar } from "../components/arena/ResourceBar";
 import { ForgePanel } from "../components/arena/ForgePanel";
 import { LockedOverlay } from "../components/shared/LockedOverlay";
 import { useGame } from "../context/GameContext";
@@ -48,25 +47,29 @@ export function ArenaForgePage() {
         maxBossEnergy={maxBossEnergy}
         shards={shards}
       />
-      <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-36 md:pt-28 pb-28 sm:pb-28 md:pb-24">
+      <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-32 md:pt-24 pb-20 sm:pb-24">
         <div className="max-w-6xl mx-auto">
           <button
             onClick={() => navigate("/locker/arena")}
-            className="mb-4 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-surface border border-white/15 text-text-muted hover:text-white hover:border-white/30 transition-colors cursor-pointer"
+            className="mb-3 px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-surface border border-white/15 text-text-muted hover:text-white hover:border-white/30 transition-colors cursor-pointer"
           >
             Back to Arena Home
           </button>
 
-          <div className="system-shell mb-6 px-5 py-5 text-center sm:mb-8 sm:px-6 sm:py-6">
-            <h1 className="text-xl sm:text-3xl md:text-5xl font-black uppercase tracking-tight text-white mb-1 sm:mb-2">
-              <span className="text-accent">Forge</span>
-            </h1>
-            <p className="text-text-muted text-xs sm:text-sm max-w-xl mx-auto">
-              Convert collectible depth into stronger outcomes.
-            </p>
+          <div className="system-shell-strong mb-4 overflow-hidden px-5 py-4 text-center sm:mb-5 sm:px-6 sm:py-5">
+            <div className="mx-auto max-w-3xl">
+              <div className="text-[10px] font-black uppercase tracking-[0.32em] text-white/42">
+                Arena Foundry
+              </div>
+              <h1 className="mt-2 text-2xl font-black uppercase tracking-[0.04em] text-white sm:text-3xl md:text-4xl">
+                <span className="text-accent">Forge</span> Chamber
+              </h1>
+              <p className="mt-2 text-sm text-text-muted">
+                Link three collectibles, bias the crucible with free spins, and resolve a stronger outcome through the verified forge flow.
+              </p>
+            </div>
           </div>
 
-          <ResourceBar />
           {!locked && <ForgePanel />}
         </div>
       </main>

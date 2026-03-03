@@ -4,7 +4,11 @@ import { useGame } from "../../context/GameContext";
 import { PrestigeOverlay } from "../profile/PrestigeOverlay";
 import { ArenaStatusDeck } from "./ArenaStatusDeck";
 
-export function ResourceBar() {
+export function ResourceBar({
+  variant = "default",
+}: {
+  variant?: "default" | "compact";
+}) {
   const {
     bossEnergy,
     maxBossEnergy,
@@ -36,9 +40,10 @@ export function ResourceBar() {
           setShowRankUpOverlay(true);
         }}
         onConvertShardsToFreeSpin={convertShardsToFreeSpin}
-        className="mb-6 sm:mb-8"
+        className={variant === "compact" ? "mb-4" : "mb-6 sm:mb-8"}
         tutorialId="arena-resources"
         rankupTutorialId="arena-rankup"
+        variant={variant}
       />
 
       <AnimatePresence>

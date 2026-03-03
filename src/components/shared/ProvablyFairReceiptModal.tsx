@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { AnimatePresence, motion } from "motion/react";
 import { Link } from "react-router-dom";
 import { verifyReceipt } from "../../lib/provably-fair-core";
@@ -51,15 +52,15 @@ export function ProvablyFairReceiptModal({
     window.setTimeout(() => setCopyState("idle"), 1400);
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[120] overflow-y-auto bg-black/80 p-4 backdrop-blur-md"
+        className="fixed inset-0 z-[120] overflow-y-auto bg-black/88 p-4 backdrop-blur-md"
       >
-        <div className="flex min-h-full items-start justify-center py-4 sm:py-6">
+        <div className="flex min-h-full items-center justify-center py-4 sm:py-6">
           <motion.div
             initial={{ opacity: 0, y: 12, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -223,6 +224,7 @@ export function ProvablyFairReceiptModal({
           </motion.div>
         </div>
       </motion.div>
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }

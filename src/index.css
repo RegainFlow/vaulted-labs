@@ -698,6 +698,17 @@
   .glow-magenta {
     box-shadow: 0 0 20px rgba(255, 45, 149, 0.3), 0 0 60px rgba(255, 45, 149, 0.1);
   }
+  .level-progress-fill {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 43, 214, 0.92) 0%,
+      rgba(178, 108, 255, 0.84) 48%,
+      rgba(0, 234, 255, 0.72) 100%
+    );
+    box-shadow:
+      0 0 18px rgba(255, 43, 214, 0.18),
+      0 0 18px rgba(0, 234, 255, 0.12);
+  }
   .glow-cyan {
     box-shadow: 0 0 20px rgba(0, 240, 255, 0.3), 0 0 60px rgba(0, 240, 255, 0.1);
   }

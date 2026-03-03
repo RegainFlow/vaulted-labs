@@ -152,6 +152,7 @@ export function ArenaPage() {
                   energyCost={battle.energyCost}
                   currentEnergy={bossEnergy}
                   onFight={handleFight}
+                  levelInfo={levelInfo}
                 />
               ))}
             </div>

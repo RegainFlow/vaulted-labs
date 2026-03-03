@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { getFunkoByName } from "../../data/funkos";
 import type { Rarity } from "../../types/vault";
 
@@ -65,6 +65,10 @@ export function FunkoImage({
   const [failedImagePath, setFailedImagePath] = useState<string | null>(null);
   const showImage = Boolean(resolvedImagePath) && resolvedImagePath !== failedImagePath;
 
+  useEffect(() => {
+    setFailedImagePath(null);
+  }, [resolvedImagePath]);
+
   return (
     <div
       className={`relative ${sizeConfig.outer} ${sizeConfig.radius} overflow-hidden border bg-gradient-to-b ${colors.bg} ${className}`}
@@ -80,7 +84,8 @@ export function FunkoImage({
             alt={name}
             className="absolute inset-0 h-full w-full object-contain object-top p-1"
             onError={() => setFailedImagePath(resolvedImagePath ?? null)}
-            loading="lazy"
+            loading={size === "hero" ? "eager" : "lazy"}
+            decoding="async"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-white/18 via-transparent to-black/40" />
           <div
