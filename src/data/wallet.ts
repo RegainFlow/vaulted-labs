@@ -4,7 +4,8 @@ export const FILTERS: { label: string; value: CreditType | "all" }[] = [
   { label: "All", value: "all" },
   { label: "Earned", value: "earned" },
   { label: "Spent", value: "spent" },
-  { label: "Incentive", value: "incentive" }
+  { label: "Incentive", value: "incentive" },
+  { label: "Activity", value: "activity" }
 ];
 
 export const TYPE_CONFIG: Record<
@@ -17,5 +18,10 @@ export const TYPE_CONFIG: Record<
     icon: "+",
     color: "text-vault-gold",
     bgColor: "bg-vault-gold/10"
+  },
+  activity: {
+    icon: "•",
+    color: "text-text-muted",
+    bgColor: "bg-white/[0.05]"
   }
 };

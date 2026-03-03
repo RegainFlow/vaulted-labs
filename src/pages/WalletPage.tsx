@@ -5,7 +5,9 @@ import { WalletHeader } from "../components/wallet/WalletHeader";
 import { TransactionList } from "../components/wallet/TransactionList";
 import { PageTutorial } from "../components/shared/PageTutorial";
 import { TutorialHelpButton } from "../components/shared/TutorialHelpButton";
+import { ProvablyFairReceiptModal } from "../components/shared/ProvablyFairReceiptModal";
 import { useGame } from "../context/GameContext";
+import { AnalyticsEvents, trackEvent } from "../lib/analytics";
 import {
   WALLET_TUTORIAL_STEPS,
   WALLET_TUTORIAL_STORAGE_KEY,
@@ -13,13 +15,31 @@ import {
 import { setTutorialCompleted } from "../lib/tutorial-storage";
 
 export function WalletPage() {
-  const { balance, inventory, xp, levelInfo, prestigeLevel, freeSpins, cashoutFlashTimestamp, cashoutStreak, bossEnergy, maxBossEnergy, shards, resetDemo, hasSeenWalletTutorial, setHasSeenWalletTutorial } = useGame();
+  const {
+    balance,
+    inventory,
+    xp,
+    prestigeLevel,
+    freeSpins,
+    cashoutFlashTimestamp,
+    cashoutStreak,
+    bossEnergy,
+    maxBossEnergy,
+    shards,
+    resetDemo,
+    hasSeenWalletTutorial,
+    setHasSeenWalletTutorial,
+    ensureProvablyFairSession,
+    getProvablyFairReceipt,
+  } = useGame();
   const navigate = useNavigate();
   const [tutorialActive, setTutorialActive] = useState(false);
+  const [activeReceiptId, setActiveReceiptId] = useState<string | null>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, []);
+    void ensureProvablyFairSession();
+  }, [ensureProvablyFairSession]);
 
   useEffect(() => {
     if (!hasSeenWalletTutorial) return;
@@ -33,7 +53,6 @@ export function WalletPage() {
         balance={balance}
         inventoryCount={inventory.length}
         xp={xp}
-        level={levelInfo.level}
         prestigeLevel={prestigeLevel}
         freeSpins={freeSpins}
         cashoutFlashTimestamp={cashoutFlashTimestamp}
@@ -84,9 +103,21 @@ export function WalletPage() {
             </div>
           </div>
           <WalletHeader />
-          <TransactionList />
+          <TransactionList
+            onOpenReceipt={(receiptId) => {
+              trackEvent(AnalyticsEvents.PROVABLY_FAIR_RECEIPT_OPENED, {
+                source: "wallet_transaction",
+                receipt_id: receiptId,
+              });
+              setActiveReceiptId(receiptId);
+            }}
+          />
         </div>
       </main>
+      <ProvablyFairReceiptModal
+        receipt={activeReceiptId ? getProvablyFairReceipt(activeReceiptId) : null}
+        onClose={() => setActiveReceiptId(null)}
+      />
       <PageTutorial
         pageKey="wallet"
         steps={WALLET_TUTORIAL_STEPS}

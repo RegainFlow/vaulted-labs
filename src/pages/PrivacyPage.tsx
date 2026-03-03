@@ -151,6 +151,13 @@ export function PrivacyPage() {
               >
                 Read Terms of Service
               </Link>
+              <span className="mx-3 text-white/30">•</span>
+              <Link
+                to="/provably-fair"
+                className="text-accent hover:text-accent-hover underline underline-offset-4 transition-colors"
+              >
+                Read Provably Fair
+              </Link>
             </div>
           </div>
         </div>

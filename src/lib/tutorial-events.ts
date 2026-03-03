@@ -4,8 +4,11 @@ export const OPEN_TUTORIAL_REVEAL_READY_EVENT =
 export const OPEN_TUTORIAL_BONUS_SHOWN_EVENT =
   "vaultedlabs:open-tutorial-bonus-shown";
 
+export const OPEN_TUTORIAL_SPIN_STARTED_EVENT =
+  "vaultedlabs:open-tutorial-spin-started";
+
 export const OPEN_TUTORIAL_SCAN_STARTED_EVENT =
-  "vaultedlabs:open-tutorial-scan-started";
+  OPEN_TUTORIAL_SPIN_STARTED_EVENT;
 
 export const OPEN_TUTORIAL_VAULT_SELECTED_EVENT =
   "vaultedlabs:open-tutorial-vault-selected";

@@ -41,7 +41,6 @@ export interface NavbarProps {
   balance?: number;
   inventoryCount?: number;
   xp?: number;
-  level?: number;
   prestigeLevel?: number;
   freeSpins?: number;
   cashoutFlashTimestamp?: number;

@@ -6,7 +6,11 @@ import type { CreditType } from "../../types/wallet";
 import { FILTERS } from "../../data/wallet";
 import { SegmentedTabs } from "../shared/SegmentedTabs";
 
-export function TransactionList() {
+export function TransactionList({
+  onOpenReceipt,
+}: {
+  onOpenReceipt?: (receiptId: string) => void;
+}) {
   const { creditTransactions } = useGame();
   const [filter, setFilter] = useState<CreditType | "all">("all");
 
@@ -64,6 +68,7 @@ export function TransactionList() {
               key={tx.id}
               transaction={tx}
               isLast={i === sorted.length - 1}
+              onOpenReceipt={onOpenReceipt}
             />
           ))}
         </div>

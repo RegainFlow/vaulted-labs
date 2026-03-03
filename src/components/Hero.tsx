@@ -154,7 +154,7 @@ export function Hero() {
         transition={{ delay: 1 }}
         className="relative z-10 mt-12 sm:mt-14"
       >
-        <PlayNowButton location="hero" />
+        <PlayNowButton location="hero" size="hero" />
       </motion.div>
 
       {/* Scroll Down Indicator */}

@@ -116,6 +116,15 @@ export function getPrestigeOdds(
   };
 }
 
+export function getPrestigeShiftBreakdown(prestigeLevel: number) {
+  return {
+    common: -(prestigeLevel * 4),
+    uncommon: +(prestigeLevel * 1.2).toFixed(1),
+    rare: +(prestigeLevel * 1.6).toFixed(1),
+    legendary: +(prestigeLevel * 1.2).toFixed(1),
+  };
+}
+
 export function pickRarity(rarities: RarityBreakdown): keyof RarityBreakdown {
   const rand = Math.random() * 100;
   let cumulative = 0;
@@ -185,13 +194,42 @@ export const PREMIUM_BONUS_CHANCE: Record<string, number> = {
 /* ─── Vault Lock Bonus Mini-Game ─── */
 
 export const VAULT_TIER_SLOTS: VaultLockSlot[] = [
-  { tier: "Bronze" as VaultTierName, color: "#cd7f32" },
-  { tier: "Silver" as VaultTierName, color: "#e0e0e0" },
-  { tier: "Gold" as VaultTierName, color: "#ffd700" },
-  { tier: "Platinum" as VaultTierName, color: "#79b5db" },
-  { tier: "Obsidian" as VaultTierName, color: "#6c4e85" },
-  { tier: "Diamond" as VaultTierName, color: "#b9f2ff" },
+  {
+    tier: "Bronze" as VaultTierName,
+    color: "#cd7f32",
+    imagePath: "/images/vaults/bonus-spinner/bronze_bonus.png",
+  },
+  {
+    tier: "Silver" as VaultTierName,
+    color: "#e0e0e0",
+    imagePath: "/images/vaults/bonus-spinner/silver_bonus.png",
+  },
+  {
+    tier: "Gold" as VaultTierName,
+    color: "#ffd700",
+    imagePath: "/images/vaults/bonus-spinner/gold_bonus.png",
+  },
+  {
+    tier: "Platinum" as VaultTierName,
+    color: "#79b5db",
+    imagePath: "/images/vaults/bonus-spinner/platinum_bonus.png",
+  },
+  {
+    tier: "Obsidian" as VaultTierName,
+    color: "#6c4e85",
+    imagePath: "/images/vaults/bonus-spinner/obsidian_bonus.png",
+  },
+  {
+    tier: "Diamond" as VaultTierName,
+    color: "#b9f2ff",
+    imagePath: "/images/vaults/bonus-spinner/diamond_bonus.png",
+  },
 ];
+
+export function getBonusSpinnerImage(tier: VaultTierName): string {
+  const slot = VAULT_TIER_SLOTS.find((entry) => entry.tier === tier);
+  return slot?.imagePath ?? "/images/vaults/bonus-spinner/bronze_bonus.png";
+}
 
 export function generateVaultLockStrip(
   purchasedTier: VaultTierName
@@ -227,9 +265,15 @@ export function pickVaultLockLanding(strip: VaultLockSlot[]): {
   index: number;
   tier: VaultTierName;
   color: string;
+  imagePath: string;
 } {
   const index = Math.floor(Math.random() * strip.length);
-  return { index, tier: strip[index].tier, color: strip[index].color };
+  return {
+    index,
+    tier: strip[index].tier,
+    color: strip[index].color,
+    imagePath: strip[index].imagePath,
+  };
 }
 
 export function getActiveTierInfo(count: number) {

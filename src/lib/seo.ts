@@ -177,6 +177,21 @@ export const ROUTE_SEO: Record<string, RouteSeoConfig> = {
       "Read VaultedLabs terms, eligibility requirements, and legal conditions.",
     twitterImage: "/og-image.png",
     robots: "index,follow"
+  },
+  "/provably-fair": {
+    title: "Provably Fair | VaultedLabs",
+    description:
+      "Review VaultedLabs provably fair commitments, seed lifecycle, verification flow, and algorithm disclosures.",
+    canonicalPath: "/provably-fair",
+    ogTitle: "Provably Fair | VaultedLabs",
+    ogDescription:
+      "See how VaultedLabs commits, reveals, and verifies outcome RNG.",
+    ogImage: "/og-image.png",
+    twitterTitle: "Provably Fair | VaultedLabs",
+    twitterDescription:
+      "Review the VaultedLabs fairness model, receipts, and verification flow.",
+    twitterImage: "/og-image.png",
+    robots: "index,follow"
   }
 };
 

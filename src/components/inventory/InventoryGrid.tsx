@@ -1,9 +1,19 @@
 import { motion } from "motion/react";
+import { useState } from "react";
 import { useGame } from "../../context/GameContext";
+import { ProvablyFairReceiptModal } from "../shared/ProvablyFairReceiptModal";
+import { COLLECTIBLE_GRID_CLASS } from "../shared/collectible-grid";
 import { InventoryItemCard } from "./InventoryItemCard";
 
 export function InventoryGrid() {
-  const { inventory, cashoutItem, shipItem, listItem } = useGame();
+  const {
+    inventory,
+    cashoutItem,
+    shipItem,
+    listItem,
+    getProvablyFairReceipt,
+  } = useGame();
+  const [activeReceiptId, setActiveReceiptId] = useState<string | null>(null);
   const items = inventory.filter((item) => item.status === "held");
 
   return (
@@ -35,7 +45,7 @@ export function InventoryGrid() {
           </p>
         </motion.div>
       ) : (
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+        <div className={COLLECTIBLE_GRID_CLASS}>
           {items.map((item, idx) => (
             <InventoryItemCard
               key={item.id}
@@ -43,11 +53,16 @@ export function InventoryGrid() {
               onCashout={cashoutItem}
               onShip={shipItem}
               onList={listItem}
+              onOpenProof={setActiveReceiptId}
               isFirst={idx === 0}
             />
           ))}
         </div>
       )}
+      <ProvablyFairReceiptModal
+        receipt={activeReceiptId ? getProvablyFairReceipt(activeReceiptId) : null}
+        onClose={() => setActiveReceiptId(null)}
+      />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { useGame } from "../../context/GameContext";
+import { COLLECTIBLE_GRID_CLASS } from "../shared/collectible-grid";
 import { ListingCard } from "./ListingCard";
 
 export function ListingGrid() {
@@ -35,7 +36,7 @@ export function ListingGrid() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+    <div className={COLLECTIBLE_GRID_CLASS}>
       {listings.map((listing, idx) => (
         <ListingCard
           key={listing.id}

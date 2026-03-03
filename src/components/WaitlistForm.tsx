@@ -17,12 +17,6 @@ const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY as
   | string
   | undefined;
-const _EARLY_BETA_COMMENTS = [
-  "New updated version of Pokemon just a different style with real rewards.",
-  "Very interesting concept here I'm excited to see the finished product release in the future.",
-  "Gambling that does not feel like gambling.",
-];
-void _EARLY_BETA_COMMENTS;
 
 export function WaitlistForm({ onJoinSuccess }: WaitlistFormProps) {
   const [email, setEmail] = useState("");

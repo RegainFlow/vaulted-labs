@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { FunkoImage } from "../shared/FunkoImage";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
+import { useOverlayScrollLock } from "../../hooks/useOverlayScrollLock";
 
 interface LegendaryHypeOverlayProps {
   funkoName: string;
@@ -15,6 +16,7 @@ const seededUnit = (seed: number) => {
 };
 
 export function LegendaryHypeOverlay({ funkoName, value, onDismiss }: LegendaryHypeOverlayProps) {
+  useOverlayScrollLock(true);
   const prefersReducedMotion = useReducedMotion();
 
   const particles = useMemo(() => {

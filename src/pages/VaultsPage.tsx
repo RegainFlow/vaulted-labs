@@ -13,7 +13,6 @@ export function VaultsPage() {
     balance,
     inventory,
     xp,
-    levelInfo,
     prestigeLevel,
     freeSpins,
     cashoutFlashTimestamp,
@@ -46,7 +45,6 @@ export function VaultsPage() {
         balance={balance}
         inventoryCount={inventory.length}
         xp={xp}
-        level={levelInfo.level}
         prestigeLevel={prestigeLevel}
         freeSpins={freeSpins}
         cashoutFlashTimestamp={cashoutFlashTimestamp}

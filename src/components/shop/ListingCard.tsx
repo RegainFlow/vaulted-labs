@@ -4,6 +4,7 @@ import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
 import { CYBER_TRANSITIONS } from "../../lib/motion-presets";
 import type { MarketplaceListing } from "../../types/marketplace";
 import { CollectibleDisplayCard } from "../shared/CollectibleDisplayCard";
+import { InlineStatusNotice } from "../shared/InlineStatusNotice";
 
 interface ListingCardProps {
   listing: MarketplaceListing;
@@ -41,16 +42,17 @@ export function ListingCard({
             value: funko ? `~$${funko.baseValue}` : "--",
           },
         ]}
+        detail={
+          !canAfford ? (
+            <InlineStatusNotice
+              title="Insufficient Credits"
+              tone="danger"
+              body={`You need $${askingPrice - balance} more credits to buy this collectible.`}
+            />
+          ) : undefined
+        }
         actionsSlot={
-          <div className="system-rail flex items-center justify-between gap-3 p-2">
-            <div className="rounded-[14px] border border-white/10 bg-black/20 px-3 py-2">
-              <p className="text-[9px] font-black uppercase tracking-[0.22em] text-text-dim">
-                Buy Now
-              </p>
-              <p className="mt-1 text-lg font-mono font-black text-vault-gold">
-                ${askingPrice}
-              </p>
-            </div>
+          <div className="system-rail flex items-center justify-center p-2">
             <button
               {...(isFirst ? { "data-tutorial": "shop-buy" } : {})}
               type="button"
@@ -65,17 +67,18 @@ export function ListingCard({
                 onBuy(listing.id);
               }}
               disabled={!canAfford}
-              className={`command-segment min-h-[46px] shrink-0 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] ${
+              className={`command-segment min-h-[46px] w-100 rounded-[14px] border px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] ${
                 canAfford
-                  ? "cursor-pointer text-accent"
-                  : "cursor-not-allowed text-text-dim opacity-45"
+                  ? "cursor-pointer border-accent/30 bg-accent/10 text-accent"
+                  : "cursor-not-allowed border-white/10 bg-white/[0.04] text-text-dim opacity-45"
               }`}
             >
-              {canAfford ? "Buy" : "Insufficient"}
+              {canAfford ? `Buy $${askingPrice}` : "Insufficient"}
             </button>
           </div>
         }
         tutorialId={isFirst ? "shop-listing" : undefined}
+        variant="feature"
       />
     </motion.div>
   );

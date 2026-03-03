@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { getFunkoByName } from "../../data/funkos";
 import type { Rarity } from "../../types/vault";
 
@@ -35,7 +35,7 @@ const SIZE_CONFIG = {
   lg: { outer: "w-32 h-32", icon: 52, text: "text-[11px]", radius: "rounded-2xl" },
   hero: {
     outer: "h-full w-full",
-    icon: 72,
+    icon: 88,
     text: "text-[11px]",
     radius: "rounded-[28px]",
   },
@@ -62,13 +62,8 @@ export function FunkoImage({
   const sizeConfig = SIZE_CONFIG[size];
   const catalogImagePath = useMemo(() => getFunkoByName(name)?.imagePath, [name]);
   const resolvedImagePath = imagePath || catalogImagePath;
-  const [imageFailed, setImageFailed] = useState(false);
-
-  useEffect(() => {
-    setImageFailed(false);
-  }, [resolvedImagePath]);
-
-  const showImage = Boolean(resolvedImagePath) && !imageFailed;
+  const [failedImagePath, setFailedImagePath] = useState<string | null>(null);
+  const showImage = Boolean(resolvedImagePath) && resolvedImagePath !== failedImagePath;
 
   return (
     <div
@@ -83,8 +78,8 @@ export function FunkoImage({
           <img
             src={resolvedImagePath}
             alt={name}
-            className="absolute inset-0 h-full w-full object-contain p-1.5"
-            onError={() => setImageFailed(true)}
+            className="absolute inset-0 h-full w-full object-contain object-top p-1"
+            onError={() => setFailedImagePath(resolvedImagePath ?? null)}
             loading="lazy"
           />
           <div className="absolute inset-0 bg-gradient-to-b from-white/18 via-transparent to-black/40" />

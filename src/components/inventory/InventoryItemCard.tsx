@@ -1,22 +1,27 @@
 import { motion } from "motion/react";
 import { getFunkoById } from "../../data/funkos";
+import { VAULTS } from "../../data/vaults";
 import { CYBER_TRANSITIONS } from "../../lib/motion-presets";
 import type { InventoryItemCardProps } from "../../types/inventory";
 import {
   CollectibleDisplayCard,
   type CollectibleDisplayAction,
 } from "../shared/CollectibleDisplayCard";
+import { InlineStatusNotice } from "../shared/InlineStatusNotice";
 
 export function InventoryItemCard({
   item,
   onCashout,
   onShip,
   onList,
+  onOpenProof,
   isFirst = false,
 }: InventoryItemCardProps & { isFirst?: boolean }) {
   const isInactive = item.status !== "held";
   const shippingLocked = item.status === "held" && !item.shippingEligible;
   const funko = item.funkoId ? getFunkoById(item.funkoId) : undefined;
+  const vaultColor =
+    VAULTS.find((vault) => vault.name === item.vaultTier)?.color ?? "#ff2d95";
 
   const statusBadge =
     item.status !== "held" ? (
@@ -44,7 +49,7 @@ export function InventoryItemCard({
             label: "Ship",
             onClick: () => onShip(item.id),
             disabled: shippingLocked,
-            tone: "accent",
+            color: vaultColor,
             tutorialId: isFirst ? "inventory-ship" : undefined,
           },
           {
@@ -61,6 +66,17 @@ export function InventoryItemCard({
           },
         ]
       : [];
+
+  const proofDetail =
+    item.provablyFairReceiptId && onOpenProof ? (
+      <button
+        type="button"
+        onClick={() => onOpenProof(item.provablyFairReceiptId!)}
+        className="system-rail px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-white"
+      >
+        View Proof
+      </button>
+    ) : null;
 
   return (
     <motion.div
@@ -82,21 +98,26 @@ export function InventoryItemCard({
           },
         ]}
         detail={
-          shippingLocked ? (
-            <div className="rounded-[16px] border border-neon-green/25 bg-neon-green/[0.08] px-3 py-3">
-              <p className="text-[9px] font-black uppercase tracking-[0.22em] text-neon-green">
-                Shipping Locked
-              </p>
-              <p className="mt-1 text-[11px] leading-relaxed text-text-muted">
-                {item.shippingLockReason ||
-                  "This collectible can be held, equipped, listed, or cashed out, but it cannot ship yet."}
-              </p>
+          shippingLocked || proofDetail ? (
+            <div className="space-y-3">
+              {shippingLocked ? (
+                <InlineStatusNotice
+                  title="Shipping Locked"
+                  tone="success"
+                  body={
+                    item.shippingLockReason ||
+                    "This collectible can be held, equipped, listed, or cashed out, but it cannot ship yet."
+                  }
+                />
+              ) : null}
+              {proofDetail}
             </div>
           ) : undefined
         }
         actions={actions}
         topRightBadge={statusBadge}
-        tutorialId={isFirst ? "collection-item" : undefined}
+        tutorialId={isFirst ? "inventory-item" : undefined}
+        variant="feature"
         dimmed={isInactive}
       />
     </motion.div>

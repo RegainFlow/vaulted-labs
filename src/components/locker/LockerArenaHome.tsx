@@ -1,154 +1,207 @@
+import type { ReactNode } from "react";
 import { motion } from "motion/react";
+import { ArenaStatusDeck } from "../arena/ArenaStatusDeck";
+import { ArcadeButton } from "../shared/ArcadeButton";
 import {
-  FEATURE_UNLOCK_LABEL,
   getUnlockXP,
   isFeatureUnlocked,
-  type UnlockFeatureKey
+  type UnlockFeatureKey,
 } from "../../lib/unlocks";
+import type { LevelInfo } from "../../types/gamification";
 
 type ArenaCardKey = "battles" | "forge" | "quests";
 
 interface LockerArenaHomeProps {
   xp: number;
+  levelInfo: LevelInfo;
+  bossEnergy: number;
+  maxBossEnergy: number;
+  shards: number;
+  freeSpins: number;
+  prestigeLevel: number;
+  canRankUp: boolean;
+  onRankUp: () => void;
+  onConvertShardsToFreeSpin: () => void;
   onSelect: (featureKey: ArenaCardKey) => void;
 }
 
-const ARENA_CARDS: { key: ArenaCardKey; title: string; description: string }[] = [
+const ARENA_CARDS: {
+  key: ArenaCardKey;
+  title: string;
+  description: string;
+  toneClass: string;
+  icon: ReactNode;
+}[] = [
   {
     key: "battles",
     title: "Battles",
-    description: "Fight bosses, burn energy, and earn progression rewards."
+    description: "Fight bosses, burn energy, and earn progression rewards.",
+    toneClass: "text-accent",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M8 4h8l1 4-5 4-5-4 1-4Z"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M12 12v8"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
   },
   {
     key: "forge",
     title: "Forge",
-    description: "Combine collectibles into stronger outcomes."
+    description: "Combine collectibles into stronger outcomes.",
+    toneClass: "text-vault-gold",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M14 4a4 4 0 1 0 0 8h2l4 4"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M3 21l6-6"
+          stroke="currentColor"
+          strokeWidth="1.7"
+          strokeLinecap="round"
+        />
+      </svg>
+    ),
   },
   {
     key: "quests",
     title: "Quests",
-    description: "Track milestones and claim long-term progression XP."
-  }
+    description: "Track milestones and claim long-term progression XP.",
+    toneClass: "text-neon-green",
+    icon: (
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        aria-hidden="true"
+      >
+        <path
+          d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    ),
+  },
 ];
 
-const RESOURCE_PILLS = [
-  {
-    label: "Energy",
-    description: "Spent to start battles. Regenerates 1 every 10 minutes (max 5).",
-    color: "text-neon-green",
-    borderColor: "border-neon-green/20",
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-neon-green shrink-0">
-        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" fill="currentColor" />
-      </svg>
-    )
-  },
-  {
-    label: "Level",
-    description: "Your progression rank. Earn XP to level up and unlock arena features.",
-    color: "text-accent",
-    borderColor: "border-accent/20",
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-accent shrink-0">
-        <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4l-6.4 4.8 2.4-7.2-6-4.8h7.6z" fill="currentColor" />
-      </svg>
-    )
-  },
-  {
-    label: "Shards",
-    description: "Dropped from boss battles. Collect 7 to convert into a Free Spin.",
-    color: "text-rarity-rare",
-    borderColor: "border-rarity-rare/20",
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-rarity-rare shrink-0">
-        <path d="M12 2L4 12l8 10 8-10L12 2z" fill="currentColor" opacity="0.3" stroke="currentColor" strokeWidth="1.5" />
-      </svg>
-    )
-  },
-  {
-    label: "Free Spins",
-    description: "Open vaults for free. Earned from Vault Lock jackpots or shard conversion.",
-    color: "text-vault-gold",
-    borderColor: "border-vault-gold/20",
-    icon: (
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" className="text-vault-gold shrink-0">
-        <path d="M12 2l2.4 7.2H22l-6 4.8 2.4 7.2L12 16.4l-6.4 4.8 2.4-7.2-6-4.8h7.6z" fill="currentColor" />
-      </svg>
-    )
-  }
-];
-
-export function LockerArenaHome({ xp, onSelect }: LockerArenaHomeProps) {
+export function LockerArenaHome({
+  xp,
+  levelInfo,
+  bossEnergy,
+  maxBossEnergy,
+  shards,
+  freeSpins,
+  prestigeLevel,
+  canRankUp,
+  onRankUp,
+  onConvertShardsToFreeSpin,
+  onSelect,
+}: LockerArenaHomeProps) {
   return (
-    <div className="space-y-4 sm:space-y-5">
-      <div className="text-center mb-2">
-        <h2 className="text-lg sm:text-2xl font-black uppercase tracking-tight text-white">
+    <div className="space-y-6 sm:space-y-7">
+      <div className="system-shell mx-auto max-w-3xl px-5 py-5 text-center sm:px-6 sm:py-6">
+        <h2 className="text-xl font-black uppercase tracking-[0.08em] text-white sm:text-3xl">
           Arena Home
         </h2>
-        <p className="text-xs sm:text-sm text-text-muted">
+        <p className="mt-2 text-xs text-text-muted sm:text-sm">
           Choose your next arena objective.
         </p>
       </div>
 
-      {/* Resource info pills */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {RESOURCE_PILLS.map((pill) => (
-          <div
-            key={pill.label}
-            className={`bg-surface/40 border ${pill.borderColor} rounded-lg p-2.5`}
-          >
-            <div className="flex items-center gap-1.5 mb-1">
-              {pill.icon}
-              <span className={`text-[10px] font-black uppercase tracking-wider ${pill.color}`}>
-                {pill.label}
-              </span>
-            </div>
-            <p className="text-[9px] text-text-dim leading-relaxed">
-              {pill.description}
-            </p>
-          </div>
-        ))}
-      </div>
+      <ArenaStatusDeck
+        bossEnergy={bossEnergy}
+        maxBossEnergy={maxBossEnergy}
+        shards={shards}
+        freeSpins={freeSpins}
+        prestigeLevel={prestigeLevel}
+        levelInfo={levelInfo}
+        canRankUp={canRankUp}
+        onRankUp={onRankUp}
+        onConvertShardsToFreeSpin={onConvertShardsToFreeSpin}
+      />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         {ARENA_CARDS.map((card, index) => {
           const featureKey = card.key as UnlockFeatureKey;
           const unlocked = isFeatureUnlocked(featureKey, xp);
 
           return (
-            <motion.button
+            <motion.div
               key={card.key}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.06 }}
-              onClick={() => onSelect(card.key)}
-              className={`rounded-2xl border p-5 sm:p-6 text-left transition-all ${
+              className={`module-card group relative flex min-h-[248px] flex-col overflow-hidden p-5 text-left transition-all duration-300 ${
                 unlocked
-                  ? "bg-surface-elevated/60 border-white/12 hover:border-accent/45 hover:-translate-y-0.5 cursor-pointer"
-                  : "bg-surface/40 border-white/8 cursor-pointer opacity-80"
+                  ? "hover:-translate-y-1 hover:border-white/18"
+                  : "opacity-85"
               }`}
             >
-              <h3 className="text-base sm:text-lg font-black uppercase tracking-wide text-white">
-                {card.title}
-              </h3>
-              <p className="text-xs sm:text-sm text-text-muted mt-2 leading-relaxed">
+              <div
+                className={`pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-current to-transparent opacity-90 ${card.toneClass}`}
+              />
+              <div className="mb-5 flex items-center gap-3">
+                <div
+                  className={`flex h-12 w-12 items-center justify-center rounded-[16px] border border-white/10 bg-black/20 ${card.toneClass}`}
+                >
+                  {card.icon}
+                </div>
+                <div>
+                  <h3 className="text-lg font-black uppercase tracking-[0.08em] text-white">
+                    {card.title}
+                  </h3>
+                </div>
+              </div>
+
+              <p className="text-sm leading-relaxed text-text-muted">
                 {card.description}
               </p>
-              <p className="text-[10px] font-bold uppercase tracking-widest mt-4">
-                {unlocked ? (
-                  <span className="text-neon-green">Open</span>
-                ) : (
-                  <span className="text-text-dim">
-                    Locked until {getUnlockXP(featureKey)} XP
-                  </span>
-                )}
-              </p>
-              {!unlocked && (
-                <p className="text-[10px] text-accent mt-1">
-                  {FEATURE_UNLOCK_LABEL[featureKey]}
-                </p>
-              )}
-            </motion.button>
+
+              <div className="mt-auto space-y-2 pt-6">
+                <ArcadeButton
+                  onClick={unlocked ? () => onSelect(card.key) : undefined}
+                  disabled={!unlocked}
+                  tone={unlocked ? "accent" : "neutral"}
+                  size="compact"
+                  fillMode="center"
+                  fullWidth
+                >
+                  {unlocked
+                    ? "Enter"
+                    : `Locked Until Lv ${getUnlockXP(featureKey)}`}
+                </ArcadeButton>
+              </div>
+            </motion.div>
           );
         })}
       </div>

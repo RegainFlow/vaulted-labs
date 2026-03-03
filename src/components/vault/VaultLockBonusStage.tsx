@@ -1,29 +1,28 @@
-import { useState, useEffect, useMemo, useCallback, useRef, memo } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "motion/react";
-import type { VaultLockBonusStageProps, VaultLockPhase, VaultLockSlot } from "../../types/bonus";
-import type { VaultTierName } from "../../types/vault";
-import { SHARD_REWARDS } from "../../types/bonus";
-import {
-  generateVaultLockStrip,
-  pickVaultLockLanding
-} from "../../data/vaults";
-import { VaultIcon } from "./VaultIcons";
-import { JACKPOT_CELEBRATION } from "../../lib/motion-presets";
-import { OPEN_TUTORIAL_BONUS_JACKPOT_EVENT } from "../../lib/tutorial-events";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { generateVaultLockStrip, pickVaultLockLanding } from "../../data/vaults";
 import { playSfx } from "../../lib/audio";
+import { OPEN_TUTORIAL_BONUS_JACKPOT_EVENT } from "../../lib/tutorial-events";
+import { JACKPOT_CELEBRATION } from "../../lib/motion-presets";
+import { SHARD_REWARDS, type VaultLockBonusStageProps, type VaultLockPhase, type VaultLockSlot } from "../../types/bonus";
+import type { VaultTierName } from "../../types/vault";
+import { ArcadeButton } from "../shared/ArcadeButton";
 
 const PRESTIGE_THEMES: Record<number, { primary: string; secondary: string }> = {
-  0: { primary: "#ff2d95", secondary: "#00f0ff" },
+  0: { primary: "#ff2d95", secondary: "#79b5db" },
   1: { primary: "#ff8c00", secondary: "#ffd700" },
   2: { primary: "#9945ff", secondary: "#c77dff" },
-  3: { primary: "#ff2d95", secondary: "#00e5ff" }
+  3: { primary: "#ff2d95", secondary: "#b9f2ff" },
 };
 
-const ESCALATION_COLORS = ["#ff2d95", "#00f0ff", "#39ff14"];
+const ACTIVE_SPIN_DURATIONS = [1.6, 1.35, 1.15];
+const LOCK_LAND_DURATIONS = [0.85, 0.9, 0.98];
+const CENTER_LOCK_COLOR = "#ff2d95";
 
 interface SpinnerResult {
   tier: VaultTierName;
   color: string;
+  imagePath: string;
   index: number;
 }
 
@@ -50,169 +49,312 @@ interface VaultLockSpinnerProps {
   spinnerIndex: number;
 }
 
+function BonusSlotCard({
+  slot,
+  isLanded,
+  slotHeight,
+}: {
+  slot: VaultLockSlot;
+  isLanded: boolean;
+  slotHeight: number;
+}) {
+  return (
+    <div
+      className="flex shrink-0 items-center justify-center px-2 sm:px-3"
+      style={{ height: `${slotHeight}px` }}
+    >
+      <motion.div
+        animate={isLanded ? { scale: [1, 1.04, 1.01], y: [0, -3, 0] } : undefined}
+        transition={isLanded ? { duration: 0.34, ease: "easeOut" } : undefined}
+        className="flex w-full items-center justify-center"
+      >
+        <div
+          className="relative flex aspect-square w-[74%] max-w-[142px] items-center justify-center"
+          style={{
+            boxShadow: isLanded
+              ? `drop-shadow(0 0 28px ${slot.color}28)`
+              : `drop-shadow(0 0 14px ${slot.color}18)`,
+          }}
+        >
+          <img
+            src={slot.imagePath}
+            alt={`${slot.tier} bonus tier`}
+            draggable={false}
+            className="h-full w-full object-contain"
+          />
+          <div
+            className="pointer-events-none absolute inset-[14%]"
+            style={{
+              background: `radial-gradient(circle at 50% 50%, ${slot.color}16 0%, transparent 66%)`,
+            }}
+          />
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
+function CenterLockFrame({
+  active,
+  locked,
+  lockedColor,
+  slotHeight,
+}: {
+  active: boolean;
+  locked: boolean;
+  lockedColor?: string;
+  slotHeight: number;
+}) {
+  const frameColor = locked && lockedColor ? lockedColor : CENTER_LOCK_COLOR;
+  const bracketLength = slotHeight < 140 ? 24 : 28;
+  const bracketOffset = slotHeight < 140 ? 7 : 9;
+  const bracketThickness = 3;
+  const frameHeight = slotHeight < 140 ? 98 : 116;
+  const frameWidth = slotHeight < 140 ? 98 : 116;
+
+  return (
+    <div
+      className="pointer-events-none absolute left-1/2 top-1/2 z-30 -translate-x-1/2 -translate-y-1/2"
+      style={{
+        width: `${frameWidth}px`,
+        height: `${frameHeight}px`,
+        filter: active || locked ? `drop-shadow(0 0 12px ${frameColor})` : "none",
+      }}
+    >
+      <div
+        className="absolute inset-[10px] rounded-full"
+        style={{
+          boxShadow:
+            active || locked
+              ? `0 0 18px ${frameColor}18, inset 0 0 14px ${frameColor}10`
+              : "none",
+        }}
+      />
+      {[
+        {
+          position: "left-0 top-0",
+          horizontal: "left-0 top-0",
+          vertical: "left-0 top-0",
+          transform: `translate(-${bracketOffset}px, -${bracketOffset}px)`,
+        },
+        {
+          position: "right-0 top-0",
+          horizontal: "right-0 top-0",
+          vertical: "right-0 top-0",
+          transform: `translate(${bracketOffset}px, -${bracketOffset}px)`,
+        },
+        {
+          position: "left-0 bottom-0",
+          horizontal: "left-0 bottom-0",
+          vertical: "left-0 bottom-0",
+          transform: `translate(-${bracketOffset}px, ${bracketOffset}px)`,
+        },
+        {
+          position: "right-0 bottom-0",
+          horizontal: "right-0 bottom-0",
+          vertical: "right-0 bottom-0",
+          transform: `translate(${bracketOffset}px, ${bracketOffset}px)`,
+        },
+      ].map((position, index) => (
+        <span
+          key={index}
+          className={`absolute ${position.position}`}
+          style={{
+            width: `${bracketLength}px`,
+            height: `${bracketLength}px`,
+            opacity: active || locked ? 1 : 0.5,
+            transform: position.transform,
+          }}
+        >
+          <span
+            className={`absolute ${position.horizontal}`}
+            style={{
+              width: `${bracketLength}px`,
+              height: `${bracketThickness}px`,
+              backgroundColor: frameColor,
+              boxShadow: `0 0 12px ${frameColor}`,
+            }}
+          />
+          <span
+            className={`absolute ${position.vertical}`}
+            style={{
+              width: `${bracketThickness}px`,
+              height: `${bracketLength}px`,
+              backgroundColor: frameColor,
+              boxShadow: `0 0 12px ${frameColor}`,
+            }}
+          />
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function VaultLockSpinnerInner({
   strip,
   isActive,
   isLocked,
   lockedResult,
   escalation,
-  spinnerIndex
+  spinnerIndex,
 }: VaultLockSpinnerProps) {
   const prefersReducedMotion = useReducedMotion();
-  const slotHeight = 72;
-  const visibleSlots = 5;
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+  const slotHeight = isMobile ? 132 : 156;
+  const visibleSlots = 3;
   const reelHeight = slotHeight * visibleSlots;
+  const loopDistance = strip.length * slotHeight;
   const displayStrip = [...strip, ...strip, ...strip];
-  const landedIndex = lockedResult ? strip.length + lockedResult.index : 0;
+  const landedIndex = lockedResult ? strip.length + lockedResult.index : strip.length + 1;
   const landedOffset = reelHeight / 2 - (landedIndex + 0.5) * slotHeight;
-
-  const borderColor = isLocked && lockedResult
-    ? `${lockedResult.color}90`
+  const accentColor = isLocked && lockedResult ? lockedResult.color : CENTER_LOCK_COLOR;
+  const rootBorder = isLocked
+    ? `${accentColor}40`
     : isActive
-      ? ESCALATION_COLORS[Math.min(escalation, 2)]
-      : "rgba(255,255,255,0.08)";
-
-  const glowIntensity = isActive ? (escalation + 1) * 15 : isLocked ? 20 : 0;
-  const accentColor = ESCALATION_COLORS[Math.min(escalation, 2)];
+      ? `${CENTER_LOCK_COLOR}36`
+      : "rgba(255,255,255,0.09)";
 
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.7, y: 30 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      transition={{ delay: spinnerIndex * 0.15, type: "spring", damping: 18 }}
-      className={`relative overflow-hidden rounded-2xl border-2 bg-surface/50 backdrop-blur-md ${escalation >= 2 && isActive ? "animate-rainbow-border" : ""}`}
+      initial={{ opacity: 0, y: 20, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: spinnerIndex * 0.09, type: "spring", damping: 20, stiffness: 160 }}
+      className="relative overflow-hidden rounded-[32px] border p-3"
       style={{
-        width: "clamp(100px, 28vw, 160px)",
-        height: `${reelHeight}px`,
-        borderColor: escalation >= 2 && isActive ? undefined : borderColor,
-        boxShadow: isLocked && lockedResult
-          ? `0 0 ${glowIntensity + 10}px ${lockedResult.color}40, inset 0 0 15px ${lockedResult.color}15`
+        width: isMobile ? "clamp(148px, 29vw, 180px)" : "clamp(180px, 24vw, 220px)",
+        borderColor: rootBorder,
+        background:
+          "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(10,16,24,0.96) 16%, rgba(7,11,18,0.98) 100%)",
+        boxShadow: isLocked
+          ? `0 24px 40px rgba(0,0,0,0.3), 0 0 26px ${accentColor}20`
           : isActive
-            ? `0 0 ${glowIntensity}px ${accentColor}30`
-            : "none"
+            ? "0 22px 38px rgba(0,0,0,0.28), 0 0 22px rgba(255,45,149,0.16)"
+            : "0 18px 28px rgba(0,0,0,0.2)",
+        opacity: !isActive && !isLocked ? 0.84 : 1,
       }}
     >
-      {/* Scanline overlay */}
       <div
-        className="absolute inset-0 z-0 opacity-10 pointer-events-none"
+        className="pointer-events-none absolute inset-x-6 top-0 h-px"
         style={{
-          backgroundImage: `repeating-linear-gradient(0deg, ${accentColor} 0px, transparent 1px, transparent 4px)`,
-          backgroundSize: "100% 4px"
+          background: `linear-gradient(90deg, transparent 0%, ${accentColor} 50%, transparent 100%)`,
+          opacity: isActive || isLocked ? 0.9 : 0.35,
         }}
       />
+      <p className="mb-3 text-center text-[10px] font-black uppercase tracking-[0.22em] text-white/42">
+        Channel {spinnerIndex + 1}
+      </p>
 
-      {/* Top/bottom fade */}
-      <div className="absolute inset-0 z-20 pointer-events-none bg-linear-to-b from-bg via-transparent to-bg" />
-
-      {/* Center line */}
       <div
-        className="absolute left-0 right-0 top-1/2 -translate-y-1/2 h-[3px] z-30 pointer-events-none"
-        style={{
-          backgroundColor: isLocked && lockedResult ? lockedResult.color : accentColor,
-          boxShadow: `0 0 10px ${isLocked && lockedResult ? lockedResult.color : accentColor}`,
-          opacity: isActive || isLocked ? 1 : 0.3
-        }}
-      />
-
-      {/* Lock flash */}
-      <AnimatePresence>
-        {isLocked && lockedResult && (
-          <motion.div
-            key={`lock-flash-${lockedResult.tier}-${lockedResult.index}`}
-            className="absolute inset-0 z-40 pointer-events-none rounded-2xl"
-            initial={{ opacity: 0.6 }}
-            animate={{ opacity: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            style={{ backgroundColor: lockedResult.color }}
-          />
-        )}
-      </AnimatePresence>
-
-      {/* Reel content */}
-      <motion.div
-        className="flex flex-col relative z-10"
-        animate={
-          isLocked && lockedResult
-            ? { y: landedOffset }
-            : isActive && !prefersReducedMotion
-              ? { y: [0, -(strip.length * slotHeight)] }
-              : prefersReducedMotion && isActive && lockedResult
-                ? { y: landedOffset }
-                : { y: 0 }
-        }
-        transition={
-          isLocked
-            ? { duration: 1.1, ease: [0.05, 0.88, 0.15, 1.02] }
-            : isActive && !prefersReducedMotion
-              ? { duration: 0.35, repeat: Infinity, ease: "linear" }
-              : prefersReducedMotion && isActive
-                ? { duration: 0.6, ease: "easeOut" }
-                : undefined
-        }
+        className="relative overflow-hidden rounded-[26px] border border-white/6 bg-black/12"
+        style={{ height: `${reelHeight}px` }}
       >
-        {displayStrip.map((slot, i) => {
-          const isLandedSlot = isLocked && i === landedIndex;
-          return (
-            <div
-              key={i}
-              className="flex items-center justify-center shrink-0"
-              style={{ height: `${slotHeight}px` }}
-            >
-              <motion.div
-                animate={
-                  isLandedSlot
-                    ? { scale: [1, 1.15, 1] }
-                    : undefined
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-16 bg-gradient-to-b from-bg via-bg/80 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-16 bg-gradient-to-t from-bg via-bg/80 to-transparent" />
+        <CenterLockFrame
+          active={isActive}
+          locked={isLocked}
+          lockedColor={lockedResult?.color}
+          slotHeight={slotHeight}
+        />
+
+        <motion.div
+          className="relative z-10 flex flex-col"
+          animate={
+            isLocked && lockedResult
+              ? { y: landedOffset }
+              : isActive && !prefersReducedMotion
+                ? { y: [0, -loopDistance] }
+                : isActive
+                  ? { y: landedOffset }
+                  : { y: 0 }
+          }
+          transition={
+            isLocked
+              ? {
+                  duration: LOCK_LAND_DURATIONS[Math.min(spinnerIndex, LOCK_LAND_DURATIONS.length - 1)],
+                  ease: [0.12, 0.84, 0.18, 1],
                 }
-                transition={isLandedSlot ? { duration: 0.4 } : undefined}
-                className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full"
-                style={{
-                  filter: isLandedSlot
-                    ? `drop-shadow(0 0 8px ${slot.color})`
-                    : undefined
-                }}
-              >
-                <VaultIcon name={slot.tier} color={slot.color} />
-              </motion.div>
-            </div>
-          );
-        })}
-      </motion.div>
+              : isActive && !prefersReducedMotion
+                ? {
+                    duration: ACTIVE_SPIN_DURATIONS[Math.min(escalation, ACTIVE_SPIN_DURATIONS.length - 1)],
+                    repeat: Infinity,
+                    ease: "linear",
+                  }
+                : isActive
+                  ? { duration: 0.5, ease: "easeOut" }
+                  : undefined
+          }
+        >
+          {displayStrip.map((slot, index) => (
+            <BonusSlotCard
+              key={`${slot.tier}-${index}`}
+              slot={slot}
+              slotHeight={slotHeight}
+              isLanded={isLocked && index === landedIndex}
+            />
+          ))}
+        </motion.div>
+      </div>
     </motion.div>
   );
 }
 
 const VaultLockSpinner = memo(VaultLockSpinnerInner);
 
-function ElectricArc({ color, fromIndex }: { color: string; fromIndex: number; toIndex: number }) {
+function ChannelBridge({ color, fromIndex }: { color: string; fromIndex: number }) {
   const prefersReducedMotion = useReducedMotion();
-  // Draw a simple lightning arc between adjacent spinners
+  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
+
   return (
-    <motion.svg
+    <motion.div
       initial={{ opacity: 0 }}
-      animate={{ opacity: prefersReducedMotion ? 0.6 : [0.4, 1, 0.4] }}
-      transition={prefersReducedMotion ? undefined : { duration: 0.3, repeat: Infinity }}
-      className="absolute top-1/2 -translate-y-1/2 pointer-events-none z-30"
+      animate={{ opacity: prefersReducedMotion ? 0.78 : [0.45, 0.82, 0.45] }}
+      transition={
+        prefersReducedMotion
+          ? undefined
+          : { duration: 1.1, repeat: Infinity, ease: "easeInOut" }
+      }
+      className="pointer-events-none absolute top-1/2 z-20 -translate-y-1/2"
       style={{
-        left: `${(fromIndex + 1) * 33.33 - 5}%`,
-        width: "10%",
-        height: "60px"
+        left: `${(fromIndex + 1) * 33.333 - (isMobile ? 4.1 : 4.35)}%`,
+        width: isMobile ? "8.2%" : "7.8%",
+        height: isMobile ? "24px" : "28px",
       }}
-      viewBox="0 0 40 60"
-      fill="none"
     >
-      <motion.path
-        d="M5 5L20 25L10 30L35 55"
-        stroke={color}
-        strokeWidth="2"
-        fill="none"
-        style={{ filter: `drop-shadow(0 0 6px ${color})` }}
-        initial={{ pathLength: 0 }}
-        animate={{ pathLength: 1 }}
-        transition={{ duration: 0.4 }}
+      <div
+        className="absolute left-0 right-0 top-1/2 h-px -translate-y-1/2"
+        style={{
+          background: `linear-gradient(90deg, transparent 0%, ${color} 18%, ${color} 82%, transparent 100%)`,
+          boxShadow: `0 0 10px ${color}`,
+          opacity: 0.85,
+        }}
       />
-    </motion.svg>
+      <div
+        className="absolute left-[10%] right-[10%] top-1/2 h-[7px] -translate-y-1/2 rounded-full"
+        style={{
+          background: `linear-gradient(90deg, transparent 0%, ${color}22 16%, ${color}22 84%, transparent 100%)`,
+        }}
+      />
+      <div
+        className="absolute left-[8%] top-1/2 h-[10px] w-[2px] -translate-y-1/2 rounded-full"
+        style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}` }}
+      />
+      <div
+        className="absolute right-[8%] top-1/2 h-[10px] w-[2px] -translate-y-1/2 rounded-full"
+        style={{ backgroundColor: color, boxShadow: `0 0 8px ${color}` }}
+      />
+      {!prefersReducedMotion ? (
+        <motion.div
+          className="absolute top-1/2 h-[8px] w-[8px] -translate-y-1/2 rounded-full"
+          style={{
+            backgroundColor: color,
+            boxShadow: `0 0 14px ${color}`,
+          }}
+          animate={{ x: ["12%", "78%", "12%"], opacity: [0.35, 1, 0.35] }}
+          transition={{ duration: 1.25, repeat: Infinity, ease: "easeInOut" }}
+        />
+      ) : null}
+    </motion.div>
   );
 }
 
@@ -220,38 +362,62 @@ export function VaultLockBonusStage({
   purchasedTierName,
   prestigeLevel = 0,
   onComplete,
-  forcedLandings
+  forcedLandings,
+  resolvedChannels,
 }: VaultLockBonusStageProps) {
   const prefersReducedMotion = useReducedMotion();
   const [phase, setPhase] = useState<VaultLockPhase>("announce");
-  const timersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
-  const prestigeTheme = PRESTIGE_THEMES[prestigeLevel as keyof typeof PRESTIGE_THEMES] || PRESTIGE_THEMES[0];
-
-  // Generate 3 independent reel strips
-  const strips = useMemo(() => [
-    generateVaultLockStrip(purchasedTierName),
-    generateVaultLockStrip(purchasedTierName),
-    generateVaultLockStrip(purchasedTierName)
-  ], [purchasedTierName]);
-
-  // Pre-determine landing results for each spinner
-  const landings = useMemo(() => {
-    if (forcedLandings === "jackpot") {
-      // Force all 3 spinners to land on purchasedTierName for a guaranteed jackpot
-      return strips.map((strip) => {
-        const matchIndex = strip.findIndex((slot) => slot.tier === purchasedTierName);
-        const idx = matchIndex >= 0 ? matchIndex : 0;
-        return { tier: strip[idx].tier, color: strip[idx].color, index: idx };
-      });
-    }
-    return strips.map((strip) => {
-      const landing = pickVaultLockLanding(strip);
-      return { tier: landing.tier, color: landing.color, index: landing.index };
-    });
-  }, [strips, forcedLandings, purchasedTierName]);
-
   const [lockedResults, setLockedResults] = useState<(SpinnerResult | null)[]>([null, null, null]);
   const [escalation, setEscalation] = useState(0);
+  const timersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
+  const prestigeTheme =
+    PRESTIGE_THEMES[prestigeLevel as keyof typeof PRESTIGE_THEMES] || PRESTIGE_THEMES[0];
+
+  const strips = useMemo(
+    () => [
+      generateVaultLockStrip(purchasedTierName),
+      generateVaultLockStrip(purchasedTierName),
+      generateVaultLockStrip(purchasedTierName),
+    ],
+    [purchasedTierName]
+  );
+
+  const landings = useMemo(() => {
+    if (resolvedChannels?.length === 3) {
+      return resolvedChannels.map((slot, index) => ({
+        tier: slot.tier,
+        color: slot.color,
+        imagePath: slot.imagePath,
+        index:
+          strips[index].findIndex((entry) => entry.tier === slot.tier) >= 0
+            ? strips[index].findIndex((entry) => entry.tier === slot.tier)
+            : 0,
+      }));
+    }
+
+    if (forcedLandings === "jackpot") {
+      return strips.map((strip) => {
+        const matchIndex = strip.findIndex((slot) => slot.tier === purchasedTierName);
+        const index = matchIndex >= 0 ? matchIndex : 0;
+        return {
+          tier: strip[index].tier,
+          color: strip[index].color,
+          imagePath: strip[index].imagePath,
+          index,
+        };
+      });
+    }
+
+    return strips.map((strip) => {
+      const landing = pickVaultLockLanding(strip);
+      return {
+        tier: landing.tier,
+        color: landing.color,
+        imagePath: landing.imagePath,
+        index: landing.index,
+      };
+    });
+  }, [forcedLandings, purchasedTierName, resolvedChannels, strips]);
 
   const clearTimers = useCallback(() => {
     for (const timer of timersRef.current) clearTimeout(timer);
@@ -264,35 +430,32 @@ export function VaultLockBonusStage({
   }, []);
 
   const getMatchCount = useCallback(() => {
-    const tiers = lockedResults.filter(Boolean).map((r) => r!.tier);
+    const tiers = lockedResults.filter(Boolean).map((entry) => entry!.tier);
     if (tiers.length < 3) return 0;
     if (tiers[0] === tiers[1] && tiers[1] === tiers[2]) return 3;
     if (tiers[0] === tiers[1] || tiers[1] === tiers[2] || tiers[0] === tiers[2]) return 2;
     return 1;
   }, [lockedResults]);
 
-  // Auto-advance for non-interactive phases
   useEffect(() => {
     if (phase === "announce") {
-      schedule(() => setPhase("materialize"), 1800);
+      schedule(() => setPhase("materialize"), 1700);
     } else if (phase === "materialize") {
-      schedule(() => setPhase("spin-1"), 1200);
+      schedule(() => setPhase("spin-1"), 1000);
     } else if (phase === "lock-1") {
       schedule(() => {
         setEscalation(1);
         setPhase("spin-2");
-      }, 1400);
+      }, 1250);
     } else if (phase === "lock-2") {
-      // Check if first two spinners match — if not, skip to evaluate (no 3rd spin)
-      const firstTwo = [landings[0].tier, landings[1].tier];
-      if (firstTwo[0] !== firstTwo[1]) {
-        // No match — show brief pause then evaluate
-        schedule(() => setPhase("evaluate"), 1400);
+      const firstTwoMatch = landings[0].tier === landings[1].tier;
+      if (!firstTwoMatch) {
+        schedule(() => setPhase("evaluate"), 1250);
       } else {
         schedule(() => {
           setEscalation(2);
           setPhase("spin-3");
-        }, 1400);
+        }, 1250);
       }
     } else if (phase === "lock-3") {
       schedule(() => setPhase("evaluate"), 800);
@@ -301,19 +464,18 @@ export function VaultLockBonusStage({
       if (matchCount === 3) {
         window.dispatchEvent(new Event(OPEN_TUTORIAL_BONUS_JACKPOT_EVENT));
       }
-      const delay = matchCount === 3 ? 3500 : 2500;
-      schedule(() => setPhase("done"), delay);
+      schedule(() => setPhase("done"), matchCount === 3 ? 3200 : 2200);
     } else if (phase === "done") {
       schedule(() => {
         const matchCount = getMatchCount();
         let shardsWon = 0;
-        if (matchCount === 3) {
-          const matchedTier = lockedResults[0]!.tier;
-          shardsWon = SHARD_REWARDS[matchedTier];
+        if (matchCount === 3 && lockedResults[0]) {
+          shardsWon = SHARD_REWARDS[lockedResults[0].tier];
         }
         onComplete(shardsWon);
       }, 400);
     }
+
     return () => clearTimers();
   }, [clearTimers, getMatchCount, landings, lockedResults, onComplete, phase, schedule]);
 
@@ -331,210 +493,230 @@ export function VaultLockBonusStage({
       setLockedResults((prev) => [prev[0], prev[1], landings[2]]);
       setPhase("lock-3");
     }
-  }, [phase, landings]);
+  }, [landings, phase]);
 
   const isSpinPhase = phase === "spin-1" || phase === "spin-2" || phase === "spin-3";
   const showSpinners = phase !== "announce";
   const matchCount = getMatchCount();
 
-  // Determine which spinners are active/locked
   const spinnerStates = [
     {
       isActive: phase === "spin-1",
       isLocked: lockedResults[0] !== null,
-      lockedResult: lockedResults[0]
+      lockedResult: lockedResults[0],
     },
     {
       isActive: phase === "spin-2",
       isLocked: lockedResults[1] !== null,
-      lockedResult: lockedResults[1]
+      lockedResult: lockedResults[1],
     },
     {
       isActive: phase === "spin-3",
       isLocked: lockedResults[2] !== null,
-      lockedResult: lockedResults[2]
-    }
+      lockedResult: lockedResults[2],
+    },
   ];
 
-  // Electric arcs between matching adjacent locked spinners
-  const arcs: { from: number; to: number; color: string }[] = [];
+  const arcs: { from: number; color: string }[] = [];
   if (lockedResults[0] && lockedResults[1] && lockedResults[0].tier === lockedResults[1].tier) {
-    arcs.push({ from: 0, to: 1, color: lockedResults[0].color });
+    arcs.push({ from: 0, color: lockedResults[0].color });
   }
   if (lockedResults[1] && lockedResults[2] && lockedResults[1].tier === lockedResults[2].tier) {
-    arcs.push({ from: 1, to: 2, color: lockedResults[1].color });
+    arcs.push({ from: 1, color: lockedResults[1].color });
   }
 
-  // LOCK button styling based on escalation
-  const lockButtonColor = ESCALATION_COLORS[Math.min(escalation, 2)];
+  const activeMessage =
+    phase === "materialize"
+      ? "Bonus channels online."
+      : phase === "spin-1"
+        ? "Lock the first channel."
+        : phase === "spin-2"
+          ? "Lock the second channel."
+          : phase === "spin-3"
+            ? "Final channel. Lock it in."
+            : phase === "evaluate"
+              ? "Resolving bonus outcome."
+              : "Match 3 channels to win shards.";
 
   return (
     <motion.div
       key="vault-lock-bonus"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, scale: 1.1, filter: "blur(10px)" }}
-      className={`flex flex-col items-center justify-center w-full max-w-[96rem] px-2 sm:px-4 lg:px-8 ${phase === "evaluate" && matchCount === 3 ? "animate-jackpot-radial-pulse" : ""}`}
+      exit={{ opacity: 0, scale: 1.04, filter: "blur(8px)" }}
+      className={`flex w-full max-w-[98rem] flex-col items-center justify-center px-2 sm:px-4 lg:px-8 ${
+        phase === "evaluate" && matchCount === 3 ? "animate-jackpot-radial-pulse" : ""
+      }`}
     >
-      {/* Announce phase */}
       {phase === "announce" && (
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
+          initial={{ scale: 0.92, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="system-shell px-8 py-8 text-center relative sm:px-12"
+          className="system-shell relative w-full max-w-4xl px-8 py-10 text-center sm:px-10 sm:py-12"
         >
           <motion.div
-            className="fixed inset-0 pointer-events-none z-50"
+            className="pointer-events-none absolute inset-0 rounded-[30px]"
             initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 0.8, 0] }}
-            transition={{ duration: 0.5 }}
-            style={{ backgroundColor: prestigeTheme.primary }}
+            animate={{ opacity: [0, 0.6, 0] }}
+            transition={{ duration: 0.7 }}
+            style={{
+              background: `radial-gradient(circle at 50% 50%, ${prestigeTheme.primary}26 0%, transparent 62%)`,
+            }}
           />
+          <p className="text-[10px] font-black uppercase tracking-[0.38em] text-accent">
+            Bonus Lock
+          </p>
           <h2
-            className="text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-[0.06em] text-white"
-            style={{ textShadow: `0 0 30px ${prestigeTheme.secondary}` }}
+            className="mt-3 text-4xl font-black uppercase tracking-[0.06em] text-white sm:text-6xl md:text-7xl"
+            style={{ textShadow: `0 0 30px ${prestigeTheme.secondary}35` }}
           >
-            Bonus Scan
+            3 Channels
           </h2>
-          <p className="text-text-muted uppercase tracking-[0.35em] sm:tracking-[0.5em] text-[10px] sm:text-xs mt-3">
-            Lock Sequence Armed
+          <p className="mt-4 text-sm uppercase tracking-[0.28em] text-text-muted sm:text-base">
+            Match tiers. Win shards.
           </p>
         </motion.div>
       )}
 
-      {/* Spinners */}
       {showSpinners && (
-        <div className="system-shell flex w-full max-w-5xl flex-col items-center gap-6 px-4 py-6 sm:gap-8 sm:px-6 sm:py-8">
-          {/* Title */}
+        <div className="system-shell relative flex w-full max-w-6xl flex-col items-center gap-6 px-4 py-6 sm:gap-8 sm:px-6 sm:py-8 md:px-8 md:py-10">
+          <div
+            className="pointer-events-none absolute inset-x-12 top-0 h-px"
+            style={{
+              background: "linear-gradient(90deg, transparent 0%, rgba(255,45,149,0.6) 50%, transparent 100%)",
+            }}
+          />
+
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-center"
           >
-            <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.28em] text-text-dim mb-1">
-              Bonus Scan
+            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-accent">
+              Bonus Lock
             </p>
-            <h3 className="text-base sm:text-lg md:text-xl font-black uppercase tracking-wider text-white">
-              Lock 3 Channels to Win Shards
+            <h3 className="mt-2 text-xl font-black uppercase tracking-[0.08em] text-white sm:text-2xl md:text-3xl">
+              Match 3 Channels to Win Shards
             </h3>
+            <p className="mt-2 text-[11px] font-mono uppercase tracking-[0.24em] text-text-muted sm:text-xs">
+              {activeMessage}
+            </p>
           </motion.div>
 
-          {/* 3 spinners side by side */}
           <div
             data-tutorial="bonus-round"
-            className="relative flex items-center justify-center gap-2 sm:gap-4 md:gap-6"
+            className="relative flex w-full items-center justify-center gap-2 sm:gap-4 md:gap-6"
           >
-            {strips.map((strip, i) => (
+            {strips.map((strip, index) => (
               <VaultLockSpinner
-                key={i}
+                key={index}
                 strip={strip}
-                isActive={spinnerStates[i].isActive}
-                isLocked={spinnerStates[i].isLocked}
-                lockedResult={spinnerStates[i].lockedResult}
+                isActive={spinnerStates[index].isActive}
+                isLocked={spinnerStates[index].isLocked}
+                lockedResult={spinnerStates[index].lockedResult}
                 escalation={escalation}
-                spinnerIndex={i}
+                spinnerIndex={index}
               />
             ))}
 
-            {/* Electric arcs */}
-            {arcs.map((arc, i) => (
-              <ElectricArc key={i} color={arc.color} fromIndex={arc.from} toIndex={arc.to} />
+            {arcs.map((arc) => (
+              <ChannelBridge key={`bridge-${arc.from}`} color={arc.color} fromIndex={arc.from} />
             ))}
           </div>
 
-          {/* LOCK button */}
           {isSpinPhase && (
-            <motion.button
+            <motion.div
               key={`lock-${phase}`}
-              data-tutorial="bonus-lock"
-              initial={{ opacity: 0, scale: 0.8 }}
+              initial={{ opacity: 0, scale: 0.92 }}
               animate={{
                 opacity: 1,
-                scale: escalation >= 2
-                  ? prefersReducedMotion ? 1 : [1, 1.05, 1]
-                  : 1
+                scale:
+                  escalation >= 2 && !prefersReducedMotion
+                    ? [1, 1.04, 1]
+                    : 1,
               }}
               transition={
-                escalation >= 2
-                  ? { scale: { duration: 0.6, repeat: Infinity } }
-                  : { type: "spring", damping: 15 }
+                escalation >= 2 && !prefersReducedMotion
+                  ? { duration: 0.8, repeat: Infinity, ease: "easeInOut" }
+                  : { type: "spring", damping: 18, stiffness: 180 }
               }
-              onClick={handleLock}
-              className="command-button min-w-[220px] px-10 py-3.5 text-sm font-black uppercase tracking-[0.28em] sm:min-w-[260px] sm:px-14 sm:py-4 sm:text-base"
-              style={{
-                borderColor: `${lockButtonColor}70`,
-                color: lockButtonColor,
-                background: `linear-gradient(180deg, ${lockButtonColor}18 0%, rgba(13,17,26,0.94) 100%)`,
-                boxShadow: `0 0 ${(escalation + 1) * 14}px ${lockButtonColor}30`
-              }}
             >
-              Lock
-            </motion.button>
+              <ArcadeButton
+                tutorialId="bonus-lock"
+                onClick={handleLock}
+                tone="accent"
+                size="primary"
+                fillMode="center"
+                className="min-w-[220px] sm:min-w-[300px]"
+              >
+                LOCK
+              </ArcadeButton>
+            </motion.div>
           )}
 
-          {/* Evaluate phase */}
           <AnimatePresence>
             {phase === "evaluate" && (
               <motion.div
-                initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                initial={{ opacity: 0, y: 16, scale: 0.96 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                className="text-center mt-4"
+                className="relative w-full max-w-3xl"
               >
-                {matchCount === 3 ? (
-                  <div className="relative">
-                    <JackpotCelebration color={lockedResults[0]!.color} reduced={!!prefersReducedMotion} />
+                {matchCount === 3 && lockedResults[0] ? (
+                  <div
+                    className="system-shell-strong relative overflow-hidden border px-6 py-6 text-center sm:px-8 sm:py-7"
+                    style={{
+                      borderColor: `${lockedResults[0].color}38`,
+                      boxShadow: `0 0 34px ${lockedResults[0].color}18`,
+                    }}
+                  >
+                    <JackpotCelebration color={lockedResults[0].color} reduced={!!prefersReducedMotion} />
+                    <p className="relative z-10 text-[10px] font-black uppercase tracking-[0.34em] text-white/60">
+                      Bonus Lock
+                    </p>
                     <motion.h3
-                      className="text-4xl sm:text-6xl md:text-7xl font-black uppercase tracking-tighter italic relative z-10"
+                      className="relative z-10 mt-3 text-4xl font-black uppercase tracking-[0.02em] sm:text-6xl"
                       style={{
-                        color: lockedResults[0]!.color,
-                        textShadow: `0 0 40px ${lockedResults[0]!.color}`,
-                        filter: `drop-shadow(0 0 30px ${lockedResults[0]!.color})`
+                        color: lockedResults[0].color,
+                        textShadow: `0 0 30px ${lockedResults[0].color}`,
                       }}
-                      initial={{ scale: 0, opacity: 0 }}
+                      initial={{ scale: 0.88, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       transition={{
                         type: "spring",
                         damping: JACKPOT_CELEBRATION.textSpring.damping,
-                        stiffness: JACKPOT_CELEBRATION.textSpring.stiffness
+                        stiffness: JACKPOT_CELEBRATION.textSpring.stiffness,
                       }}
                     >
-                      Jackpot!
+                      Jackpot
                     </motion.h3>
-                    <motion.p
-                      className="text-lg sm:text-xl font-black text-white mt-3 relative z-10"
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.3 }}
-                    >
-                      <span style={{ color: lockedResults[0]!.color }}>
-                        +{SHARD_REWARDS[lockedResults[0]!.tier]}
-                      </span>{" "}
-                      Shard{SHARD_REWARDS[lockedResults[0]!.tier] > 1 ? "s" : ""}!
-                    </motion.p>
-                    <motion.p
-                      className="text-[10px] text-text-dim uppercase tracking-[0.3em] mt-1 relative z-10"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: 0.5 }}
-                    >
-                      3x {lockedResults[0]!.tier} Match
-                    </motion.p>
+                    <p className="relative z-10 mt-3 text-lg font-black uppercase tracking-[0.18em] text-white sm:text-2xl">
+                      +{SHARD_REWARDS[lockedResults[0].tier]} Shards
+                    </p>
+                    <p className="relative z-10 mt-2 text-[10px] font-mono uppercase tracking-[0.28em] text-text-muted">
+                      3x {lockedResults[0].tier} match
+                    </p>
                   </div>
                 ) : matchCount === 2 ? (
-                  <div className="module-card px-8 py-5">
-                    <h3 className="text-2xl sm:text-3xl font-black uppercase tracking-widest text-vault-gold">
-                      So Close!
+                  <div className="module-card px-6 py-6 text-center sm:px-8">
+                    <p className="text-[10px] font-black uppercase tracking-[0.34em] text-vault-gold">
+                      Bonus Lock
+                    </p>
+                    <h3 className="mt-3 text-3xl font-black uppercase tracking-[0.06em] text-white sm:text-4xl">
+                      So Close
                     </h3>
-                    <p className="text-xs text-text-dim mt-2 uppercase tracking-[0.3em]">
-                      2 of 3 matched
+                    <p className="mt-2 text-[11px] font-mono uppercase tracking-[0.24em] text-text-muted">
+                      2 channels matched
                     </p>
                   </div>
                 ) : (
-                  <div className="module-card px-8 py-5">
-                    <h3 className="text-xl sm:text-2xl font-black uppercase tracking-widest text-text-muted">
+                  <div className="module-card px-6 py-6 text-center sm:px-8">
+                    <p className="text-[10px] font-black uppercase tracking-[0.34em] text-white/56">
+                      Bonus Lock
+                    </p>
+                    <h3 className="mt-3 text-2xl font-black uppercase tracking-[0.08em] text-white sm:text-3xl">
                       No Match
                     </h3>
-                    <p className="text-xs text-text-dim mt-2 uppercase tracking-[0.3em]">
+                    <p className="mt-2 text-[11px] font-mono uppercase tracking-[0.24em] text-text-muted">
                       Better luck next time
                     </p>
                   </div>
@@ -549,83 +731,68 @@ export function VaultLockBonusStage({
 }
 
 function JackpotCelebration({ color, reduced }: { color: string; reduced: boolean }) {
-  const colorSeed = useMemo(() => color.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0), [color]);
+  const colorSeed = useMemo(
+    () => color.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0),
+    [color]
+  );
   const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
-  const particleCount = reduced ? 0 : isMobile ? 50 : JACKPOT_CELEBRATION.particleCount;
+  const particleCount = reduced ? 0 : isMobile ? 32 : 54;
 
   const particles = useMemo<BurstParticle[]>(
     () =>
-      Array.from({ length: particleCount }).map((_, i) => {
-        const base = colorSeed + i * 23.51;
-        const colorRoll = seededUnit(base + 3);
-        const isDiamond = seededUnit(base + 7) > 0.6;
+      Array.from({ length: particleCount }).map((_, index) => {
+        const base = colorSeed + index * 17.41;
         return {
-          id: i,
-          x: (seededUnit(base + 1) - 0.5) * JACKPOT_CELEBRATION.spread,
-          y: (seededUnit(base + 2) - 0.5) * JACKPOT_CELEBRATION.spread,
-          color: colorRoll > 0.5 ? color : JACKPOT_CELEBRATION.particleColors[Math.floor(seededUnit(base + 4) * JACKPOT_CELEBRATION.particleColors.length)],
-          scale: seededUnit(base + 5) * 1.0 + 0.3,
-          rotate: seededUnit(base + 6) * 720,
-          isDiamond
-        } as BurstParticle & { isDiamond: boolean };
+          id: index,
+          x: (seededUnit(base + 1) - 0.5) * (isMobile ? 320 : 420),
+          y: (seededUnit(base + 2) - 0.5) * (isMobile ? 240 : 320),
+          color:
+            seededUnit(base + 3) > 0.48
+              ? color
+              : JACKPOT_CELEBRATION.particleColors[
+                  Math.floor(seededUnit(base + 4) * JACKPOT_CELEBRATION.particleColors.length)
+                ],
+          scale: seededUnit(base + 5) * 0.8 + 0.3,
+          rotate: seededUnit(base + 6) * 540,
+        };
       }),
-    [color, colorSeed, particleCount]
+    [color, colorSeed, isMobile, particleCount]
   );
 
   if (reduced) return null;
 
   return (
-    <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible z-0">
-      {/* Shockwave rings */}
-      {Array.from({ length: JACKPOT_CELEBRATION.shockwaveCount }).map((_, i) => (
+    <div className="pointer-events-none absolute inset-0 flex items-center justify-center overflow-visible">
+      {Array.from({ length: 2 }).map((_, index) => (
         <motion.div
-          key={`shockwave-${i}`}
-          className="absolute rounded-full border-2"
-          style={{ borderColor: `${color}60`, width: 40, height: 40 }}
-          initial={{ scale: 0, opacity: 0.8 }}
-          animate={{ scale: 4, opacity: 0 }}
-          transition={{ duration: 1.2, delay: i * JACKPOT_CELEBRATION.shockwaveStagger, ease: "easeOut" }}
+          key={`shockwave-${index}`}
+          className="absolute rounded-full border"
+          style={{ borderColor: `${color}55`, width: 40, height: 40 }}
+          initial={{ scale: 0, opacity: 0.7 }}
+          animate={{ scale: isMobile ? 4 : 5, opacity: 0 }}
+          transition={{ duration: 1, delay: index * 0.14, ease: "easeOut" }}
         />
       ))}
-
-      {/* Golden flash */}
-      <motion.div
-        className="fixed inset-0 pointer-events-none z-50"
-        initial={{ opacity: 0.7 }}
-        animate={{ opacity: 0 }}
-        transition={{ duration: JACKPOT_CELEBRATION.flashDuration }}
-        style={{ backgroundColor: "rgba(255,215,0,0.25)" }}
-      />
-
-      {/* Mixed particles (round + diamond-shaped) */}
-      {particles.map((p) => {
-        const pExt = p as BurstParticle & { isDiamond: boolean };
-        const sizeClass = pExt.isDiamond
-          ? `w-${Math.ceil(pExt.scale * 3)} h-${Math.ceil(pExt.scale * 3)}`
-          : `w-${Math.ceil(pExt.scale * 2)} h-${Math.ceil(pExt.scale * 2)}`;
-        return (
-          <motion.div
-            key={p.id}
-            initial={{ opacity: 1, x: 0, y: 0, scale: 0 }}
-            animate={{
-              opacity: 0,
-              x: p.x,
-              y: p.y,
-              rotate: p.rotate,
-              scale: p.scale
-            }}
-            transition={{ duration: 2.5, ease: "easeOut" }}
-            className={`absolute ${sizeClass}`}
-            style={{
-              backgroundColor: p.color,
-              borderRadius: pExt.isDiamond ? "2px" : "50%",
-              transform: pExt.isDiamond ? "rotate(45deg)" : undefined,
-              width: `${Math.max(4, p.scale * 12)}px`,
-              height: `${Math.max(4, p.scale * 12)}px`
-            }}
-          />
-        );
-      })}
+      {particles.map((particle) => (
+        <motion.div
+          key={particle.id}
+          className="absolute rounded-sm"
+          style={{
+            width: `${Math.max(5, particle.scale * 9)}px`,
+            height: `${Math.max(5, particle.scale * 9)}px`,
+            backgroundColor: particle.color,
+          }}
+          initial={{ opacity: 1, x: 0, y: 0, scale: 0 }}
+          animate={{
+            opacity: 0,
+            x: particle.x,
+            y: particle.y,
+            rotate: particle.rotate,
+            scale: particle.scale,
+          }}
+          transition={{ duration: 1.8, ease: "easeOut" }}
+        />
+      ))}
     </div>
   );
 }

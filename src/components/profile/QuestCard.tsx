@@ -15,17 +15,17 @@ export function QuestCard({ quest, progress }: QuestCardProps) {
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`relative rounded-xl border-l-4 bg-surface-elevated/50 backdrop-blur-sm p-3 sm:p-4 transition-all ${
+      className={`module-card relative overflow-hidden p-4 sm:p-5 transition-all ${
         isCompleted ? "opacity-60" : isLocked ? "opacity-40 grayscale" : ""
       }`}
-      style={{
-        borderLeftColor: isCompleted
-          ? "#39ff14"
-          : isLocked
-            ? "#6a6a80"
-            : borderColor
-      }}
+      style={{ borderColor: `${borderColor}32` }}
     >
+      <div
+        className="absolute inset-x-0 top-0 h-px"
+        style={{
+          background: `linear-gradient(90deg, transparent 0%, ${borderColor}bb 50%, transparent 100%)`,
+        }}
+      />
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="flex-1 min-w-0">
           <h4
@@ -64,7 +64,7 @@ export function QuestCard({ quest, progress }: QuestCardProps) {
 
       {/* Progress bar */}
       {!isLocked && (
-        <div className="mt-2">
+        <div className="mt-3 rounded-[16px] border border-white/10 bg-black/20 px-3 py-3">
           <div className="flex items-center justify-between mb-1">
             <span className="text-[9px] font-mono text-text-dim">
               {progress.progress} / {quest.requirement.target}

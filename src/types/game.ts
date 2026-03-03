@@ -10,3 +10,4 @@ export * from "./tutorial";
 export * from "./bonus";
 export * from "./funko";
 export * from "./forge";
+export * from "./provably-fair";

@@ -13,7 +13,6 @@ export function ArenaForgePage() {
     balance,
     inventory,
     xp,
-    levelInfo,
     prestigeLevel,
     freeSpins,
     cashoutFlashTimestamp,
@@ -41,7 +40,6 @@ export function ArenaForgePage() {
         balance={balance}
         inventoryCount={inventory.length}
         xp={xp}
-        level={levelInfo.level}
         prestigeLevel={prestigeLevel}
         freeSpins={freeSpins}
         cashoutFlashTimestamp={cashoutFlashTimestamp}
@@ -59,7 +57,7 @@ export function ArenaForgePage() {
             Back to Arena Home
           </button>
 
-          <div className="mb-6 sm:mb-8 text-center">
+          <div className="system-shell mb-6 px-5 py-5 text-center sm:mb-8 sm:px-6 sm:py-6">
             <h1 className="text-xl sm:text-3xl md:text-5xl font-black uppercase tracking-tight text-white mb-1 sm:mb-2">
               <span className="text-accent">Forge</span>
             </h1>

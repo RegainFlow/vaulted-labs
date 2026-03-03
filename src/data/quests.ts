@@ -60,7 +60,7 @@ export const QUESTS: Quest[] = [
   {
     id: "q-stockpile",
     title: "Stockpile",
-    description: "Hold 3 items in your collection.",
+    description: "Hold 3 items in your inventory.",
     requiredLevel: 3,
     xpReward: 30,
     requirement: { type: "hold_item", target: 3 },

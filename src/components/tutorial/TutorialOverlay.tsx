@@ -2,6 +2,7 @@ import { AnimatePresence } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 import { useTutorial } from "../../hooks/useTutorial";
+import { useOverlayScrollLock } from "../../hooks/useOverlayScrollLock";
 import {
   getGroupedSpotlightRect,
   getSafeViewportInsets,
@@ -52,6 +53,7 @@ export function TutorialOverlay({
   onStepChange,
   onCommand,
 }: TutorialOverlayProps) {
+  useOverlayScrollLock(isActive);
   const { currentIndex, currentStep, next, skip, complete } = useTutorial({
     steps,
     isActive,
@@ -103,11 +105,6 @@ export function TutorialOverlay({
       }, 0);
       return () => window.clearTimeout(resetId);
     }
-
-    document.body.classList.add("tutorial-active");
-    return () => {
-      document.body.classList.remove("tutorial-active");
-    };
   }, [isActive]);
 
   useEffect(() => {

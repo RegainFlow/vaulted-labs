@@ -8,8 +8,6 @@ import { BattleSetupModal } from "../components/arena/BattleSetupModal";
 import { BattleOverlay } from "../components/arena/BattleOverlay";
 import { ForgePanel } from "../components/arena/ForgePanel";
 import { QuestList } from "../components/profile/QuestList";
-import { PrestigeButton } from "../components/profile/PrestigeButton";
-import { PrestigeOverlay } from "../components/profile/PrestigeOverlay";
 import { SegmentedTabs } from "../components/shared/SegmentedTabs";
 import { PageTutorial } from "../components/shared/PageTutorial";
 import { TutorialHelpButton } from "../components/shared/TutorialHelpButton";
@@ -25,15 +23,16 @@ export function ArenaPage() {
   const {
     balance, inventory, xp, levelInfo, prestigeLevel, freeSpins,
     cashoutFlashTimestamp, cashoutStreak, bossEnergy, maxBossEnergy, shards,
-    defeatedBosses, spendBossEnergy, completeBattle,
-    canPrestige, prestige, resetDemo, setHasSeenArenaTutorial
+    defeatedBosses, spendBossEnergy, completeBattle, resolveBattleFairly,
+    resetDemo, setHasSeenArenaTutorial
   } = useGame();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<ArenaSection>("battles");
   const [selectedBattle, setSelectedBattle] = useState<Battle | null>(null);
   const [activeBattle, setActiveBattle] = useState<Battle | null>(null);
   const [battleSquad, setBattleSquad] = useState<Collectible[] | null>(null);
-  const [showPrestigeOverlay, setShowPrestigeOverlay] = useState(false);
+  const [battleResultSeed, setBattleResultSeed] = useState<CombatResult | null>(null);
+  const [battleReceiptId, setBattleReceiptId] = useState<string | null>(null);
   const [tutorialActive, setTutorialActive] = useState(false);
   const [tutorialStepIndex, setTutorialStepIndex] = useState(0);
   const tutorialStep = ARENA_TUTORIAL_STEPS[tutorialStepIndex];
@@ -53,20 +52,41 @@ export function ArenaPage() {
     setSelectedBattle(battle);
   };
 
-  const handleStartBattle = (items: Collectible[]) => {
+  const handleStartBattle = async (items: Collectible[]) => {
     if (!selectedBattle) return;
     if (!spendBossEnergy(selectedBattle.energyCost)) return;
+    const squadStats = items.reduce(
+      (acc, item) => ({
+        totalAtk: acc.totalAtk + item.stats.atk,
+        totalDef: acc.totalDef + item.stats.def,
+        totalAgi: acc.totalAgi + item.stats.agi,
+        memberCount: acc.memberCount + 1,
+      }),
+      { totalAtk: 0, totalDef: 0, totalAgi: 0, memberCount: 0 }
+    );
+    const fairResponse = await resolveBattleFairly({
+      battleId: selectedBattle.id,
+      squadItemIds: items.map((item) => item.id),
+      squadStats,
+      rankLevel: prestigeLevel,
+    });
     setActiveBattle(selectedBattle);
     setBattleSquad(items);
+    setBattleResultSeed(
+      ((fairResponse?.resultPayload as unknown) as CombatResult) ?? null
+    );
+    setBattleReceiptId(fairResponse?.receipt.id ?? null);
     setSelectedBattle(null);
   };
 
   const handleBattleComplete = (result: CombatResult) => {
     if (battleSquad && activeBattle) {
-      completeBattle(activeBattle.id, result);
+      completeBattle(activeBattle.id, result, battleReceiptId ?? undefined);
     }
     setActiveBattle(null);
     setBattleSquad(null);
+    setBattleResultSeed(null);
+    setBattleReceiptId(null);
   };
 
   const sections: { key: ArenaSection; label: string; mobileLabel: string; tutorialId?: string }[] = [
@@ -78,8 +98,7 @@ export function ArenaPage() {
   const hideDock =
     !!selectedBattle ||
     !!activeBattle ||
-    !!battleSquad ||
-    showPrestigeOverlay;
+    !!battleSquad;
 
   return (
     <>
@@ -88,7 +107,6 @@ export function ArenaPage() {
         balance={balance}
         inventoryCount={inventory.length}
         xp={xp}
-        level={levelInfo.level}
         prestigeLevel={prestigeLevel}
         freeSpins={freeSpins}
         cashoutFlashTimestamp={cashoutFlashTimestamp}
@@ -143,18 +161,7 @@ export function ArenaPage() {
 
           {displaySection === "quests" && <QuestList />}
 
-          {/* Rank-up + Debug */}
           <div className="mt-8 sm:mt-12 space-y-4">
-            {canPrestige && (
-              <PrestigeButton
-                nextPrestigeLevel={prestigeLevel + 1}
-                onClick={() => {
-                  prestige();
-                  setShowPrestigeOverlay(true);
-                }}
-              />
-            )}
-
             <div className="pt-6 border-t border-white/5 text-center">
               <div className="flex items-center justify-center gap-3 flex-wrap">
                 <button
@@ -195,17 +202,13 @@ export function ArenaPage() {
             squadItems={battleSquad}
             rankLevel={prestigeLevel}
             onComplete={handleBattleComplete}
+            resolvedResult={battleResultSeed}
+            proofReceiptId={battleReceiptId}
           />
         )}
       </AnimatePresence>
 
       <AnimatePresence>
-        {showPrestigeOverlay && (
-          <PrestigeOverlay
-            prestigeLevel={prestigeLevel}
-            onClose={() => setShowPrestigeOverlay(false)}
-          />
-        )}
       </AnimatePresence>
 
       <PageTutorial

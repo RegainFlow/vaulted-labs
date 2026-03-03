@@ -10,6 +10,7 @@ import { ArenaQuestsPage } from "./pages/ArenaQuestsPage";
 import { WalletPage } from "./pages/WalletPage";
 import { PrivacyPage } from "./pages/PrivacyPage";
 import { TermsPage } from "./pages/TermsPage";
+import { ProvablyFairPage } from "./pages/ProvablyFairPage";
 import { QuestToastNotification } from "./components/shared/QuestToast";
 import { trackPageView } from "./lib/analytics";
 import { applySeo } from "./lib/apply-seo";
@@ -29,22 +30,44 @@ function App() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/vaults" element={<VaultsPage />} />
           <Route path="/wallet" element={<WalletPage />} />
-          <Route path="/locker" element={<Navigate to="/locker/inventory" replace />} />
+          <Route
+            path="/locker"
+            element={<Navigate to="/locker/inventory" replace />}
+          />
           <Route path="/locker/:section" element={<LockerPage />} />
           <Route path="/arena/battles" element={<ArenaBattlesPage />} />
           <Route path="/arena/forge" element={<ArenaForgePage />} />
           <Route path="/arena/quests" element={<ArenaQuestsPage />} />
           <Route path="/privacy" element={<PrivacyPage />} />
           <Route path="/terms" element={<TermsPage />} />
+          <Route path="/provably-fair" element={<ProvablyFairPage />} />
           {/* Redirects from old routes */}
           <Route path="/open" element={<Navigate to="/vaults" replace />} />
           <Route path="/play" element={<Navigate to="/vaults" replace />} />
-          <Route path="/collection" element={<Navigate to="/locker/inventory" replace />} />
-          <Route path="/shop" element={<Navigate to="/locker/market" replace />} />
-          <Route path="/market" element={<Navigate to="/locker/market" replace />} />
-          <Route path="/inventory" element={<Navigate to="/locker/inventory" replace />} />
-          <Route path="/profile" element={<Navigate to="/locker/arena" replace />} />
-          <Route path="/arena" element={<Navigate to="/locker/arena" replace />} />
+          <Route
+            path="/collection"
+            element={<Navigate to="/locker/inventory" replace />}
+          />
+          <Route
+            path="/shop"
+            element={<Navigate to="/locker/market" replace />}
+          />
+          <Route
+            path="/market"
+            element={<Navigate to="/locker/market" replace />}
+          />
+          <Route
+            path="/inventory"
+            element={<Navigate to="/locker/inventory" replace />}
+          />
+          <Route
+            path="/profile"
+            element={<Navigate to="/locker/arena" replace />}
+          />
+          <Route
+            path="/arena"
+            element={<Navigate to="/locker/arena" replace />}
+          />
         </Routes>
         <QuestToastNotification />
       </GameProvider>

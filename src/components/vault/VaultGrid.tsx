@@ -11,7 +11,7 @@ import {
   pickProduct,
   getPrestigeOdds,
 } from "../../data/vaults";
-import { pickFunko } from "../../data/funkos";
+import { getVaultItemsByRarity, pickFunko } from "../../data/funkos";
 import { FunkoImage } from "../shared/FunkoImage";
 import { VaultCard } from "./VaultCard";
 import { SegmentedTabs } from "../shared/SegmentedTabs";
@@ -21,7 +21,7 @@ import {
   OPEN_TUTORIAL_BONUS_SHOWN_EVENT,
   OPEN_TUTORIAL_RESULT_CHOSEN_EVENT,
   OPEN_TUTORIAL_REVEAL_READY_EVENT,
-  OPEN_TUTORIAL_SCAN_STARTED_EVENT,
+  OPEN_TUTORIAL_SPIN_STARTED_EVENT,
   OPEN_TUTORIAL_VAULT_SELECTED_EVENT,
 } from "../../lib/tutorial-events";
 import {
@@ -47,10 +47,15 @@ import {
   CELEBRATION_SPRINGS,
 } from "../../lib/motion-presets";
 import type { ItemAcquisitionMeta } from "../../types/collectible";
+import { InlineStatusNotice } from "../shared/InlineStatusNotice";
+import { ArcadeButton } from "../shared/ArcadeButton";
+import { ProvablyFairReceiptModal } from "../shared/ProvablyFairReceiptModal";
+import { useOverlayScrollLock } from "../../hooks/useOverlayScrollLock";
 
 /* â”€â”€â”€ Constants & Types â”€â”€â”€ */
 
 type Stage = "idle" | "spinning" | "bonus-spinning" | "result";
+type SpinRequestState = "idle" | "requesting" | "spinning";
 const ACTION_XP_REWARD = 10;
 
 interface VaultOverlayProps {
@@ -58,8 +63,12 @@ interface VaultOverlayProps {
   balance: number;
   category: string | null;
   onClose: () => void;
-  onPurchase: (vaultName: string, price: number) => ItemAcquisitionMeta | null;
-  onClaim: (amount: number) => void;
+  onPurchase: (
+    vaultName: string,
+    price: number,
+    options?: { receiptId?: string; transactionId?: string }
+  ) => { acquisitionMeta: ItemAcquisitionMeta; transactionId: string } | null;
+  onClaim: (amount: number, receiptId?: string) => void;
   onEquip: (
     product: string,
     vaultTier: VaultTierName,
@@ -67,7 +76,8 @@ interface VaultOverlayProps {
     value: number,
     funkoId?: string,
     funkoName?: string,
-    acquisitionMeta?: ItemAcquisitionMeta
+    acquisitionMeta?: ItemAcquisitionMeta,
+    receiptId?: string
   ) => void;
   onShip: (
     product: string,
@@ -76,13 +86,15 @@ interface VaultOverlayProps {
     value: number,
     funkoId?: string,
     funkoName?: string,
-    acquisitionMeta?: ItemAcquisitionMeta
+    acquisitionMeta?: ItemAcquisitionMeta,
+    receiptId?: string
   ) => boolean;
   prestigeLevel?: number;
   onUseFreeSpinForVault?: (
     vaultName: string,
-    price: number
-  ) => ItemAcquisitionMeta | null;
+    price: number,
+    options?: { receiptId?: string; transactionId?: string }
+  ) => { acquisitionMeta: ItemAcquisitionMeta; transactionId: string } | null;
   onBonusShards?: (count: number) => void;
   freeSpins?: number;
   microTutorialActive?: boolean;
@@ -300,22 +312,29 @@ function VaultOverlay({
   tutorialMode = null,
   onTutorialResultAction,
 }: VaultOverlayProps) {
+  useOverlayScrollLock(true);
+  const navigate = useNavigate();
+  const {
+    fairnessClientSeed,
+    provablyFairCommit,
+    ensureProvablyFairSession,
+    resolveVaultOpenFairly,
+    resolveBonusLockFairly,
+    getProvablyFairReceipt,
+  } = useGame();
   const isTutorialDemo = tutorialMode === "demo";
   const [stage, setStage] = useState<Stage>("idle");
   const [purchaseError, setPurchaseError] = useState<string | null>(null);
+  const [fairnessError, setFairnessError] = useState<string | null>(null);
   const [spinLanded, setSpinLanded] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
   const [isResolvingAction, setIsResolvingAction] = useState(false);
   const [cashoutComplete, setCashoutComplete] = useState(false);
   const [claimParticles, setClaimParticles] = useState<ClaimParticle[]>([]);
   const [bonusTriggered, setBonusTriggered] = useState(false);
-  const [overrideCharge, setOverrideCharge] = useState(0);
-  const [isChargingOverride, setIsChargingOverride] = useState(false);
   const [acquisitionMeta, setAcquisitionMeta] =
     useState<ItemAcquisitionMeta | null>(null);
   const timeoutIdsRef = useRef<number[]>([]);
-  const chargeRafRef = useRef<number | null>(null);
-  const chargeStartRef = useRef<number | null>(null);
   const lastOutcomeRef = useRef<SpinOutcome | null>(null);
   const effectiveOdds = useMemo(
     () => getPrestigeOdds(tier.rarities, overlayPrestigeLevel),
@@ -382,13 +401,18 @@ function VaultOverlay({
 
   const [landingFlash, setLandingFlash] = useState(false);
   const [purchasedBalance, setPurchasedBalance] = useState<number | null>(null);
+  const [vaultReceiptId, setVaultReceiptId] = useState<string | null>(null);
+  const [bonusReceiptId, setBonusReceiptId] = useState<string | null>(null);
+  const [showProofModal, setShowProofModal] = useState(false);
+  const [spinRequestState, setSpinRequestState] =
+    useState<SpinRequestState>("idle");
+  const [resolvedBonusChannels, setResolvedBonusChannels] = useState<
+    { tier: VaultTierName; color: string; imagePath: string }[] | null
+  >(null);
   const preBalance = purchasedBalance ?? balance;
   const postBalance = usedFreeSpin
     ? preBalance + resultValue
     : preBalance - tier.price + resultValue;
-  const scanAccent = "#ff2d95";
-
-  const OVERRIDE_CHARGE_DURATION = 1150;
   const OVERRIDE_SPIN_DURATION_MS = 9600;
   const POST_LAND_HOLD_DELAY = 900;
 
@@ -402,25 +426,13 @@ function VaultOverlay({
     return () => {
       timeoutIdsRef.current.forEach((id) => window.clearTimeout(id));
       timeoutIdsRef.current = [];
-      if (chargeRafRef.current) {
-        window.cancelAnimationFrame(chargeRafRef.current);
-      }
     };
   }, []);
 
-  const stopChargeLoop = useCallback(() => {
-    if (chargeRafRef.current) {
-      window.cancelAnimationFrame(chargeRafRef.current);
-      chargeRafRef.current = null;
-    }
-    chargeStartRef.current = null;
-  }, []);
-
-  const resetOverrideCharge = useCallback(() => {
-    stopChargeLoop();
-    setIsChargingOverride(false);
-    setOverrideCharge(0);
-  }, [stopChargeLoop]);
+  useEffect(() => {
+    if (stage !== "idle") return;
+    void ensureProvablyFairSession();
+  }, [ensureProvablyFairSession, stage]);
 
   const handleSpinLand = useCallback(() => {
     setSpinLanded(true);
@@ -478,41 +490,147 @@ function VaultOverlay({
     setCashoutComplete(false);
     setClaimParticles([]);
     setPurchaseError(null);
+    setFairnessError(null);
+    setSpinRequestState("idle");
     setPurchasedBalance(null);
     setBonusTriggered(false);
     setUsedFreeSpin(false);
     setAcquisitionMeta(null);
-    resetOverrideCharge();
-  }, [resetOverrideCharge]);
+    setVaultReceiptId(null);
+    setBonusReceiptId(null);
+    setResolvedBonusChannels(null);
+  }, []);
 
-  const handleSpin = useCallback(() => {
-    resetOverrideCharge();
-    const nextOutcome = rollOutcome();
+  const handleSpin = useCallback(async () => {
+    if (spinRequestState !== "idle") return;
+    const usesFreeSpin = !isTutorialDemo && freeSpins > 0;
+    setPurchaseError(null);
+    setFairnessError(null);
+    setSpinRequestState("requesting");
+    const fairResponse = !isTutorialDemo
+      ? await resolveVaultOpenFairly({
+          vaultName: tier.name,
+          price: tier.price,
+          prestigeLevel: overlayPrestigeLevel,
+          categoryKey: category,
+          fundingSource: usesFreeSpin ? "free_spin" : "credits",
+          funkoPools: {
+            common: getVaultItemsByRarity(tier.name as VaultTierName, "common").map((item) => ({
+              id: item.id,
+              name: item.name,
+              imagePath: item.imagePath,
+            })),
+            uncommon: getVaultItemsByRarity(
+              tier.name as VaultTierName,
+              "uncommon"
+            ).map((item) => ({
+              id: item.id,
+              name: item.name,
+              imagePath: item.imagePath,
+            })),
+            rare: getVaultItemsByRarity(tier.name as VaultTierName, "rare").map((item) => ({
+              id: item.id,
+              name: item.name,
+              imagePath: item.imagePath,
+            })),
+            legendary: getVaultItemsByRarity(
+              tier.name as VaultTierName,
+              "legendary"
+            ).map((item) => ({
+              id: item.id,
+              name: item.name,
+              imagePath: item.imagePath,
+            })),
+          },
+        })
+      : null;
+
+    if (!isTutorialDemo && !fairResponse) {
+      setSpinRequestState("idle");
+      setFairnessError(
+        "The fairness backend did not return a verifiable receipt. Spin is blocked until proof is available."
+      );
+      return;
+    }
+
+    const nextOutcome =
+      fairResponse
+        ? {
+            rarity: fairResponse.resultPayload.rarity as Rarity,
+            product: fairResponse.resultPayload.product as string,
+            value: Number(fairResponse.resultPayload.value),
+            funko: {
+              id: fairResponse.resultPayload.funkoId as string,
+              name: fairResponse.resultPayload.funkoName as string,
+              imagePath: fairResponse.resultPayload.imagePath as string,
+              rarity: fairResponse.resultPayload.rarity as Rarity,
+              vaultTiers: [tier.name as VaultTierName],
+              baseValue: Number(fairResponse.resultPayload.value),
+            },
+          }
+        : rollOutcome();
     const nextWonRarity = nextOutcome.rarity;
     const shouldTriggerBonus =
-      isMicroTutorial || Math.random() < (PREMIUM_BONUS_CHANCE[tier.name] ?? 0);
+      isMicroTutorial ||
+      (fairResponse
+        ? Boolean(fairResponse.resultPayload.bonusTriggered)
+        : Math.random() < (PREMIUM_BONUS_CHANCE[tier.name] ?? 0));
+
+    let nextBonusChannels: { tier: VaultTierName; color: string; imagePath: string }[] | null =
+      null;
+    let nextBonusReceiptId: string | null = null;
+    if (shouldTriggerBonus && fairResponse?.receipt.id && !isTutorialDemo) {
+      const bonusResponse = await resolveBonusLockFairly({
+        vaultName: tier.name,
+        parentVaultReceiptId: fairResponse.receipt.id,
+        prestigeLevel: overlayPrestigeLevel,
+      });
+      if (!bonusResponse) {
+        setSpinRequestState("idle");
+        setFairnessError(
+          "The bonus lock receipt could not be prepared. Spin is blocked until proof is available."
+        );
+        setResolvedBonusChannels(null);
+        setBonusReceiptId(null);
+        return;
+      }
+      nextBonusReceiptId = bonusResponse.receipt.id;
+      nextBonusChannels = bonusResponse.resultPayload.channels as {
+        tier: VaultTierName;
+        color: string;
+        imagePath: string;
+      }[];
+    }
+
+    playSfx("vault_scan_start");
     trackEvent(AnalyticsEvents.SPIN_STARTED, {
       vault_tier: tier.name,
       vault_price: tier.price,
       free_spins_available: freeSpins,
       interaction: "vault_override",
     });
-    window.dispatchEvent(new CustomEvent(OPEN_TUTORIAL_SCAN_STARTED_EVENT));
+    window.dispatchEvent(new CustomEvent(OPEN_TUTORIAL_SPIN_STARTED_EVENT));
     setOutcome(nextOutcome);
     setBonusTriggered(shouldTriggerBonus);
+    setVaultReceiptId(fairResponse?.receipt.id ?? null);
+    setBonusReceiptId(nextBonusReceiptId);
     setSpinLanded(false);
     setUsedFreeSpin(false);
     setIsResolvingAction(false);
     setCashoutComplete(false);
     setClaimParticles([]);
-    // Try free spin first
+    setResolvedBonusChannels(nextBonusChannels);
+
     const freeSpinMeta = isTutorialDemo
       ? null
-      : (onUseFreeSpinForVault?.(tier.name, tier.price) ?? null);
+      : (onUseFreeSpinForVault?.(tier.name, tier.price, {
+          receiptId: fairResponse?.receipt.id,
+          transactionId: `tx-vault-${Date.now()}`,
+        }) ?? null);
     if (freeSpinMeta) {
       setUsedFreeSpin(true);
       setPurchasedBalance(balance);
-      setAcquisitionMeta(freeSpinMeta);
+      setAcquisitionMeta(freeSpinMeta.acquisitionMeta);
       setPurchaseError(null);
       trackEvent(AnalyticsEvents.FREE_SPIN_USED, {
         vault_tier: tier.name,
@@ -525,6 +643,7 @@ function VaultOverlay({
         vault_price: tier.price,
         free_spin: true,
       });
+      setSpinRequestState("spinning");
       setStage("spinning");
       scheduleTimeout(() => handleSpinLand(), OVERRIDE_SPIN_DURATION_MS);
       if (shouldTriggerBonus) {
@@ -552,19 +671,24 @@ function VaultOverlay({
         shippingEligible: true,
       });
     } else {
-      const nextAcquisitionMeta = onPurchase(tier.name, tier.price);
-      if (!nextAcquisitionMeta) {
+      const purchaseResult = onPurchase(tier.name, tier.price, {
+        receiptId: fairResponse?.receipt.id,
+        transactionId: `tx-vault-${Date.now()}`,
+      });
+      if (!purchaseResult) {
+        setSpinRequestState("idle");
         setPurchaseError(`Insufficient credits.`);
         return;
       }
       setPurchasedBalance(balance);
-      setAcquisitionMeta(nextAcquisitionMeta);
+      setAcquisitionMeta(purchaseResult.acquisitionMeta);
     }
     setPurchaseError(null);
     trackEvent(AnalyticsEvents.VAULT_OPENED, {
       vault_tier: tier.name,
       vault_price: tier.price,
     });
+    setSpinRequestState("spinning");
     setStage("spinning");
     scheduleTimeout(() => handleSpinLand(), OVERRIDE_SPIN_DURATION_MS);
     if (shouldTriggerBonus) {
@@ -573,86 +697,43 @@ function VaultOverlay({
         vault_price: tier.price,
         first_rarity: nextWonRarity,
       });
-        scheduleTimeout(
-          () => setStage("bonus-spinning"),
-          OVERRIDE_SPIN_DURATION_MS + POST_LAND_HOLD_DELAY
-        );
-      } else {
-        scheduleTimeout(
-          () => setStage("result"),
-          OVERRIDE_SPIN_DURATION_MS + POST_LAND_HOLD_DELAY
-        );
-      }
+      scheduleTimeout(
+        () => setStage("bonus-spinning"),
+        OVERRIDE_SPIN_DURATION_MS + POST_LAND_HOLD_DELAY
+      );
+    } else {
+      scheduleTimeout(
+        () => setStage("result"),
+        OVERRIDE_SPIN_DURATION_MS + POST_LAND_HOLD_DELAY
+      );
+    }
   }, [
     OVERRIDE_SPIN_DURATION_MS,
     POST_LAND_HOLD_DELAY,
     balance,
+    category,
     freeSpins,
     handleSpinLand,
     isMicroTutorial,
     isTutorialDemo,
     onPurchase,
     onUseFreeSpinForVault,
-    resetOverrideCharge,
+    overlayPrestigeLevel,
+    resolveBonusLockFairly,
+    resolveVaultOpenFairly,
     rollOutcome,
     scheduleTimeout,
+    spinRequestState,
     tier.name,
     tier.price,
   ]);
 
   const isLoss = !usedFreeSpin && resultValue < tier.price;
   const canSpinAgain = isTutorialDemo || freeSpins > 0 || balance >= tier.price;
-  const canStartSpin = isTutorialDemo || freeSpins > 0 || balance >= tier.price;
-
-  const beginOverrideCharge = useCallback(() => {
-    if (!canStartSpin || stage !== "idle" || isChargingOverride) return;
-
-    setPurchaseError(null);
-    setIsChargingOverride(true);
-    playSfx("vault_scan_start");
-    chargeStartRef.current = null;
-
-    const tick = (timestamp: number) => {
-      if (chargeStartRef.current == null) {
-        chargeStartRef.current = timestamp;
-      }
-
-      const elapsed = timestamp - chargeStartRef.current;
-      const nextProgress = Math.min(elapsed / OVERRIDE_CHARGE_DURATION, 1);
-      setOverrideCharge(nextProgress);
-
-      if (nextProgress < 1) {
-        chargeRafRef.current = window.requestAnimationFrame(tick);
-      } else {
-        chargeRafRef.current = null;
-      }
-    };
-
-    stopChargeLoop();
-    chargeRafRef.current = window.requestAnimationFrame(tick);
-  }, [
-    OVERRIDE_CHARGE_DURATION,
-    canStartSpin,
-    isChargingOverride,
-    stage,
-    stopChargeLoop,
-  ]);
-
-  const endOverrideCharge = useCallback(() => {
-    if (!isChargingOverride) return;
-
-    const isCharged = overrideCharge >= 0.999;
-    stopChargeLoop();
-    setIsChargingOverride(false);
-
-    if (isCharged) {
-      setOverrideCharge(1);
-      handleSpin();
-      return;
-    }
-
-    setOverrideCharge(0);
-  }, [handleSpin, isChargingOverride, overrideCharge, stopChargeLoop]);
+  const canStartSpin =
+    (isTutorialDemo || freeSpins > 0 || balance >= tier.price) &&
+    stage === "idle" &&
+    spinRequestState === "idle";
 
   const handleClaimLocal = () => {
     if (isResolvingAction || cashoutComplete) return;
@@ -691,7 +772,7 @@ function VaultOverlay({
     });
     setIsClaiming(true);
     playSfx("cashout");
-    onClaim(resultValue);
+    onClaim(resultValue, vaultReceiptId ?? undefined);
     scheduleTimeout(() => {
       setIsClaiming(false);
       setCashoutComplete(true);
@@ -725,7 +806,8 @@ function VaultOverlay({
       resultValue,
       wonFunko.id,
       wonFunko.name,
-      resultAcquisitionMeta
+      resultAcquisitionMeta,
+      vaultReceiptId ?? undefined
     );
   };
 
@@ -758,7 +840,8 @@ function VaultOverlay({
       resultValue,
       wonFunko.id,
       wonFunko.name,
-      resultAcquisitionMeta
+      resultAcquisitionMeta,
+      vaultReceiptId ?? undefined
     );
     if (!shipped) {
       setIsResolvingAction(false);
@@ -921,7 +1004,7 @@ function VaultOverlay({
                           <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
                         </svg>
                         <span className="text-[10px] font-black uppercase tracking-[0.24em] text-neon-green">
-                          Free Scan Ready
+                          Free Spin Ready
                         </span>
                       </motion.div>
                     )}
@@ -929,155 +1012,108 @@ function VaultOverlay({
                 </div>
 
                 {purchaseError && (
-                  <p className="text-sm font-bold text-error">
-                    {purchaseError}
-                  </p>
+                  <InlineStatusNotice
+                    title="Insufficient Credits"
+                    tone="danger"
+                    body={purchaseError}
+                  />
+                )}
+                {fairnessError && (
+                  <InlineStatusNotice
+                    title="Proof Unavailable"
+                    tone="danger"
+                    body={fairnessError}
+                  />
                 )}
 
                 <div data-tutorial="override-stage" className="space-y-5">
+                  <div className="mx-auto w-full max-w-3xl">
+                    <div className="module-card flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex-1">
+                        <div className="grid gap-3 text-left text-xs sm:grid-cols-3 sm:gap-5">
+                          <div>
+                            <p className="system-label">Server Hash</p>
+                            <p className="mt-1 font-mono text-[11px] text-white">
+                              {provablyFairCommit
+                                ? `${provablyFairCommit.serverSeedHash.slice(0, 14)}...${provablyFairCommit.serverSeedHash.slice(-10)}`
+                                : "Unavailable"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="system-label">Client Seed</p>
+                            <p className="mt-1 font-mono text-[11px] text-white">
+                              {`${fairnessClientSeed.slice(0, 10)}...${fairnessClientSeed.slice(-6)}`}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="system-label">Next Nonce</p>
+                            <p className="mt-1 font-mono text-[11px] text-white">
+                              {provablyFairCommit?.nextNonce ?? "--"}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="mt-2 text-[10px] font-mono uppercase tracking-[0.18em] text-text-dim">
+                          {spinRequestState === "requesting"
+                            ? "Locking receipt..."
+                            : "Nonce increments after each verified outcome"}
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {vaultReceiptId ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              trackEvent(AnalyticsEvents.PROVABLY_FAIR_RECEIPT_OPENED, {
+                                source: "vault_overlay",
+                                receipt_id: vaultReceiptId,
+                              });
+                              setShowProofModal(true);
+                            }}
+                            className="system-rail px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-white"
+                          >
+                            View Proof
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            trackEvent(AnalyticsEvents.PROVABLY_FAIR_DOC_OPENED, {
+                              source: "vault_overlay",
+                              vault_tier: tier.name,
+                            });
+                            navigate("/provably-fair");
+                          }}
+                          className="system-rail px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-white"
+                        >
+                          Open Fairness Doc
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
                   <VaultOverrideTrack
                     vaultTier={tier.name as VaultTierName}
                     wonFunko={wonFunko}
                     extracting={false}
                     locked={false}
                     spinDurationMs={OVERRIDE_SPIN_DURATION_MS}
-                    chargeProgress={overrideCharge}
                   />
 
-                  <div className="mx-auto w-full max-w-5xl">
-                    <button
-                      onPointerDown={beginOverrideCharge}
-                      onPointerUp={endOverrideCharge}
-                      onPointerLeave={endOverrideCharge}
-                      onPointerCancel={endOverrideCharge}
-                      onKeyDown={(event) => {
-                        if (
-                          (event.key === "Enter" || event.key === " ") &&
-                          !event.repeat
-                        ) {
-                          event.preventDefault();
-                          beginOverrideCharge();
-                        }
-                      }}
-                      onKeyUp={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          endOverrideCharge();
-                        }
-                      }}
-                      onContextMenu={(event) => event.preventDefault()}
+                  <div className="mx-auto w-full max-w-[36rem] px-2 sm:px-0">
+                    <ArcadeButton
+                      onClick={handleSpin}
                       disabled={!canStartSpin}
-                      data-tutorial="scan-button"
-                      className={`group relative w-full overflow-hidden rounded-[28px] border px-5 py-5 text-center transition-transform duration-200 ease-out outline-none ${
-                        canStartSpin
-                          ? "cursor-pointer active:translate-y-[2px]"
-                          : "cursor-not-allowed opacity-60"
-                      }`}
-                      style={{
-                        borderColor: `${scanAccent}${overrideCharge >= 0.999 ? "d0" : "7a"}`,
-                        background:
-                          "linear-gradient(180deg, rgba(7,12,20,0.96) 0%, rgba(7,12,20,0.9) 100%)",
-                        boxShadow:
-                          overrideCharge >= 0.999
-                            ? `0 0 48px ${scanAccent}42, inset 0 0 24px ${scanAccent}24, 0 0 18px ${tier.color}26`
-                            : `0 0 ${28 + overrideCharge * 30}px ${scanAccent}${Math.round(
-                                24 + overrideCharge * 40
-                              )
-                                .toString(16)
-                                .padStart(
-                                  2,
-                                  "0"
-                                )}, inset 0 0 22px rgba(255,255,255,0.04)`,
-                      }}
+                      loading={spinRequestState === "requesting"}
+                      loadingLabel="Preparing Spin"
+                      tutorialId="spin-button"
+                      tone="accent"
+                      size="primary"
+                      fillMode="center"
+                      fullWidth
+                      className="mx-auto"
                     >
-                      <motion.div
-                        className="absolute inset-y-0 left-0 overflow-hidden rounded-[27px]"
-                        animate={{ width: `${overrideCharge * 100}%` }}
-                        transition={{
-                          type: "spring",
-                          stiffness: 190,
-                          damping: 24,
-                        }}
-                        style={{
-                          background: `linear-gradient(90deg, rgba(255,45,149,0.18) 0%, rgba(255,45,149,0.58) 48%, rgba(255,135,206,0.94) 100%)`,
-                        }}
-                      >
-                        <div
-                          className="absolute inset-0 opacity-80"
-                          style={{
-                            background:
-                              "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.02) 28%, rgba(255,255,255,0) 100%)",
-                          }}
-                        />
-                        <motion.div
-                          className="absolute inset-y-0 w-24"
-                          animate={{
-                            x: isChargingOverride ? ["-20%", "170%"] : "30%",
-                            opacity:
-                              isChargingOverride || overrideCharge >= 0.999
-                                ? 0.95
-                                : 0.35,
-                          }}
-                          transition={{
-                            duration: 1.25,
-                            repeat: Infinity,
-                            ease: "linear",
-                          }}
-                          style={{
-                            background:
-                              "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.46) 48%, transparent 100%)",
-                            filter: "blur(2px)",
-                          }}
-                        />
-                      </motion.div>
-                      <div
-                        className="absolute inset-0 opacity-40"
-                        style={{
-                          background:
-                            "linear-gradient(120deg, rgba(255,255,255,0.14) 0%, transparent 24%, transparent 72%, rgba(255,255,255,0.08) 100%)",
-                        }}
-                      />
-                      <div
-                        className="absolute inset-x-6 top-2 h-px opacity-80"
-                        style={{
-                          background: `linear-gradient(90deg, transparent 0%, ${scanAccent} 50%, transparent 100%)`,
-                        }}
-                      />
-                      <motion.div
-                        className="pointer-events-none absolute inset-0"
-                        animate={{
-                          opacity:
-                            isChargingOverride || overrideCharge >= 0.999
-                              ? [0.18, 0.34, 0.18]
-                              : 0.12,
-                        }}
-                        transition={{
-                          duration: 1.2,
-                          repeat:
-                            isChargingOverride || overrideCharge >= 0.999
-                              ? Infinity
-                              : 0,
-                          ease: "easeInOut",
-                        }}
-                        style={{
-                          background:
-                            "radial-gradient(circle at 50% 50%, rgba(255,45,149,0.22) 0%, transparent 58%)",
-                        }}
-                      />
-                      <div className="relative z-10 flex min-h-[62px] items-center justify-center">
-                        <span
-                          className="text-lg font-black uppercase tracking-[0.34em] text-white sm:text-xl"
-                          style={{
-                            textShadow:
-                              overrideCharge > 0.15
-                                ? `0 0 22px ${scanAccent}`
-                                : "0 0 10px rgba(255,255,255,0.16)",
-                          }}
-                        >
-                          SCAN
-                        </span>
-                      </div>
-                    </button>
+                      SPIN
+                    </ArcadeButton>
                   </div>
                 </div>
               </div>
@@ -1095,7 +1131,7 @@ function VaultOverlay({
             >
               <div className="mb-4 text-center sm:mb-5">
                 <h3 className="text-lg font-black uppercase tracking-[0.22em] text-white sm:text-xl md:text-2xl">
-                  {spinLanded ? "Funko Acquired" : "Scan In Progress"}
+                  {spinLanded ? "Funko Acquired" : "Spin In Progress"}
                 </h3>
               </div>
               <VaultOverrideTrack
@@ -1104,11 +1140,7 @@ function VaultOverlay({
                 extracting={!spinLanded}
                 locked={spinLanded}
                 spinDurationMs={OVERRIDE_SPIN_DURATION_MS}
-                chargeProgress={1}
               />
-              <p className="mt-4 text-center text-[11px] font-mono uppercase tracking-[0.28em] text-white/45 sm:text-xs">
-                {spinLanded ? wonFunko.name : "Resolving Target Lock"}
-              </p>
             </motion.div>
           )}
 
@@ -1121,6 +1153,7 @@ function VaultOverlay({
                   handleBonusComplete(shardsAwarded)
                 }
                 forcedLandings={isMicroTutorial ? "jackpot" : undefined}
+                resolvedChannels={resolvedBonusChannels}
               />
             </div>
           )}
@@ -1169,17 +1202,7 @@ function VaultOverlay({
                       }}
                     />
                     <div className="relative z-10 text-center">
-                      <span
-                        className="inline-flex max-w-full items-center gap-2 rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.28em] sm:px-4 sm:py-2 sm:text-xs"
-                        style={{
-                          borderColor: `${rarityConfig.color}55`,
-                          color: rarityConfig.color,
-                          backgroundColor: `${rarityConfig.color}10`,
-                        }}
-                      >
-                        Lock Acquired
-                      </span>
-                      <div className="mt-4 flex items-center justify-center">
+                      <div className="flex items-center justify-center">
                         <motion.div
                           initial={{ opacity: 0, scale: 0.78, y: 18 }}
                           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -1291,6 +1314,23 @@ function VaultOverlay({
                         </p>
                       </div>
                     </div>
+                    {vaultReceiptId && (
+                      <div className="mt-4 flex justify-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            trackEvent(AnalyticsEvents.PROVABLY_FAIR_RECEIPT_OPENED, {
+                              source: "vault_result",
+                              receipt_id: bonusReceiptId ?? vaultReceiptId,
+                            });
+                            setShowProofModal(true);
+                          }}
+                          className="system-rail px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-white"
+                        >
+                          View Proof
+                        </button>
+                      </div>
+                    )}
                   </div>
 
                   {!cashoutComplete && (
@@ -1363,7 +1403,7 @@ function VaultOverlay({
                               : "system-rail text-text-dim cursor-not-allowed"
                           }`}
                         >
-                          Scan Again
+                          Spin Again
                         </button>
                       </div>
                     </motion.div>
@@ -1373,6 +1413,14 @@ function VaultOverlay({
             })()}
         </AnimatePresence>
       </div>
+      <ProvablyFairReceiptModal
+        receipt={
+          showProofModal
+            ? getProvablyFairReceipt(bonusReceiptId ?? vaultReceiptId ?? "")
+            : null
+        }
+        onClose={() => setShowProofModal(false)}
+      />
     </motion.div>
   );
 }
@@ -1409,23 +1457,18 @@ export function VaultGrid({
     funkoName: string;
     value: number;
   } | null>(null);
-  const [tutorialResultPending, setTutorialResultPending] = useState(false);
   const [equipLockedNotice, setEquipLockedNotice] = useState<string | null>(
     null
   );
   const [unlockNoticeFeatures, setUnlockNoticeFeatures] = useState<
     UnlockFeatureKey[] | null
   >(null);
+  useOverlayScrollLock(Boolean(equipLockedNotice || unlockNoticeFeatures));
 
   useEffect(() => {
     onOverlayChange?.(selectedVault != null);
   }, [selectedVault, onOverlayChange]);
 
-  useEffect(() => {
-    if (!tutorialResultPending || selectedVault) return;
-    window.dispatchEvent(new CustomEvent(OPEN_TUTORIAL_RESULT_CHOSEN_EVENT));
-    setTutorialResultPending(false);
-  }, [selectedVault, tutorialResultPending]);
   const isPrimaryCategory = activeCategoryKey === primaryCategoryKey;
   const selectedCategory = isPrimaryCategory ? PRODUCT_TYPES[0] : null;
 
@@ -1457,8 +1500,8 @@ export function VaultGrid({
       });
     setSelectedVault(null);
   };
-  const handleClaim = (amount: number) => {
-    claimCreditsFromReveal(amount);
+  const handleClaim = (amount: number, receiptId?: string) => {
+    claimCreditsFromReveal(amount, receiptId);
     awardXP(ACTION_XP_REWARD, "vault_cashout");
   };
   const handleEquip = (
@@ -1468,7 +1511,8 @@ export function VaultGrid({
     value: number,
     funkoId?: string,
     funkoName?: string,
-    acquisitionMeta?: ItemAcquisitionMeta
+    acquisitionMeta?: ItemAcquisitionMeta,
+    receiptId?: string
   ) => {
     addAndEquipItem(
       product,
@@ -1477,7 +1521,8 @@ export function VaultGrid({
       value,
       funkoId,
       funkoName,
-      acquisitionMeta
+      acquisitionMeta,
+      receiptId
     );
     awardXP(ACTION_XP_REWARD, "vault_equip");
     setSelectedVault(null);
@@ -1510,7 +1555,8 @@ export function VaultGrid({
     value: number,
     funkoId?: string,
     funkoName?: string,
-    acquisitionMeta?: ItemAcquisitionMeta
+    acquisitionMeta?: ItemAcquisitionMeta,
+    receiptId?: string
   ) => {
     const item = addAndShipItem(
       product,
@@ -1519,7 +1565,8 @@ export function VaultGrid({
       value,
       funkoId,
       funkoName,
-      acquisitionMeta
+      acquisitionMeta,
+      receiptId
     );
     if (!item) {
       setEquipLockedNotice(
@@ -1549,7 +1596,6 @@ export function VaultGrid({
       key: tabKey,
       label: category,
       mobileLabel: isPrimary ? "Funko" : "Community",
-      badgeText: isPrimary ? undefined : "Vote",
     };
   });
 
@@ -1580,7 +1626,7 @@ export function VaultGrid({
             Open Your <span className="text-accent">Vault</span>
           </h2>
           <p className="mx-auto max-w-2xl text-text-muted">
-            Pick your tier, charge the scan, and extract your collectible.
+            Pick your tier, press spin, and extract your collectible.
           </p>
         </div>
         <SegmentedTabs
@@ -1645,7 +1691,7 @@ export function VaultGrid({
                 </h3>
                 <p className="text-xs sm:text-sm text-text-muted mt-2">
                   Community vault categories are next. Join the waitlist and
-                  help vote which collection drops first.
+                  help vote which inventory drop theme lands first.
                 </p>
                 <button
                   onClick={() => {
@@ -1708,7 +1754,9 @@ export function VaultGrid({
             tutorialMode={tutorialMode}
             onTutorialResultAction={() => {
               if (microTutorialActive && tutorialStepId === "vault-reveal") {
-                setTutorialResultPending(true);
+                window.dispatchEvent(
+                  new CustomEvent(OPEN_TUTORIAL_RESULT_CHOSEN_EVENT)
+                );
               }
             }}
           />

@@ -15,6 +15,7 @@ export type VaultLockPhase =
 export interface VaultLockSlot {
   tier: VaultTierName;
   color: string;
+  imagePath: string;
 }
 
 export interface VaultLockBonusStageProps {
@@ -22,6 +23,7 @@ export interface VaultLockBonusStageProps {
   prestigeLevel?: number;
   onComplete: (shardsAwarded: number) => void;
   forcedLandings?: "jackpot";
+  resolvedChannels?: VaultLockSlot[] | null;
 }
 
 export const SHARD_REWARDS: Record<VaultTierName, number> = {

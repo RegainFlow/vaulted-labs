@@ -14,9 +14,14 @@ function formatTimestamp(ts: number): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export function TransactionRow({ transaction, isLast }: TransactionRowProps) {
+export function TransactionRow({
+  transaction,
+  isLast,
+  onOpenReceipt,
+}: TransactionRowProps) {
   const config = TYPE_CONFIG[transaction.type] || TYPE_CONFIG.earned;
   const isPositive = transaction.amount > 0;
+  const isActivity = transaction.type === "activity";
 
   return (
     <div
@@ -36,16 +41,37 @@ export function TransactionRow({ transaction, isLast }: TransactionRowProps) {
         <p className="text-xs sm:text-sm font-bold text-white truncate">
           {transaction.description}
         </p>
-        <p className="system-kicker mt-1">
-          {formatTimestamp(transaction.timestamp)}
-        </p>
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <p className="system-kicker">{formatTimestamp(transaction.timestamp)}</p>
+          {transaction.provablyFairReceiptId && onOpenReceipt ? (
+            <button
+              type="button"
+              onClick={() => onOpenReceipt(transaction.provablyFairReceiptId!)}
+              className={`rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] ${
+                transaction.provablyFairStatus === "revealed"
+                  ? "border-neon-green/35 text-neon-green"
+                  : "border-accent/35 text-accent"
+              }`}
+            >
+              Proof
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {/* Amount */}
       <span
-        className={`shrink-0 text-sm sm:text-base font-mono font-black ${isPositive ? "text-accent" : "text-error"}`}
+        className={`shrink-0 text-sm sm:text-base font-mono font-black ${
+          isActivity
+            ? "text-text-muted"
+            : isPositive
+              ? "text-accent"
+              : "text-error"
+        }`}
       >
-        {isPositive ? "+" : ""}${Math.abs(transaction.amount).toLocaleString()}
+        {isActivity
+          ? "Recorded"
+          : `${isPositive ? "+" : ""}$${Math.abs(transaction.amount).toLocaleString()}`}
       </span>
     </div>
   );

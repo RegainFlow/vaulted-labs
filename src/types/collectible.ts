@@ -35,6 +35,7 @@ export interface Collectible {
   fundingSource: ItemFundingSource;
   shippingEligible: boolean;
   shippingLockReason?: string;
+  provablyFairReceiptId?: string;
 }
 
 /** @deprecated Use Collectible instead */
@@ -45,6 +46,7 @@ export interface CollectibleCardProps {
   onCashout: (itemId: string) => void;
   onShip: (itemId: string) => void;
   onList: (itemId: string) => void;
+  onOpenProof?: (receiptId: string) => void;
 }
 
 /** @deprecated Use CollectibleCardProps instead */

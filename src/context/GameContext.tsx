@@ -38,10 +38,21 @@ import {
   type UnlockFeatureKey
 } from "../lib/unlocks";
 import { playSfx } from "../lib/audio";
+import {
+  invokeProvablyFairRoll,
+  invokeProvablyFairRotate,
+  invokeProvablyFairSession,
+} from "../lib/provably-fair-api";
+import type {
+  ProvablyFairCommitState,
+  ProvablyFairReceipt,
+  ProvablyFairRollResponse,
+  ProvablyFairRevealStatus,
+} from "../types/provably-fair";
 
 // localStorage helpers
 const STORAGE_KEY = "vaultedlabs-game-state";
-const STATE_VERSION = 4;
+const STATE_VERSION = 5;
 
 interface PersistedState {
   creditTransactions: CreditTransaction[];
@@ -69,6 +80,10 @@ interface PersistedState {
   shards: number;
   equippedItemIds: string[];
   trackedUnlocks: UnlockFeatureKey[];
+  walletId: string;
+  fairnessClientSeed: string;
+  provablyFairCommit: ProvablyFairCommitState | null;
+  provablyFairReceipts: ProvablyFairReceipt[];
   stateVersion: number;
 }
 
@@ -198,6 +213,37 @@ function normalizeCreditTransactions(
   });
 }
 
+function randomHex(bytes = 16) {
+  const values = crypto.getRandomValues(new Uint8Array(bytes));
+  return Array.from(values)
+    .map((value) => value.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+function attachRevealToReceipts(
+  receipts: ProvablyFairReceipt[],
+  revealedCommit?:
+    | {
+        commitId: string;
+        serverSeedHash: string;
+        serverSeed: string;
+        revealedAt: string;
+      }
+    | undefined
+) {
+  if (!revealedCommit) return receipts;
+
+  return receipts.map((receipt) =>
+    receipt.commitId === revealedCommit.commitId
+      ? {
+          ...receipt,
+          serverSeed: revealedCommit.serverSeed,
+          revealStatus: "revealed" as ProvablyFairRevealStatus,
+        }
+      : receipt
+  );
+}
+
 function loadState(): PersistedState | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -265,6 +311,10 @@ function migrateState(state: PersistedState): PersistedState {
     shards: state.shards ?? 0,
     equippedItemIds: state.equippedItemIds ?? [],
     trackedUnlocks: state.trackedUnlocks ?? [],
+    walletId: state.walletId ?? crypto.randomUUID(),
+    fairnessClientSeed: state.fairnessClientSeed ?? randomHex(16),
+    provablyFairCommit: state.provablyFairCommit ?? null,
+    provablyFairReceipts: state.provablyFairReceipts ?? [],
     hasSeenArenaTutorial: state.hasSeenArenaTutorial ?? false,
     hasSeenCollectionTutorial: state.hasSeenCollectionTutorial ?? false,
     stateVersion: STATE_VERSION
@@ -273,6 +323,10 @@ function migrateState(state: PersistedState): PersistedState {
 
 // Context
 interface GameContextValue {
+  walletId: string;
+  fairnessClientSeed: string;
+  provablyFairCommit: ProvablyFairCommitState | null;
+  provablyFairReceipts: ProvablyFairReceipt[];
   creditTransactions: CreditTransaction[];
   inventory: Collectible[];
   xp: number;
@@ -309,13 +363,18 @@ interface GameContextValue {
     value: number,
     funkoId?: string,
     funkoName?: string,
-    acquisitionMeta?: ItemAcquisitionMeta
+    acquisitionMeta?: ItemAcquisitionMeta,
+    receiptId?: string
   ) => Collectible | null;
   cashoutItem: (itemId: string) => void;
   shipItem: (itemId: string) => boolean;
   listItem: (itemId: string) => void;
-  purchaseVault: (vaultName: string, price: number) => ItemAcquisitionMeta | null;
-  claimCreditsFromReveal: (value: number) => void;
+  purchaseVault: (
+    vaultName: string,
+    price: number,
+    options?: { receiptId?: string; transactionId?: string }
+  ) => { acquisitionMeta: ItemAcquisitionMeta; transactionId: string } | null;
+  claimCreditsFromReveal: (value: number, receiptId?: string) => string;
   buyListing: (listingId: string) => boolean;
   placeBid: (auctionId: string, amount: number) => boolean;
   addXP: (amount: number) => void;
@@ -345,7 +404,11 @@ interface GameContextValue {
   ) => void;
   freeSpins: number;
   grantFreeSpins: (count: number) => void;
-  useFreeSpinForVault: (vaultName: string, price: number) => ItemAcquisitionMeta | null;
+  useFreeSpinForVault: (
+    vaultName: string,
+    price: number,
+    options?: { receiptId?: string; transactionId?: string }
+  ) => { acquisitionMeta: ItemAcquisitionMeta; transactionId: string } | null;
   cashoutFlashTimestamp: number;
   cashoutStreak: number;
   // v2 — Arena economy
@@ -368,11 +431,38 @@ interface GameContextValue {
     value: number,
     funkoId?: string,
     funkoName?: string,
-    acquisitionMeta?: ItemAcquisitionMeta
+    acquisitionMeta?: ItemAcquisitionMeta,
+    receiptId?: string
   ) => Collectible;
   unequipItem: (itemId: string) => void;
-  forgeItems: (itemIds: [string, string, string], freeSpinsUsed: number) => Collectible | null;
-  completeBattle: (bossId: string, result: CombatResult) => void;
+  forgeItems: (
+    itemIds: [string, string, string],
+    freeSpinsUsed: number,
+    fairResult?: {
+      rarity: Rarity;
+      product: string;
+      vaultTier: VaultTierName;
+      value: number;
+      stats: Collectible["stats"];
+      receiptId?: string;
+    }
+  ) => Collectible | null;
+  completeBattle: (bossId: string, result: CombatResult, receiptId?: string) => void;
+  ensureProvablyFairSession: () => Promise<ProvablyFairCommitState | null>;
+  rotateProvablyFairSeed: () => Promise<void>;
+  resolveVaultOpenFairly: (
+    requestPayload: Record<string, unknown>
+  ) => Promise<ProvablyFairRollResponse | null>;
+  resolveBonusLockFairly: (
+    requestPayload: Record<string, unknown>
+  ) => Promise<ProvablyFairRollResponse | null>;
+  resolveForgeFairly: (
+    requestPayload: Record<string, unknown>
+  ) => Promise<ProvablyFairRollResponse | null>;
+  resolveBattleFairly: (
+    requestPayload: Record<string, unknown>
+  ) => Promise<ProvablyFairRollResponse | null>;
+  getProvablyFairReceipt: (receiptId: string) => ProvablyFairReceipt | null;
 }
 
 const GameContext = createContext<GameContextValue | null>(null);
@@ -397,6 +487,8 @@ function initQuestProgress(): QuestProgress[] {
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const initial = migrated;
+  const initialWalletId = initial?.walletId ?? crypto.randomUUID();
+  const initialFairnessClientSeed = initial?.fairnessClientSeed ?? randomHex(16);
 
   const [creditTransactions, setCreditTransactions] = useState<
     CreditTransaction[]
@@ -463,6 +555,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [trackedUnlocks, setTrackedUnlocks] = useState<UnlockFeatureKey[]>(
     initial?.trackedUnlocks ?? []
   );
+  const [walletId, setWalletId] = useState(initialWalletId);
+  const [fairnessClientSeed, setFairnessClientSeed] = useState(
+    initialFairnessClientSeed
+  );
+  const [provablyFairCommit, setProvablyFairCommit] =
+    useState<ProvablyFairCommitState | null>(initial?.provablyFairCommit ?? null);
+  const [provablyFairReceipts, setProvablyFairReceipts] = useState<
+    ProvablyFairReceipt[]
+  >(initial?.provablyFairReceipts ?? []);
 
   // Ref to track toast auto-dismiss timer
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -540,6 +641,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       shards,
       equippedItemIds,
       trackedUnlocks,
+      walletId,
+      fairnessClientSeed,
+      provablyFairCommit,
+      provablyFairReceipts,
       stateVersion: STATE_VERSION
     });
   }, [
@@ -548,7 +653,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
     hasSeenInventoryTutorial, hasSeenShopTutorial, hasSeenBossFightTutorial,
     hasSeenArenaTutorial, hasSeenCollectionTutorial,
     questProgress, prestigeLevel, defeatedBosses, freeSpins, cashoutStreak,
-    bossEnergy, lastEnergyRegenAt, shards, equippedItemIds, trackedUnlocks
+    bossEnergy, lastEnergyRegenAt, shards, equippedItemIds, trackedUnlocks,
+    walletId, fairnessClientSeed, provablyFairCommit, provablyFairReceipts
   ]);
 
   const balance = useMemo(
@@ -557,6 +663,139 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const levelInfo = useMemo(() => getLevelInfo(xp), [xp]);
+
+  const updateReceiptStore = useCallback(
+    (response: ProvablyFairRollResponse | null) => {
+      if (!response) return;
+      setProvablyFairCommit(response.activeCommit);
+      setProvablyFairReceipts((prev) =>
+        attachRevealToReceipts(
+          [
+            ...attachRevealToReceipts(prev, response.revealedCommit).filter(
+              (receipt) => receipt.id !== response.receipt.id
+            ),
+            response.receipt,
+          ],
+          response.revealedCommit
+        )
+      );
+    },
+    []
+  );
+
+  const ensureProvablyFairSession = useCallback(async () => {
+    try {
+      const response = await invokeProvablyFairSession({
+        walletId,
+        clientSeed: fairnessClientSeed,
+      });
+      setProvablyFairCommit(response.activeCommit);
+      setProvablyFairReceipts((prev) =>
+        attachRevealToReceipts(prev, response.revealedCommit)
+      );
+      return response.activeCommit;
+    } catch {
+      return null;
+    }
+  }, [fairnessClientSeed, walletId]);
+
+  const rotateProvablyFairSeed = useCallback(async () => {
+    try {
+      const response = await invokeProvablyFairRotate({
+        walletId,
+        clientSeed: fairnessClientSeed,
+      });
+      setProvablyFairCommit(response.activeCommit);
+      setProvablyFairReceipts((prev) =>
+        attachRevealToReceipts(prev, response.revealedCommit)
+      );
+      trackEvent(AnalyticsEvents.PROVABLY_FAIR_SEED_ROTATED);
+    } catch {
+      // Keep UI stable when the fairness backend is unavailable.
+    }
+  }, [fairnessClientSeed, walletId]);
+
+  const resolveVaultOpenFairly = useCallback(
+    async (requestPayload: Record<string, unknown>) => {
+      try {
+        const response = await invokeProvablyFairRoll({
+          walletId,
+          clientSeed: fairnessClientSeed,
+          gameType: "vault_open",
+          requestPayload,
+        });
+        updateReceiptStore(response);
+        return response;
+      } catch {
+        return null;
+      }
+    },
+    [fairnessClientSeed, updateReceiptStore, walletId]
+  );
+
+  const resolveBonusLockFairly = useCallback(
+    async (requestPayload: Record<string, unknown>) => {
+      try {
+        const response = await invokeProvablyFairRoll({
+          walletId,
+          clientSeed: fairnessClientSeed,
+          gameType: "bonus_lock",
+          requestPayload,
+          linkedParentReceiptId:
+            typeof requestPayload.parentVaultReceiptId === "string"
+              ? requestPayload.parentVaultReceiptId
+              : undefined,
+        });
+        updateReceiptStore(response);
+        return response;
+      } catch {
+        return null;
+      }
+    },
+    [fairnessClientSeed, updateReceiptStore, walletId]
+  );
+
+  const resolveForgeFairly = useCallback(
+    async (requestPayload: Record<string, unknown>) => {
+      try {
+        const response = await invokeProvablyFairRoll({
+          walletId,
+          clientSeed: fairnessClientSeed,
+          gameType: "forge_roll",
+          requestPayload,
+        });
+        updateReceiptStore(response);
+        return response;
+      } catch {
+        return null;
+      }
+    },
+    [fairnessClientSeed, updateReceiptStore, walletId]
+  );
+
+  const resolveBattleFairly = useCallback(
+    async (requestPayload: Record<string, unknown>) => {
+      try {
+        const response = await invokeProvablyFairRoll({
+          walletId,
+          clientSeed: fairnessClientSeed,
+          gameType: "battle_sim",
+          requestPayload,
+        });
+        updateReceiptStore(response);
+        return response;
+      } catch {
+        return null;
+      }
+    },
+    [fairnessClientSeed, updateReceiptStore, walletId]
+  );
+
+  const getProvablyFairReceipt = useCallback(
+    (receiptId: string) =>
+      provablyFairReceipts.find((receipt) => receipt.id === receiptId) ?? null,
+    [provablyFairReceipts]
+  );
 
   // Derived: equipped items resolved from IDs
   const equippedItems = useMemo(
@@ -579,6 +818,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
     );
     return stats;
   }, [equippedItems]);
+
+  useEffect(() => {
+    if (provablyFairReceipts.length === 0) return;
+    const statusByReceiptId = new Map(
+      provablyFairReceipts.map((receipt) => [receipt.id, receipt.revealStatus])
+    );
+
+    setCreditTransactions((prev) =>
+      prev.map((transaction) => {
+        if (!transaction.provablyFairReceiptId) return transaction;
+        const nextStatus = statusByReceiptId.get(transaction.provablyFairReceiptId);
+        if (!nextStatus || transaction.provablyFairStatus === nextStatus) {
+          return transaction;
+        }
+        return {
+          ...transaction,
+          provablyFairStatus: nextStatus,
+        };
+      })
+    );
+  }, [provablyFairReceipts]);
 
   // Auto-unlock quests when level increases
   useEffect(() => {
@@ -733,6 +993,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
     [advanceQuests]
   );
 
+  const addProofActivity = useCallback((description: string, receiptId?: string) => {
+    if (!receiptId) return;
+    setCreditTransactions((prev) => [
+      ...prev,
+      {
+        id: uid("tx"),
+        type: "activity",
+        amount: 0,
+        description,
+        timestamp: Date.now(),
+        provablyFairReceiptId: receiptId,
+        provablyFairStatus: "pending_reveal",
+      }
+    ]);
+  }, []);
+
   const addAndShipItem = useCallback(
     (
       product: string,
@@ -741,7 +1017,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       value: number,
       funkoId?: string,
       funkoName?: string,
-      acquisitionMeta: ItemAcquisitionMeta = DEFAULT_ITEM_META
+      acquisitionMeta: ItemAcquisitionMeta = DEFAULT_ITEM_META,
+      receiptId?: string
     ): Collectible | null => {
       if (!acquisitionMeta.shippingEligible) {
         playSfx("ui_locked");
@@ -758,6 +1035,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         acquiredAt: Date.now(),
         stats: generateItemStats(rarity, vaultTier),
         isEquipped: false,
+        provablyFairReceiptId: receiptId,
         ...acquisitionMeta,
         ...(funkoId ? { funkoId } : {}),
         ...(funkoName ? { funkoName } : {})
@@ -767,11 +1045,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setCashoutStreak(0);
       advanceQuests("hold_item", 1);
       advanceQuests("ship_item", 1);
+      addProofActivity(`Shipped: ${funkoName ?? product}`, receiptId);
       playSfx("ship_item");
 
       return item;
     },
-    [advanceQuests]
+    [addProofActivity, advanceQuests]
   );
 
   const cashoutItem = useCallback(
@@ -782,24 +1061,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
       // Auto-unequip if equipped
       setEquippedItemIds((prev) => prev.filter((id) => id !== itemId));
       setInventory((prev) =>
-        prev.map((item) => {
-          if (item.id !== itemId || item.status !== "held") return item;
-          setCreditTransactions((txs) => [
-            ...txs,
-            {
-              id: uid("tx"),
-              type: "earned",
-              amount: item.value,
-              description: `Cashout: ${item.rarity} ${item.product}`,
-              timestamp: Date.now()
-            }
-          ]);
-          advanceQuests("cashout_item", 1);
-          setCashoutFlashTimestamp(Date.now());
-          setCashoutStreak((prev) => prev + 1);
-          return { ...item, status: "cashed_out" as const, isEquipped: false };
-        })
+        prev.map((item) =>
+          item.id === itemId && item.status === "held"
+            ? { ...item, status: "cashed_out" as const, isEquipped: false }
+            : item
+        )
       );
+      setCreditTransactions((prev) => [
+        ...prev,
+        {
+          id: uid("tx"),
+          type: "earned",
+          amount: targetItem.value,
+          description: `Cashout: ${targetItem.rarity} ${targetItem.product}`,
+          timestamp: Date.now(),
+          provablyFairReceiptId: targetItem.provablyFairReceiptId,
+          provablyFairStatus: targetItem.provablyFairReceiptId
+            ? "pending_reveal"
+            : undefined,
+        }
+      ]);
+      advanceQuests("cashout_item", 1);
+      setCashoutFlashTimestamp(Date.now());
+      setCashoutStreak((prev) => prev + 1);
       playSfx("cashout");
     },
     [advanceQuests, inventory]
@@ -857,17 +1141,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const purchaseVault = useCallback(
-    (vaultName: string, price: number): ItemAcquisitionMeta | null => {
+    (
+      vaultName: string,
+      price: number,
+      options?: { receiptId?: string; transactionId?: string }
+    ): { acquisitionMeta: ItemAcquisitionMeta; transactionId: string } | null => {
       if (balance < price) return null;
       const acquisitionMeta = resolveVaultAcquisitionMeta(price, creditTransactions);
+      const transactionId = options?.transactionId ?? uid("tx");
       setCreditTransactions((prev) => [
         ...prev,
         {
-          id: uid("tx"),
+          id: transactionId,
           type: "spent",
           amount: -price,
           description: `${vaultName} Vault purchase`,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          provablyFairReceiptId: options?.receiptId,
+          provablyFairStatus: options?.receiptId ? "pending_reveal" : undefined,
         }
       ]);
       setXP((prev) => prev + price);
@@ -877,24 +1168,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
       );
       advanceQuests("vault_purchase", 1);
       advanceQuests("spend_amount", price);
-      return acquisitionMeta;
+      return { acquisitionMeta, transactionId };
     },
     [balance, advanceQuests, creditTransactions]
   );
 
-  const claimCreditsFromReveal = useCallback((value: number) => {
+  const claimCreditsFromReveal = useCallback((value: number, receiptId?: string) => {
+    const transactionId = uid("tx");
     setCreditTransactions((prev) => [
       ...prev,
       {
-        id: uid("tx"),
+        id: transactionId,
         type: "earned",
         amount: value,
         description: "Vault reveal credit claim",
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        provablyFairReceiptId: receiptId,
+        provablyFairStatus: receiptId ? "pending_reveal" : undefined,
       }
     ]);
     setCashoutFlashTimestamp(Date.now());
     setCashoutStreak((prev) => prev + 1);
+    return transactionId;
   }, []);
 
   const buyListing = useCallback(
@@ -982,8 +1277,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const useFreeSpinForVault = useCallback(
-    (vaultName: string, price: number): ItemAcquisitionMeta | null => {
+    (
+      vaultName: string,
+      price: number,
+      options?: { receiptId?: string; transactionId?: string }
+    ): { acquisitionMeta: ItemAcquisitionMeta; transactionId: string } | null => {
       if (freeSpins <= 0) return null;
+      const transactionId = options?.transactionId ?? uid("tx");
       setFreeSpins((prev) => prev - 1);
       setXP((prev) => prev + price);
       // Grant boss energy on free spin vault open
@@ -993,16 +1293,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setCreditTransactions((prev) => [
         ...prev,
         {
-          id: uid("tx"),
+          id: transactionId,
           type: "earned",
           amount: 0,
           description: `Free Spin: ${vaultName} Vault`,
-          timestamp: Date.now()
+          timestamp: Date.now(),
+          provablyFairReceiptId: options?.receiptId,
+          provablyFairStatus: options?.receiptId ? "pending_reveal" : undefined,
         }
       ]);
       advanceQuests("vault_purchase", 1);
       advanceQuests("spend_amount", price);
-      return createItemMeta("free_spin", false, FREE_SPIN_SHIPPING_LOCK_REASON);
+      return {
+        acquisitionMeta: createItemMeta(
+          "free_spin",
+          false,
+          FREE_SPIN_SHIPPING_LOCK_REASON
+        ),
+        transactionId,
+      };
     },
     [freeSpins, advanceQuests]
   );
@@ -1114,7 +1423,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       value: number,
       funkoId?: string,
       funkoName?: string,
-      acquisitionMeta: ItemAcquisitionMeta = DEFAULT_ITEM_META
+      acquisitionMeta: ItemAcquisitionMeta = DEFAULT_ITEM_META,
+      receiptId?: string
     ): Collectible => {
       const item: Collectible = {
         id: uid("item"),
@@ -1126,6 +1436,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         acquiredAt: Date.now(),
         stats: generateItemStats(rarity, vaultTier),
         isEquipped: true,
+        provablyFairReceiptId: receiptId,
         ...acquisitionMeta,
         ...(funkoId ? { funkoId } : {}),
         ...(funkoName ? { funkoName } : {})
@@ -1135,11 +1446,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setEquippedItemIds((prev) => [...prev, item.id]);
       setCashoutStreak(0);
       advanceQuests("hold_item", 1);
+      addProofActivity(`Equipped: ${funkoName ?? product}`, receiptId);
       playSfx("equip_item");
 
       return item;
     },
-    [advanceQuests]
+    [addProofActivity, advanceQuests]
   );
 
   const unequipItem = useCallback((itemId: string) => {
@@ -1150,7 +1462,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const forgeItems = useCallback(
-    (itemIds: [string, string, string], freeSpinsUsed: number): Collectible | null => {
+    (
+      itemIds: [string, string, string],
+      freeSpinsUsed: number,
+      fairResult?: {
+        rarity: Rarity;
+        product: string;
+        vaultTier: VaultTierName;
+        value: number;
+        stats: Collectible["stats"];
+        receiptId?: string;
+      }
+    ): Collectible | null => {
       const items = itemIds.map((id) =>
         inventory.find((i) => i.id === id && i.status === "held")
       );
@@ -1170,11 +1493,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
         validItems[2].rarity
       );
       const finalOdds = applyForgeBoost(baseOdds, freeSpinsUsed);
-      const resultRarity = rollForgeResult(finalOdds);
+      const resultRarity = fairResult?.rarity ?? rollForgeResult(finalOdds);
 
       // Pick a vault tier from the highest-tier input
       const tierOrder: VaultTierName[] = ["Bronze", "Silver", "Gold", "Platinum", "Obsidian", "Diamond"];
-      const highestTier = validItems.reduce((best, item) => {
+      const highestTier = fairResult?.vaultTier ?? validItems.reduce((best, item) => {
         const bestIdx = tierOrder.indexOf(best);
         const itemIdx = tierOrder.indexOf(item.vaultTier);
         return itemIdx > bestIdx ? item.vaultTier : best;
@@ -1182,18 +1505,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
       const rarityConfig = RARITY_CONFIG[resultRarity];
       const avgPrice = validItems.reduce((sum, i) => sum + i.value, 0) / 3;
-      const resultValue = pickValue(avgPrice, rarityConfig);
+      const resultValue = fairResult?.value ?? pickValue(avgPrice, rarityConfig);
 
       const newItem: Collectible = {
         id: uid("item"),
-        product: pickProduct(),
+        product: fairResult?.product ?? pickProduct(),
         vaultTier: highestTier,
         rarity: resultRarity,
         value: resultValue,
         status: "held",
         acquiredAt: Date.now(),
-        stats: generateItemStats(resultRarity, highestTier),
+        stats: fairResult?.stats ?? generateItemStats(resultRarity, highestTier),
         isEquipped: false,
+        provablyFairReceiptId: fairResult?.receiptId,
         ...mergeItemMeta(validItems)
       };
 
@@ -1211,13 +1535,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
   );
 
   const completeBattle = useCallback(
-    (bossId: string, result: CombatResult) => {
+    (bossId: string, result: CombatResult, receiptId?: string) => {
       if (result.victory && !defeatedBosses.includes(bossId)) {
         setDefeatedBosses((prev) => [...prev, bossId]);
       }
       // Grant shards + XP only — no credits, no items
       if (result.shardsEarned > 0) {
         setShards((prev) => prev + result.shardsEarned);
+        if (receiptId) {
+          setCreditTransactions((prev) => [
+            ...prev,
+            {
+              id: uid("tx"),
+              type: "earned",
+              amount: 0,
+              description: `Battle proof: ${bossId}`,
+              timestamp: Date.now(),
+              provablyFairReceiptId: receiptId,
+              provablyFairStatus: "pending_reveal",
+            },
+          ]);
+        }
       }
       setXP((prev) => prev + result.xpEarned);
     },
@@ -1280,11 +1618,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setShards(0);
     setEquippedItemIds([]);
     setTrackedUnlocks([]);
+    setWalletId(crypto.randomUUID());
+    setFairnessClientSeed(randomHex(16));
+    setProvablyFairCommit(null);
+    setProvablyFairReceipts([]);
     document.documentElement.removeAttribute("data-prestige");
   }, []);
 
   const value = useMemo<GameContextValue>(
     () => ({
+      walletId,
+      fairnessClientSeed,
+      provablyFairCommit,
+      provablyFairReceipts,
       creditTransactions,
       inventory,
       xp,
@@ -1354,9 +1700,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
       addAndEquipItem,
       unequipItem,
       forgeItems,
-      completeBattle
+      completeBattle,
+      ensureProvablyFairSession,
+      rotateProvablyFairSeed,
+      resolveVaultOpenFairly,
+      resolveBonusLockFairly,
+      resolveForgeFairly,
+      resolveBattleFairly,
+      getProvablyFairReceipt
     }),
     [
+      walletId, fairnessClientSeed, provablyFairCommit, provablyFairReceipts,
       creditTransactions, inventory, xp, listings, auctions, balance, levelInfo,
       hasSeenTutorial, hasSeenWalletTutorial, hasSeenProfileTutorial,
       hasSeenInventoryTutorial, hasSeenShopTutorial, hasSeenBossFightTutorial,
@@ -1371,7 +1725,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       bossEnergy, spendBossEnergy, grantBossEnergy,
       shards, grantShards, grantBonusShards, convertShardsToFreeSpin,
       equippedItemIds, equippedItems, squadStats, equipItem, addAndEquipItem, unequipItem,
-      forgeItems, completeBattle
+      forgeItems, completeBattle,
+      ensureProvablyFairSession, rotateProvablyFairSeed,
+      resolveVaultOpenFairly, resolveBonusLockFairly, resolveForgeFairly,
+      resolveBattleFairly, getProvablyFairReceipt
     ]
   );
 

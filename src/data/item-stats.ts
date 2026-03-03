@@ -38,3 +38,15 @@ export function generateItemStats(rarity: Rarity, vaultTier: VaultTierName): Ite
     agi: Math.round(randomInRange(range.min, range.max) * mult)
   };
 }
+
+export function getPreviewStats(rarity: Rarity, vaultTier: VaultTierName): ItemStats {
+  const range = RARITY_STAT_RANGES[rarity];
+  const mult = VAULT_TIER_MULTIPLIERS[vaultTier];
+  const midpoint = Math.round(((range.min + range.max) / 2) * mult);
+
+  return {
+    atk: midpoint,
+    def: midpoint,
+    agi: midpoint,
+  };
+}

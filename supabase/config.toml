@@ -238,6 +238,7 @@ otp_expiry = 3600
 # content_path = "./templates/password_changed_notification.html"
 
 [auth.sms]
+
 # Allow/disallow new user signups via SMS to your project.
 enable_signup = false
 # If enabled, users need to confirm their phone number before signing in.
@@ -390,11 +391,24 @@ s3_secret_key = "env(S3_SECRET_KEY)"
 [functions.waitlist-signup]
 enabled = true
 verify_jwt = false
-import_map = "./functions/import_map.json"
 entrypoint = "./functions/waitlist-signup/index.ts"
 
 [functions.waitlist-count]
 enabled = true
 verify_jwt = false
-import_map = "./functions/import_map.json"
 entrypoint = "./functions/waitlist-count/index.ts"
+
+[functions.provably-fair-session]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/provably-fair-session/index.ts"
+
+[functions.provably-fair-roll]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/provably-fair-roll/index.ts"
+
+[functions.provably-fair-rotate]
+enabled = true
+verify_jwt = false
+entrypoint = "./functions/provably-fair-rotate/index.ts"

@@ -36,7 +36,7 @@ export function QuestList() {
     <div className="space-y-6" data-tutorial="arena-quests">
       {/* Active Quests */}
       {activeQuests.length > 0 && (
-        <div>
+        <div className="system-shell px-4 py-4 sm:px-5 sm:py-5">
           <h3 className="text-base sm:text-lg font-black text-white uppercase tracking-tight mb-3 sm:mb-4">
             Active <span className="text-accent">Quests</span>
           </h3>
@@ -54,7 +54,7 @@ export function QuestList() {
 
       {/* Locked Quests */}
       {lockedQuests.length > 0 && (
-        <div>
+        <div className="system-shell px-4 py-4 sm:px-5 sm:py-5">
           <h3 className="text-sm font-black text-text-dim uppercase tracking-tight mb-3">
             Locked Quests
           </h3>
@@ -72,7 +72,7 @@ export function QuestList() {
 
       {/* Completed Quests */}
       {completedQuests.length > 0 && (
-        <div>
+        <div className="system-shell px-4 py-4 sm:px-5 sm:py-5">
           <button
             onClick={() => setShowCompleted(!showCompleted)}
             className="flex items-center gap-2 text-sm font-black text-text-dim uppercase tracking-tight mb-3 hover:text-text-muted transition-colors cursor-pointer"

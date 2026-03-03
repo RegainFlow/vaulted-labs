@@ -10,21 +10,27 @@ import { getForgeOdds, applyForgeBoost } from "../../data/forge";
 import { MAX_FORGE_BOOSTS } from "../../types/forge";
 import { FORGE_ANIMATION } from "../../lib/motion-presets";
 import { playSfx } from "../../lib/audio";
+import { ProvablyFairReceiptModal } from "../shared/ProvablyFairReceiptModal";
+import { AnalyticsEvents, trackEvent } from "../../lib/analytics";
 import type { Collectible } from "../../types/collectible";
 import type { Rarity } from "../../types/vault";
+import { useOverlayScrollLock } from "../../hooks/useOverlayScrollLock";
 
 type ForgePhase = "dissolve" | "crucible" | "materialize" | null;
 
 export function ForgePanel() {
-  const { inventory, freeSpins, forgeItems } = useGame();
+  const { inventory, freeSpins, forgeItems, resolveForgeFairly, getProvablyFairReceipt } = useGame();
   const [selectedItems, setSelectedItems] = useState<(Collectible | null)[]>([null, null, null]);
   const [boostSpins, setBoostSpins] = useState(0);
   const [modalSlot, setModalSlot] = useState<number | null>(null);
   const [forgePhase, setForgePhase] = useState<ForgePhase>(null);
   const [forgeResult, setForgeResult] = useState<Collectible | null>(null);
+  const [forgeReceiptId, setForgeReceiptId] = useState<string | null>(null);
+  const [showProofModal, setShowProofModal] = useState(false);
   const forgeLockRef = useRef(false);
   const prefersReducedMotion = useReducedMotion();
   const forging = forgePhase !== null;
+  useOverlayScrollLock(forging || Boolean(forgeResult));
 
   useEffect(() => {
     playSfx("foundry_open");
@@ -41,6 +47,38 @@ export function ForgePanel() {
     const baseOdds = getForgeOdds(items[0].rarity, items[1].rarity, items[2].rarity);
     return applyForgeBoost(baseOdds, boostSpins);
   }, [selectedItems, allSelected, boostSpins]);
+  const dissolveParticles = useMemo(
+    () =>
+      Array.from({ length: FORGE_ANIMATION.sparkCount * 3 }).map((_, i) => {
+        const itemIdx = Math.floor(i / FORGE_ANIMATION.sparkCount);
+        const xStart = (itemIdx - 1) * 80;
+        const offset = ((i % FORGE_ANIMATION.sparkCount) - FORGE_ANIMATION.sparkCount / 2) * 10;
+        return {
+          id: i,
+          itemIdx,
+          xStart,
+          xTarget: xStart + offset,
+          yTarget: ((i % 5) - 2) * 18,
+          delay: (i % FORGE_ANIMATION.sparkCount) * 0.04,
+        };
+      }),
+    []
+  );
+  const emberCount =
+    typeof window !== "undefined" && window.innerWidth < 640
+      ? 15
+      : FORGE_ANIMATION.emberCount;
+  const emberParticles = useMemo(
+    () =>
+      Array.from({ length: emberCount }).map((_, i) => ({
+        id: i,
+        x: ((i % 5) - 2) * 14,
+        y: -(72 + (i % 6) * 18),
+        duration: 0.9 + (i % 4) * 0.12,
+        delay: (i % 6) * 0.08,
+      })),
+    [emberCount]
+  );
 
   const handleSelectItem = (item: Collectible) => {
     if (modalSlot === null) return;
@@ -82,17 +120,43 @@ export function ForgePanel() {
         setForgePhase("materialize");
 
         setTimeout(() => {
-          const result = forgeItems(
-            [items[0].id, items[1].id, items[2].id],
-            boostSpins
-          );
-          setForgePhase(null);
-          forgeLockRef.current = false;
-          if (result) {
-            setForgeResult(result);
-            setSelectedItems([null, null, null]);
-            setBoostSpins(0);
-          }
+          void (async () => {
+            const fairResponse = await resolveForgeFairly({
+              inputItemIds: [items[0].id, items[1].id, items[2].id],
+              inputRarities: [items[0].rarity, items[1].rarity, items[2].rarity],
+              inputVaultTiers: [
+                items[0].vaultTier,
+                items[1].vaultTier,
+                items[2].vaultTier,
+              ],
+              inputValues: [items[0].value, items[1].value, items[2].value],
+              spinsUsed: boostSpins,
+              oddsSnapshot: odds,
+            });
+
+            const result = forgeItems(
+              [items[0].id, items[1].id, items[2].id],
+              boostSpins,
+              fairResponse
+                ? {
+                    rarity: fairResponse.resultPayload.rarity as Rarity,
+                    product: fairResponse.resultPayload.product as string,
+                    vaultTier: fairResponse.resultPayload.vaultTier as typeof items[number]["vaultTier"],
+                    value: Number(fairResponse.resultPayload.value),
+                    stats: fairResponse.resultPayload.stats as Collectible["stats"],
+                    receiptId: fairResponse.receipt.id,
+                  }
+                : undefined
+            );
+            setForgePhase(null);
+            forgeLockRef.current = false;
+            if (result) {
+              setForgeReceiptId(fairResponse?.receipt.id ?? null);
+              setForgeResult(result);
+              setSelectedItems([null, null, null]);
+              setBoostSpins(0);
+            }
+          })();
         }, FORGE_ANIMATION.materializeDuration);
       }, FORGE_ANIMATION.crucibleDuration);
     }, FORGE_ANIMATION.dissolveDuration);
@@ -106,7 +170,7 @@ export function ForgePanel() {
   };
 
   return (
-    <div data-tutorial="arena-forge">
+    <div data-tutorial="arena-forge" className="system-shell px-4 py-4 sm:px-5 sm:py-5">
       <h3 className="text-sm font-black uppercase tracking-widest text-white mb-4">
         Forge
       </h3>
@@ -137,7 +201,7 @@ export function ForgePanel() {
                       value: funko ? `~$${funko.baseValue}` : "--",
                     },
                   ]}
-                  density="compact"
+                  variant="selection"
                   actions={[
                     {
                       label: "Remove",
@@ -153,12 +217,12 @@ export function ForgePanel() {
             <button
               key={`forge-slot-${index}`}
               onClick={() => setModalSlot(index)}
-              className="rounded-xl border-2 border-dashed border-white/15 bg-surface/30 p-6 flex flex-col items-center justify-center gap-1 hover:border-rarity-rare/40 transition-all cursor-pointer"
+              className="module-card flex min-h-[470px] flex-col items-center justify-center gap-3 border border-dashed border-white/14 bg-white/[0.03] p-6 text-center transition-all hover:border-rarity-rare/40 hover:bg-rarity-rare/5 cursor-pointer"
             >
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-text-dim">
                 <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
-              <span className="text-[8px] font-bold uppercase text-text-dim">Add</span>
+              <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim">Select</span>
             </button>
           );
         })}
@@ -166,7 +230,7 @@ export function ForgePanel() {
 
       {/* Live odds table */}
       {odds && (
-        <div className="bg-surface/50 border border-white/10 rounded-xl p-3 mb-4">
+        <div className="module-card p-3 mb-4">
           <p className="text-[9px] font-bold uppercase tracking-wider text-text-dim mb-2">Forge Odds</p>
           <div className="flex gap-3">
             {(["common", "uncommon", "rare", "legendary"] as Rarity[]).map((rarity) => (
@@ -185,7 +249,7 @@ export function ForgePanel() {
 
       {/* Boost toggle */}
       {allSelected && maxBoosts > 0 && (
-        <div className="bg-surface/50 border border-white/10 rounded-xl p-3 mb-4">
+        <div className="module-card p-3 mb-4">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-text-dim">
               Boost with Free Spins ({freeSpins} available)
@@ -194,7 +258,7 @@ export function ForgePanel() {
               <button
                 onClick={() => setBoostSpins(Math.max(0, boostSpins - 1))}
                 disabled={boostSpins <= 0}
-                className="w-6 h-6 rounded bg-surface border border-white/10 text-white text-xs font-bold cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                className="command-segment flex h-7 w-7 items-center justify-center rounded-[12px] border border-white/10 bg-white/[0.04] text-white text-xs font-bold cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 -
               </button>
@@ -202,7 +266,7 @@ export function ForgePanel() {
               <button
                 onClick={() => setBoostSpins(Math.min(maxBoosts, boostSpins + 1))}
                 disabled={boostSpins >= maxBoosts}
-                className="w-6 h-6 rounded bg-surface border border-white/10 text-white text-xs font-bold cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                className="command-segment flex h-7 w-7 items-center justify-center rounded-[12px] border border-white/10 bg-white/[0.04] text-white text-xs font-bold cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
               >
                 +
               </button>
@@ -268,22 +332,20 @@ export function ForgePanel() {
                 <AnimatePresence>
                   {forgePhase === "dissolve" && (
                     <>
-                      {Array.from({ length: FORGE_ANIMATION.sparkCount * 3 }).map((_, i) => {
-                        const itemIdx = Math.floor(i / FORGE_ANIMATION.sparkCount);
-                        const xStart = (itemIdx - 1) * 80;
+                      {dissolveParticles.map((particle) => {
                         return (
                           <motion.div
-                            key={`spark-${i}`}
+                            key={`spark-${particle.id}`}
                             className="absolute w-1.5 h-1.5 rounded-full"
-                            style={{ backgroundColor: RARITY_CONFIG[(selectedItems[itemIdx]?.rarity ?? "common") as keyof typeof RARITY_CONFIG]?.color ?? "#a855f7" }}
-                            initial={{ x: xStart, y: 0, opacity: 1, scale: 0.5 }}
+                            style={{ backgroundColor: RARITY_CONFIG[(selectedItems[particle.itemIdx]?.rarity ?? "common") as keyof typeof RARITY_CONFIG]?.color ?? "#a855f7" }}
+                            initial={{ x: particle.xStart, y: 0, opacity: 1, scale: 0.5 }}
                             animate={{
-                              x: xStart + (Math.random() - 0.5) * 100,
-                              y: (Math.random() - 0.5) * 100,
+                              x: particle.xTarget,
+                              y: particle.yTarget,
                               opacity: 0,
                               scale: 0
                             }}
-                            transition={{ duration: 0.6, delay: Math.random() * 0.4, ease: "easeOut" }}
+                            transition={{ duration: 0.6, delay: particle.delay, ease: "easeOut" }}
                           />
                         );
                       })}
@@ -304,23 +366,23 @@ export function ForgePanel() {
                         style={{ background: FORGE_ANIMATION.crucibleGradient }}
                       />
                       {/* Ember particles drifting upward */}
-                      {Array.from({ length: window.innerWidth < 640 ? 15 : FORGE_ANIMATION.emberCount }).map((_, i) => (
+                      {emberParticles.map((particle) => (
                         <motion.div
-                          key={`ember-${i}`}
+                          key={`ember-${particle.id}`}
                           className="absolute w-1 h-1 rounded-full"
                           style={{
-                            backgroundColor: FORGE_ANIMATION.emberColors[i % FORGE_ANIMATION.emberColors.length]
+                            backgroundColor: FORGE_ANIMATION.emberColors[particle.id % FORGE_ANIMATION.emberColors.length]
                           }}
                           initial={{ x: 0, y: 0, opacity: 0, scale: 0.5 }}
                           animate={{
-                            x: (Math.random() - 0.5) * 60,
-                            y: -(60 + Math.random() * 120),
+                            x: particle.x,
+                            y: particle.y,
                             opacity: [0, 1, 0],
                             scale: [0.5, 1, 0.3]
                           }}
                           transition={{
-                            duration: 0.8 + Math.random() * 0.5,
-                            delay: Math.random() * 0.6,
+                            duration: particle.duration,
+                            delay: particle.delay,
                             ease: "easeOut"
                           }}
                         />
@@ -380,41 +442,64 @@ export function ForgePanel() {
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", damping: 15 }}
-              className="bg-surface-elevated border border-white/10 rounded-2xl p-8 max-w-sm text-center"
+              className="system-shell w-full max-w-xl p-5 sm:p-6"
               onClick={(e) => e.stopPropagation()}
             >
-              <FunkoImage name={forgeResult.funkoName || forgeResult.product} rarity={forgeResult.rarity} size="lg" className="mx-auto mb-4" />
-              <h3 className="text-xl font-black text-white uppercase mb-1">
-                {RARITY_CONFIG[forgeResult.rarity].label}!
-              </h3>
-              <span
-                className="inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border mb-3"
-                style={{
-                  color: RARITY_CONFIG[forgeResult.rarity].color,
-                  borderColor: `${RARITY_CONFIG[forgeResult.rarity].color}40`,
-                  backgroundColor: `${RARITY_CONFIG[forgeResult.rarity].color}10`
-                }}
-              >
-                {forgeResult.rarity}
-              </span>
-              <div className="flex justify-center gap-3 text-xs font-mono mb-4">
-                <span className="text-error">ATK {forgeResult.stats.atk}</span>
-                <span className="text-neon-cyan">DEF {forgeResult.stats.def}</span>
-                <span className="text-neon-green">AGI {forgeResult.stats.agi}</span>
+              <div className="mb-4 text-center">
+                <p className="text-[10px] font-black uppercase tracking-[0.28em] text-accent">
+                  Forge Result
+                </p>
               </div>
-              <p className="text-text-muted text-sm mb-4">
-                Value: <span className="font-bold text-white">${forgeResult.value}</span>
-              </p>
-              <button
-                onClick={() => setForgeResult(null)}
-                className="px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest bg-accent/10 border border-accent/30 text-accent hover:bg-accent/20 transition-all cursor-pointer"
-              >
-                Add to Collection
-              </button>
+              <CollectibleDisplayCard
+                name={forgeResult.funkoName || forgeResult.product}
+                rarity={forgeResult.rarity}
+                imagePath={getFunkoById(forgeResult.funkoId || "")?.imagePath}
+                stats={forgeResult.stats}
+                metrics={[
+                  { label: "Value", value: `$${forgeResult.value}`, tone: "gold" },
+                  {
+                    label: "Market",
+                    value: getFunkoById(forgeResult.funkoId || "") ? `~$${getFunkoById(forgeResult.funkoId || "")?.baseValue}` : "--",
+                  },
+                ]}
+                variant="feature"
+                actions={[
+                  {
+                    label: "Add to Inventory",
+                    onClick: () => setForgeResult(null),
+                    tone: "accent",
+                  },
+                  ...(forgeReceiptId
+                    ? [
+                        {
+                          label: "View Proof",
+                          onClick: () => {
+                            if (forgeReceiptId) {
+                              trackEvent(AnalyticsEvents.PROVABLY_FAIR_RECEIPT_OPENED, {
+                                source: "forge_result",
+                                receipt_id: forgeReceiptId,
+                              });
+                            }
+                            setShowProofModal(true);
+                          },
+                          tone: "muted" as const,
+                        },
+                      ]
+                    : []),
+                ]}
+              />
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+      <ProvablyFairReceiptModal
+        receipt={
+          showProofModal && forgeReceiptId
+            ? getProvablyFairReceipt(forgeReceiptId)
+            : null
+        }
+        onClose={() => setShowProofModal(false)}
+      />
 
       <CollectionModal
         isOpen={modalSlot !== null}

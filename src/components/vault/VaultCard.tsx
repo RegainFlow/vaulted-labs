@@ -230,7 +230,9 @@ export function VaultCard({
                     Extraction Odds
                   </p>
                   <p className="text-[8px] font-mono uppercase tracking-[0.28em] text-accent">
-                    Prestige {prestigeLevel}
+                    {prestigeLevel > 0
+                      ? `Rank ${prestigeLevel} Bonus`
+                      : "Base Odds"}
                   </p>
                 </div>
                 <div className="space-y-4">

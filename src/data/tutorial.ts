@@ -17,15 +17,15 @@ export const VAULT_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "vault-intro",
     kind: "intro",
-    kicker: "Vault Scan Tutorial",
+    kicker: "Vault Spin Tutorial",
     title: "Open Vaults",
-    body: "Pick a vault, review the drop details, charge the scan, and choose what to do with the collectible you pull.",
+    body: "Pick a vault, review the drop details, press spin, and choose what to do with the collectible you pull.",
     actionLabel: "Begin",
   },
   {
     id: "vault-card",
     kind: "rail",
-    kicker: "Vault Scan Tutorial",
+    kicker: "Vault Spin Tutorial",
     title: "The Vault",
     body: "Each vault tier has its own price and value range. Higher tiers cost more and can return stronger pulls.",
     target: {
@@ -39,7 +39,7 @@ export const VAULT_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "vault-transparency",
     kind: "rail",
-    kicker: "Vault Scan Tutorial",
+    kicker: "Vault Spin Tutorial",
     title: "Check Contents and Odds",
     body: "Use Contents and Odds before opening so the drop pool and rarity distribution stay transparent.",
     target: {
@@ -56,7 +56,7 @@ export const VAULT_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "vault-open",
     kind: "rail",
-    kicker: "Vault Scan Tutorial",
+    kicker: "Vault Spin Tutorial",
     title: "Open Vault",
     body: "Tap this vault card to open it.",
     actionLabel: "Tap Vault",
@@ -76,16 +76,16 @@ export const VAULT_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "vault-scan",
     kind: "rail",
-    kicker: "Vault Scan Tutorial",
-    title: "Charge the Scan",
-    body: "Hold SCAN, then release.",
-    hint: "Hold SCAN, then release",
-    actionLabel: "Hold SCAN",
+    kicker: "Vault Spin Tutorial",
+    title: "Press Spin",
+    body: "Tap SPIN once to start the reel.",
+    hint: "Tap SPIN",
+    actionLabel: "Tap SPIN",
     accentColor: "accent",
     compact: true,
     placement: "top",
     target: {
-      selector: '[data-tutorial="scan-button"]',
+      selector: '[data-tutorial="spin-button"]',
       padding: 10,
       radius: 18,
       showRing: true,
@@ -106,9 +106,9 @@ export const VAULT_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "vault-bonus",
     kind: "rail",
-    kicker: "Vault Scan Tutorial",
-    title: "Bonus Scan",
-    body: "Tap LOCK.",
+    kicker: "Vault Spin Tutorial",
+    title: "Bonus Lock",
+    body: "Tap LOCK on each active channel. Match all 3 to win shards.",
     hint: "Tap LOCK",
     actionLabel: "Tap LOCK",
     accentColor: "neon-green",
@@ -130,7 +130,7 @@ export const VAULT_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "vault-reveal",
     kind: "rail",
-    kicker: "Vault Scan Tutorial",
+    kicker: "Vault Spin Tutorial",
     title: "Choose an Outcome",
     body: "Pick Cashout, Equip, or Ship.",
     actionLabel: "Choose One",
@@ -159,7 +159,7 @@ export const VAULT_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "vault-complete",
     kind: "complete",
-    kicker: "Vault Scan Tutorial",
+    kicker: "Vault Spin Tutorial",
     title: "Tutorial Complete",
     body: "You have seen the full vault flow. Tutorial actions do not change your credits or items.",
     actionLabel: "Done",
@@ -331,17 +331,17 @@ export const COLLECTION_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "collection-intro",
     kind: "intro",
-    kicker: "Collection Tutorial",
-    title: "Collection",
+    kicker: "Inventory Tutorial",
+    title: "Inventory",
     body: "Manage held items, browse listings, and watch auctions from one control surface.",
     actionLabel: "Begin",
   },
   {
     id: "collection-tabs",
     kind: "spotlight",
-    kicker: "Collection Tutorial",
+    kicker: "Inventory Tutorial",
     title: "Section Rail",
-    body: "Switch between your collection, the market, and auctions here.",
+    body: "Switch between your inventory, the market, and auctions here.",
     placement: "bottom",
     target: {
       selector: '[data-tutorial="collection-tabs"]',
@@ -352,12 +352,12 @@ export const COLLECTION_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "collection-item",
     kind: "spotlight",
-    kicker: "Collection Tutorial",
+    kicker: "Inventory Tutorial",
     title: "Collectible Card",
     body: "Each collectible card tracks rarity, value, and available actions.",
     placement: "bottom",
     target: {
-      selector: '[data-tutorial="collection-item"]',
+      selector: '[data-tutorial="inventory-item"]',
       padding: 10,
       radius: 18,
     },
@@ -365,7 +365,7 @@ export const COLLECTION_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "collection-actions",
     kind: "spotlight",
-    kicker: "Collection Tutorial",
+    kicker: "Inventory Tutorial",
     title: "Item Actions",
     body: "Use the action rail to ship, cash out, or list held items.",
     placement: "top",
@@ -378,7 +378,7 @@ export const COLLECTION_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "collection-market-tab",
     kind: "spotlight",
-    kicker: "Collection Tutorial",
+    kicker: "Inventory Tutorial",
     title: "Market Tab",
     body: "Move into Market for fixed-price listings.",
     placement: "bottom",
@@ -392,7 +392,7 @@ export const COLLECTION_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "collection-listing",
     kind: "spotlight",
-    kicker: "Collection Tutorial",
+    kicker: "Inventory Tutorial",
     title: "Listing Card",
     body: "Compare rarity and pricing before you buy.",
     placement: "bottom",
@@ -406,7 +406,7 @@ export const COLLECTION_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "collection-auction-tab",
     kind: "spotlight",
-    kicker: "Collection Tutorial",
+    kicker: "Inventory Tutorial",
     title: "Auctions Tab",
     body: "Switch to auctions when you want to bid instead of buying instantly.",
     placement: "bottom",
@@ -420,7 +420,7 @@ export const COLLECTION_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "collection-auction",
     kind: "spotlight",
-    kicker: "Collection Tutorial",
+    kicker: "Inventory Tutorial",
     title: "Auction Card",
     body: "Watch the timer and outbid the current leader before the auction closes.",
     placement: "bottom",
@@ -434,8 +434,8 @@ export const COLLECTION_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "collection-complete",
     kind: "complete",
-    kicker: "Collection Tutorial",
-    title: "Collection Ready",
+    kicker: "Inventory Tutorial",
+    title: "Inventory Ready",
     body: "You can manage, trade, and route collectibles from here.",
     actionLabel: "Done",
   },
@@ -551,7 +551,7 @@ export const ARENA_TUTORIAL_STEPS: TutorialStepDefinition[] = [
     kind: "spotlight",
     kicker: "Arena Tutorial",
     title: "Rank Up",
-    body: "Leveling raises your access and eventually unlocks prestige.",
+    body: "Reach Lv 10 to Rank Up and permanently improve vault odds across every tier.",
     placement: "top",
     target: {
       selector: '[data-tutorial="arena-rankup"]',

@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { useGame } from "../../context/GameContext";
+import { COLLECTIBLE_GRID_CLASS } from "../shared/collectible-grid";
 import { AuctionCard } from "./AuctionCard";
 
 export function AuctionGrid() {
@@ -37,7 +38,7 @@ export function AuctionGrid() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+    <div className={COLLECTIBLE_GRID_CLASS}>
       {auctions.map((auction, idx) => (
         <AuctionCard
           key={auction.id}

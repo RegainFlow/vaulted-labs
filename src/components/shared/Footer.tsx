@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { FeedbackButton } from "./FeedbackButton";
+import { AnalyticsEvents, trackEvent } from "../../lib/analytics";
 
 export function Footer() {
   return (
@@ -21,6 +22,17 @@ export function Footer() {
           className="text-text-muted hover:text-accent transition-colors underline underline-offset-4"
         >
           Terms
+        </Link>
+        <Link
+          to="/provably-fair"
+          onClick={() =>
+            trackEvent(AnalyticsEvents.PROVABLY_FAIR_DOC_OPENED, {
+              source: "landing_footer",
+            })
+          }
+          className="text-text-muted hover:text-accent transition-colors underline underline-offset-4"
+        >
+          Provably Fair
         </Link>
       </div>
       <FeedbackButton className="text-sm text-text-muted hover:text-accent transition-colors underline underline-offset-4 mb-4 inline-block cursor-pointer" />

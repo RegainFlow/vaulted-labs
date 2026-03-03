@@ -7,7 +7,7 @@ import { useGame } from "../context/GameContext";
 
 export function OpenPage() {
   const {
-    balance, inventory, xp, levelInfo, setHasSeenTutorial,
+    balance, inventory, xp, setHasSeenTutorial,
     prestigeLevel, freeSpins, cashoutFlashTimestamp, cashoutStreak,
     bossEnergy, maxBossEnergy, shards
   } = useGame();
@@ -39,7 +39,6 @@ export function OpenPage() {
         balance={balance}
         inventoryCount={inventory.length}
         xp={xp}
-        level={levelInfo.level}
         prestigeLevel={prestigeLevel}
         freeSpins={freeSpins}
         cashoutFlashTimestamp={cashoutFlashTimestamp}

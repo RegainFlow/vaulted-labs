@@ -1,10 +1,31 @@
-import { useState, useEffect, useMemo } from "react";
 import { motion, useReducedMotion } from "motion/react";
+import { PrestigeShieldIcon } from "../../assets/prestige-icons";
+import { getPrestigeShiftBreakdown } from "../../data/vaults";
+import { ArcadeButton } from "../shared/ArcadeButton";
+import { useOverlayScrollLock } from "../../hooks/useOverlayScrollLock";
 
-const PRESTIGE_COLORS: Record<number, { primary: string; secondary: string; label: string }> = {
-  1: { primary: "#ff8c00", secondary: "#ffd700", label: "Gold" },
-  2: { primary: "#9945ff", secondary: "#c77dff", label: "Violet" },
-  3: { primary: "#ff2d95", secondary: "#00e5ff", label: "Prismatic" }
+const RANK_THEMES: Record<
+  number,
+  { primary: string; secondary: string; title: string; themeLabel: string }
+> = {
+  1: {
+    primary: "#ff8c00",
+    secondary: "#ffd700",
+    title: "Amber",
+    themeLabel: "Amber theme unlocked",
+  },
+  2: {
+    primary: "#9945ff",
+    secondary: "#c77dff",
+    title: "Violet",
+    themeLabel: "Violet theme unlocked",
+  },
+  3: {
+    primary: "#ff2d95",
+    secondary: "#00e5ff",
+    title: "Prismatic",
+    themeLabel: "Prismatic theme unlocked",
+  },
 };
 
 interface PrestigeOverlayProps {
@@ -12,170 +33,133 @@ interface PrestigeOverlayProps {
   onClose: () => void;
 }
 
-const seededUnit = (seed: number) => {
-  const x = Math.sin(seed * 12.9898 + 78.233) * 43758.5453;
-  return x - Math.floor(x);
-};
-
-export function PrestigeOverlay({ prestigeLevel, onClose }: PrestigeOverlayProps) {
-  const prefersReducedMotion = useReducedMotion();
-  const [phase, setPhase] = useState<"ignition" | "expansion" | "manifestation" | "text">("ignition");
-  const colors = PRESTIGE_COLORS[prestigeLevel] ?? PRESTIGE_COLORS[1];
-
-  useEffect(() => {
-    const timers = [
-      setTimeout(() => setPhase("expansion"), 400),
-      setTimeout(() => setPhase("manifestation"), 1000),
-      setTimeout(() => setPhase("text"), 1800)
-    ];
-    return () => timers.forEach(clearTimeout);
-  }, []);
-
-  const particles = useMemo(
-    () =>
-      Array.from({ length: 150 }).map((_, i) => ({
-        id: i,
-        angle: seededUnit(prestigeLevel * 1000 + i * 17 + 1) * Math.PI * 2,
-        radius: 100 + seededUnit(prestigeLevel * 1000 + i * 17 + 2) * 600,
-        color: seededUnit(prestigeLevel * 1000 + i * 17 + 3) > 0.5 ? colors.primary : colors.secondary,
-        scale: seededUnit(prestigeLevel * 1000 + i * 17 + 4) * 0.8 + 0.2,
-        speed: 0.5 + seededUnit(prestigeLevel * 1000 + i * 17 + 5) * 1.5,
-        delay: seededUnit(prestigeLevel * 1000 + i * 17 + 6) * 2
-      })),
-    [colors, prestigeLevel]
+function BenefitModule({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: string;
+  tone: string;
+}) {
+  return (
+    <div className="rounded-[18px] border border-white/8 bg-black/20 px-4 py-4 text-left">
+      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-text-dim">
+        {label}
+      </p>
+      <p className={`mt-2 text-sm font-black uppercase tracking-[0.08em] ${tone}`}>
+        {value}
+      </p>
+    </div>
   );
+}
+
+export function PrestigeOverlay({
+  prestigeLevel,
+  onClose,
+}: PrestigeOverlayProps) {
+  useOverlayScrollLock(true);
+  const prefersReducedMotion = useReducedMotion();
+  const theme = RANK_THEMES[prestigeLevel] ?? RANK_THEMES[1];
+  const oddsShift = getPrestigeShiftBreakdown(prestigeLevel);
 
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0, filter: "brightness(2) blur(20px)" }}
-      onClick={onClose}
-      className="fixed inset-0 z-[60] flex items-center justify-center cursor-pointer bg-bg/95 backdrop-blur-2xl"
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-bg/92 px-4 backdrop-blur-xl"
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
     >
-      {/* 1. Ignition point */}
-      {phase === "ignition" && (
-        <motion.div 
-          className="w-1 h-1 rounded-full bg-white shadow-[0_0_50px_#fff]"
-          initial={{ scale: 0 }}
-          animate={prefersReducedMotion ? { scale: [0, 18, 0] } : { scale: [0, 32, 0] }}
-          transition={{ duration: 0.4 }}
+      <motion.div
+        initial={
+          prefersReducedMotion
+            ? { opacity: 0 }
+            : { opacity: 0, y: 24, scale: 0.98 }
+        }
+        animate={
+          prefersReducedMotion
+            ? { opacity: 1 }
+            : { opacity: 1, y: 0, scale: 1 }
+        }
+        exit={
+          prefersReducedMotion
+            ? { opacity: 0 }
+            : { opacity: 0, y: 16, scale: 0.98 }
+        }
+        transition={{ duration: 0.24, ease: "easeOut" }}
+        className="system-shell-strong relative w-full max-w-3xl overflow-hidden rounded-[30px] px-6 py-7 sm:px-8 sm:py-8"
+        style={{
+          boxShadow: `0 28px 90px rgba(0,0,0,0.46), 0 0 48px ${theme.primary}1e`,
+        }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div
+          className="pointer-events-none absolute inset-0 opacity-70"
+          style={{
+            background: `radial-gradient(circle at 50% 18%, ${theme.primary}22 0%, transparent 42%), radial-gradient(circle at 50% 100%, ${theme.secondary}18 0%, transparent 48%)`,
+          }}
         />
-      )}
+        <div
+          className="pointer-events-none absolute inset-x-10 top-0 h-px"
+          style={{
+            background: `linear-gradient(90deg, transparent, ${theme.primary}, transparent)`,
+          }}
+        />
 
-      {/* 2. Expansion rings */}
-      {(phase === "expansion" || phase === "manifestation" || phase === "text") && (
-        <>
-          <motion.div
-            className="absolute rounded-full border-[1px]"
-            style={{ borderColor: colors.primary }}
-            initial={{ width: 0, height: 0, opacity: 1 }}
-            animate={{ width: 2000, height: 2000, opacity: 0 }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
-          />
-          <motion.div
-            className="absolute rounded-full border-[1px]"
-            style={{ borderColor: colors.secondary }}
-            initial={{ width: 0, height: 0, opacity: 1 }}
-            animate={{ width: 1500, height: 1500, opacity: 0 }}
-            transition={{ duration: 1.8, ease: "easeOut", delay: 0.1 }}
-          />
-        </>
-      )}
+        <div className="relative z-10 text-center">
+          <p className="system-kicker mb-4 text-white/55">Rank Up Complete</p>
 
-      {/* 3. Magnetic Particle Field */}
-      {(phase === "manifestation" || phase === "text") && (
-        <div className="absolute inset-0 flex items-center justify-center overflow-hidden pointer-events-none">
-          {particles.map((p) => (
-            <motion.div
-              key={p.id}
-              className="absolute w-1.5 h-1.5 rounded-full"
-              style={{ backgroundColor: p.color, boxShadow: `0 0 10px ${p.color}` }}
-              initial={{ 
-                x: Math.cos(p.angle) * p.radius, 
-                y: Math.sin(p.angle) * p.radius,
-                opacity: 0,
-                scale: 0 
-              }}
-              animate={{
-                x: 0,
-                y: 0,
-                opacity: [0, 1, 0],
-                scale: p.scale
-              }}
-              transition={{ 
-                duration: prefersReducedMotion ? 1.2 : 2 / p.speed,
-                ease: "easeOut",
-                delay: p.delay
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* 4. Ascension Text */}
-      {phase === "text" && (
-        <motion.div
-          className="relative z-10 text-center px-4"
-          initial={{ scale: 0.8, opacity: 0, filter: "blur(10px)" }}
-          animate={{ scale: 1, opacity: 1, filter: "blur(0px)" }}
-          transition={{ type: "spring", damping: 15 }}
-        >
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-xs font-black uppercase tracking-[0.8em] text-white/40 mb-6"
-          >
-            Rank Up Complete
-          </motion.div>
-
-          <motion.h1
-            className="text-6xl sm:text-8xl md:text-9xl font-black uppercase tracking-tighter mb-8 italic text-white"
-            style={{
-              textShadow: `0 0 30px ${colors.primary}, 0 0 60px ${colors.primary}80`
-            }}
-          >
-            RANK {prestigeLevel}
-          </motion.h1>
-
-          <motion.div
-            className="flex flex-col items-center gap-6"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.8 }}
-          >
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <BenefitBadge label="Permanent Buff" desc="+4% Rare Chance" color={colors.primary} delay={1} />
-              <BenefitBadge label="Exclusive UI" desc={`${colors.label} Theme`} color={colors.secondary} delay={1.3} />
+          <div className="mx-auto flex w-fit items-center gap-4 rounded-[24px] border border-white/8 bg-black/18 px-5 py-4">
+            <PrestigeShieldIcon level={(prestigeLevel as 1 | 2 | 3) || 1} size={52} />
+            <div className="text-left">
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-text-dim">
+                New Rank
+              </p>
+              <h2
+                className="mt-1 text-3xl font-black uppercase tracking-[0.08em] sm:text-4xl"
+                style={{ color: theme.primary }}
+              >
+                Rank {prestigeLevel}
+              </h2>
+              <p className="mt-1 text-[11px] font-mono uppercase tracking-[0.18em] text-white/70">
+                {theme.title} boost online
+              </p>
             </div>
-            
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 3 }}
-              className="text-text-muted text-[10px] uppercase tracking-[0.4em] mt-8"
-            >
-              Tap to continue
-            </motion.p>
-          </motion.div>
-        </motion.div>
-      )}
-    </motion.div>
-  );
-}
+          </div>
 
-function BenefitBadge({ label, desc, color, delay }: { label: string; desc: string; color: string; delay: number }) {
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      transition={{ delay }}
-      className="bg-white/5 backdrop-blur-xl border-l-4 p-4 rounded-r-xl text-left min-w-[180px]"
-      style={{ borderColor: color }}
-    >
-      <div className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color }}>{label}</div>
-      <div className="text-sm font-bold text-white uppercase">{desc}</div>
+          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+            <BenefitModule
+              label="Vault Odds Bonus"
+              value={`Common ${oddsShift.common}% | Uncommon +${oddsShift.uncommon}% | Rare +${oddsShift.rare}% | Legendary +${oddsShift.legendary}%`}
+              tone="text-accent"
+            />
+            <BenefitModule
+              label="Theme Updated"
+              value={theme.themeLabel}
+              tone="text-white"
+            />
+          </div>
+
+          <p className="mt-5 text-xs leading-relaxed text-text-muted sm:text-sm">
+            Your level has reset, but your shards, energy, and vault odds bonus stay with you.
+          </p>
+
+          <div className="mt-6 flex justify-center">
+            <ArcadeButton
+              onClick={onClose}
+              tone="accent"
+              size="primary"
+              fillMode="center"
+              className="min-w-[220px]"
+            >
+              Continue
+            </ArcadeButton>
+          </div>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }

@@ -6,6 +6,7 @@ import {
   getUnlockXP,
   type UnlockFeatureKey
 } from "../../lib/unlocks";
+import { useOverlayScrollLock } from "../../hooks/useOverlayScrollLock";
 
 interface LockedOverlayProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export function LockedOverlay({
   onClose,
   ctaTo = "/vaults"
 }: LockedOverlayProps) {
+  useOverlayScrollLock(isOpen);
   const navigate = useNavigate();
   const location = useLocation();
 

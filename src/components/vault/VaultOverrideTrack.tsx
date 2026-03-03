@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   motion,
   useMotionValue,
@@ -23,7 +23,6 @@ interface VaultOverrideTrackProps {
   extracting: boolean;
   locked: boolean;
   spinDurationMs: number;
-  chargeProgress?: number;
 }
 
 interface RarityCapsuleProps {
@@ -385,7 +384,6 @@ export function VaultOverrideTrack({
   extracting,
   locked,
   spinDurationMs,
-  chargeProgress = 0,
 }: VaultOverrideTrackProps) {
   const prefersReducedMotion = useReducedMotion();
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -447,15 +445,15 @@ export function VaultOverrideTrack({
   const landedOffset =
     containerWidth / 2 - (landedIndex * itemSpan + tileWidth / 2);
 
-  const stopTrackMotion = () => {
+  const stopTrackMotion = useCallback(() => {
     if (trackFrameRef.current) {
       window.cancelAnimationFrame(trackFrameRef.current);
       trackFrameRef.current = null;
     }
     spinStartTimeRef.current = null;
-  };
+  }, []);
 
-  const startTrackMotion = (from: number, to: number) => {
+  const startTrackMotion = useCallback((from: number, to: number) => {
     stopTrackMotion();
     spinFromRef.current = from;
     spinTargetRef.current = to;
@@ -489,7 +487,7 @@ export function VaultOverrideTrack({
     };
 
     trackFrameRef.current = window.requestAnimationFrame(tick);
-  };
+  }, [itemSpan, spinDurationMs, stopTrackMotion, x]);
 
   useEffect(() => {
     if (!containerWidth) return;
@@ -522,6 +520,8 @@ export function VaultOverrideTrack({
     landedOffset,
     locked,
     prefersReducedMotion,
+    startTrackMotion,
+    stopTrackMotion,
     spinDurationMs,
     x,
   ]);
@@ -530,7 +530,7 @@ export function VaultOverrideTrack({
     return () => {
       stopTrackMotion();
     };
-  }, []);
+  }, [stopTrackMotion]);
 
   const lockColor = "#ff2d95";
   const lockWidth = tileWidth + LOCK_FRAME_PAD_X * 2;
@@ -541,7 +541,7 @@ export function VaultOverrideTrack({
     ? 0.94
     : extracting
       ? 0.74
-      : 0.56 + chargeProgress * 0.16;
+      : 0.64;
 
   return (
     <div className="relative w-full">

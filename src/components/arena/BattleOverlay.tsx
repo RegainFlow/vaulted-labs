@@ -6,6 +6,10 @@ import { simulateCombat, getPrestigeBattleStats } from "../../data/gamification"
 import { BossIcon } from "../../assets/boss-icons";
 import { BATTLE_ANIMATION } from "../../lib/motion-presets";
 import { playSfx } from "../../lib/audio";
+import { ProvablyFairReceiptModal } from "../shared/ProvablyFairReceiptModal";
+import { useGame } from "../../context/GameContext";
+import { AnalyticsEvents, trackEvent } from "../../lib/analytics";
+import { useOverlayScrollLock } from "../../hooks/useOverlayScrollLock";
 
 type BattlePhase = "intro" | "combat" | "result";
 
@@ -34,18 +38,25 @@ interface BattleOverlayProps {
   squadItems: Collectible[];
   rankLevel: number;
   onComplete: (result: CombatResult) => void;
+  resolvedResult?: CombatResult | null;
+  proofReceiptId?: string | null;
 }
 
 export function BattleOverlay({
   battle,
   squadItems,
   rankLevel,
-  onComplete
+  onComplete,
+  resolvedResult = null,
+  proofReceiptId = null,
 }: BattleOverlayProps) {
+  useOverlayScrollLock(true);
+  const { getProvablyFairReceipt } = useGame();
   const prefersReducedMotion = useReducedMotion();
   const [phase, setPhase] = useState<BattlePhase>("intro");
   const [currentExchangeIndex, setCurrentExchangeIndex] = useState(-1);
   const [combatResult, setCombatResult] = useState<CombatResult | null>(null);
+  const [showProofModal, setShowProofModal] = useState(false);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   const scaled = getPrestigeBattleStats(battle, rankLevel);
@@ -64,8 +75,8 @@ export function BattleOverlay({
 
   // Run combat simulation on mount
   const result = useMemo(
-    () => simulateCombat(squadStats, battle, rankLevel),
-    [squadStats, battle, rankLevel]
+    () => resolvedResult ?? simulateCombat(squadStats, battle, rankLevel),
+    [resolvedResult, squadStats, battle, rankLevel]
   );
 
   useEffect(() => {
@@ -78,9 +89,11 @@ export function BattleOverlay({
 
   // Phase progression
   useEffect(() => {
+    const scheduledTimers: ReturnType<typeof setTimeout>[] = [];
     const schedule = (fn: () => void, delay: number) => {
       const t = setTimeout(fn, delay);
       timersRef.current.push(t);
+      scheduledTimers.push(t);
       return t;
     };
 
@@ -91,7 +104,9 @@ export function BattleOverlay({
       }, prefersReducedMotion ? 800 : 2000);
     }
 
-    return () => timersRef.current.forEach(clearTimeout);
+    return () => {
+      scheduledTimers.forEach(clearTimeout);
+    };
   }, [phase, prefersReducedMotion]);
 
   // Animate combat exchanges
@@ -138,6 +153,18 @@ export function BattleOverlay({
   // Track previous HP for damage number display
   const prevExchangeRef = useRef<CombatExchange | null>(null);
   const [showHitFlash, setShowHitFlash] = useState<"squad" | "boss" | null>(null);
+  const victoryParticles = useMemo(
+    () =>
+      Array.from({ length: 40 }).map((_, index) => ({
+        id: index,
+        x: (Math.sin(index * 1.73) - 0.5) * 400,
+        y: (Math.cos(index * 2.11) - 0.5) * 400,
+        rotate: (index * 83) % 720,
+        scale: 0.3 + ((index % 10) / 10) * 0.8,
+        delay: (index % 6) * 0.05,
+      })),
+    []
+  );
 
   useEffect(() => {
     if (!currentExchange) return;
@@ -420,20 +447,20 @@ export function BattleOverlay({
               {/* Victory confetti particles */}
               {combatResult.victory && !prefersReducedMotion && (
                 <div className="absolute inset-0 pointer-events-none flex items-center justify-center overflow-visible">
-                  {Array.from({ length: 40 }).map((_, i) => (
+                  {victoryParticles.map((particle, i) => (
                     <motion.div
-                      key={i}
+                      key={particle.id}
                       className="absolute w-2 h-2 rounded-sm"
                       style={{ backgroundColor: i % 3 === 0 ? "#39ff14" : i % 3 === 1 ? "#ffd700" : "#00f0ff" }}
                       initial={{ opacity: 1, x: 0, y: 0, scale: 0 }}
                       animate={{
                         opacity: 0,
-                        x: (Math.random() - 0.5) * 400,
-                        y: (Math.random() - 0.5) * 400,
-                        rotate: Math.random() * 720,
-                        scale: Math.random() * 0.8 + 0.3
+                        x: particle.x,
+                        y: particle.y,
+                        rotate: particle.rotate,
+                        scale: particle.scale
                       }}
-                      transition={{ duration: 2, ease: "easeOut", delay: Math.random() * 0.3 }}
+                      transition={{ duration: 2, ease: "easeOut", delay: particle.delay }}
                     />
                   ))}
                 </div>
@@ -478,16 +505,41 @@ export function BattleOverlay({
                 </div>
               </div>
 
-              <button
-                onClick={() => onComplete(combatResult)}
-                className="px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest bg-accent/10 border border-accent/30 text-accent hover:bg-accent/20 transition-all cursor-pointer active:scale-[0.98]"
-              >
-                {combatResult.shardsEarned > 0 ? "Collect Shards" : "Continue"}
-              </button>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                {proofReceiptId ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      trackEvent(AnalyticsEvents.PROVABLY_FAIR_RECEIPT_OPENED, {
+                        source: "battle_result",
+                        receipt_id: proofReceiptId,
+                      });
+                      setShowProofModal(true);
+                    }}
+                    className="system-rail px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.22em] text-white"
+                  >
+                    View Proof
+                  </button>
+                ) : null}
+                <button
+                  onClick={() => onComplete(combatResult)}
+                  className="px-8 py-3 rounded-xl text-xs font-black uppercase tracking-widest bg-accent/10 border border-accent/30 text-accent hover:bg-accent/20 transition-all cursor-pointer active:scale-[0.98]"
+                >
+                  {combatResult.shardsEarned > 0 ? "Collect Shards" : "Continue"}
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
+      <ProvablyFairReceiptModal
+        receipt={
+          showProofModal && proofReceiptId
+            ? getProvablyFairReceipt(proofReceiptId)
+            : null
+        }
+        onClose={() => setShowProofModal(false)}
+      />
     </motion.div>
   );
 }

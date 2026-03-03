@@ -29,12 +29,15 @@ export function ArenaBattlesPage() {
     shards,
     defeatedBosses,
     spendBossEnergy,
-    completeBattle
+    completeBattle,
+    resolveBattleFairly,
   } = useGame();
   const navigate = useNavigate();
   const [selectedBattle, setSelectedBattle] = useState<Battle | null>(null);
   const [activeBattle, setActiveBattle] = useState<Battle | null>(null);
   const [battleSquad, setBattleSquad] = useState<Collectible[] | null>(null);
+  const [battleResultSeed, setBattleResultSeed] = useState<CombatResult | null>(null);
+  const [battleReceiptId, setBattleReceiptId] = useState<string | null>(null);
   const locked = !isFeatureUnlocked("battles", xp);
 
   useEffect(() => {
@@ -46,20 +49,41 @@ export function ArenaBattlesPage() {
     trackEvent(AnalyticsEvents.FEATURE_LOCKED_CLICKED, { featureKey: "battles" });
   }, [locked]);
 
-  const handleStartBattle = (items: Collectible[]) => {
+  const handleStartBattle = async (items: Collectible[]) => {
     if (!selectedBattle) return;
     if (!spendBossEnergy(selectedBattle.energyCost)) return;
+    const squadStats = items.reduce(
+      (acc, item) => ({
+        totalAtk: acc.totalAtk + item.stats.atk,
+        totalDef: acc.totalDef + item.stats.def,
+        totalAgi: acc.totalAgi + item.stats.agi,
+        memberCount: acc.memberCount + 1,
+      }),
+      { totalAtk: 0, totalDef: 0, totalAgi: 0, memberCount: 0 }
+    );
+    const fairResponse = await resolveBattleFairly({
+      battleId: selectedBattle.id,
+      squadItemIds: items.map((item) => item.id),
+      squadStats,
+      rankLevel: prestigeLevel,
+    });
     setActiveBattle(selectedBattle);
     setBattleSquad(items);
+    setBattleResultSeed(
+      ((fairResponse?.resultPayload as unknown) as CombatResult) ?? null
+    );
+    setBattleReceiptId(fairResponse?.receipt.id ?? null);
     setSelectedBattle(null);
   };
 
   const handleBattleComplete = (result: CombatResult) => {
     if (battleSquad && activeBattle) {
-      completeBattle(activeBattle.id, result);
+      completeBattle(activeBattle.id, result, battleReceiptId ?? undefined);
     }
     setActiveBattle(null);
     setBattleSquad(null);
+    setBattleResultSeed(null);
+    setBattleReceiptId(null);
   };
 
   const hideDock = !!selectedBattle || !!activeBattle || !!battleSquad;
@@ -72,7 +96,6 @@ export function ArenaBattlesPage() {
         balance={balance}
         inventoryCount={inventory.length}
         xp={xp}
-        level={levelInfo.level}
         prestigeLevel={prestigeLevel}
         freeSpins={freeSpins}
         cashoutFlashTimestamp={cashoutFlashTimestamp}
@@ -90,7 +113,7 @@ export function ArenaBattlesPage() {
             Back to Arena Home
           </button>
 
-          <div className="mb-6 sm:mb-8 text-center">
+          <div className="system-shell mb-6 px-5 py-5 text-center sm:mb-8 sm:px-6 sm:py-6">
             <h1 className="text-xl sm:text-3xl md:text-5xl font-black uppercase tracking-tight text-white mb-1 sm:mb-2">
               <span className="text-accent">Battles</span>
             </h1>
@@ -112,6 +135,7 @@ export function ArenaBattlesPage() {
                   energyCost={battle.energyCost}
                   currentEnergy={bossEnergy}
                   onFight={setSelectedBattle}
+                  levelInfo={levelInfo}
                 />
               ))}
             </div>
@@ -135,6 +159,8 @@ export function ArenaBattlesPage() {
             squadItems={battleSquad}
             rankLevel={prestigeLevel}
             onComplete={handleBattleComplete}
+            resolvedResult={battleResultSeed}
+            proofReceiptId={battleReceiptId}
           />
         )}
       </AnimatePresence>

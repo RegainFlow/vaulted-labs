@@ -4,11 +4,13 @@ import { useGame } from "../../context/GameContext";
 import { getFunkoById } from "../../data/funkos";
 import { CollectionModal } from "../shared/CollectionModal";
 import { CollectibleDisplayCard } from "../shared/CollectibleDisplayCard";
+import { useOverlayScrollLock } from "../../hooks/useOverlayScrollLock";
 
 export function SquadPanel() {
   const { equippedItems, equipItem, unequipItem, inventory, squadStats } = useGame();
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmUnequip, setConfirmUnequip] = useState<string | null>(null);
+  useOverlayScrollLock(Boolean(confirmUnequip));
 
   const slots = [0, 1, 2];
   const equippedIds = equippedItems.map((i) => i.id);
@@ -51,7 +53,7 @@ export function SquadPanel() {
                       value: funko ? `~$${funko.baseValue}` : "--",
                     },
                   ]}
-                  density="compact"
+                  variant="selection"
                   actions={[
                     {
                       label: "Remove",
@@ -68,13 +70,13 @@ export function SquadPanel() {
             <button
               key={`empty-${index}`}
               onClick={() => handleSlotClick(index)}
-              className="rounded-xl border-2 border-dashed border-white/15 bg-surface/30 p-6 sm:p-8 flex flex-col items-center justify-center gap-2 hover:border-accent/40 hover:bg-accent/5 transition-all cursor-pointer"
+              className="module-card flex min-h-[470px] flex-col items-center justify-center gap-3 border border-dashed border-white/14 bg-white/[0.03] p-6 text-center transition-all hover:border-accent/40 hover:bg-accent/5 cursor-pointer"
             >
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-text-dim">
                 <path d="M12 5v14M5 12h14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
               </svg>
               <span className="text-[9px] font-bold uppercase tracking-wider text-text-dim">
-                Add Unit
+                Select Unit
               </span>
             </button>
           );

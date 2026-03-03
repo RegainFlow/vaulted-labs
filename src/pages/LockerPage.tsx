@@ -7,6 +7,7 @@ import { TutorialHelpButton } from "../components/shared/TutorialHelpButton";
 import { InventoryGrid } from "../components/inventory/InventoryGrid";
 import { LockerMarketView } from "../components/locker/LockerMarketView";
 import { LockerArenaHome } from "../components/locker/LockerArenaHome";
+import { PrestigeOverlay } from "../components/profile/PrestigeOverlay";
 import { LockedOverlay } from "../components/shared/LockedOverlay";
 import { useGame } from "../context/GameContext";
 import {
@@ -37,8 +38,12 @@ export function LockerPage() {
     cashoutStreak,
     bossEnergy,
     maxBossEnergy,
+    shards,
+    canPrestige,
+    prestige,
+    convertShardsToFreeSpin,
     hasSeenCollectionTutorial,
-    setHasSeenCollectionTutorial
+    setHasSeenCollectionTutorial,
   } = useGame();
   const initialTutorialActive =
     !isTutorialCompleted(LOCKER_TUTORIAL_STORAGE_KEY) &&
@@ -48,8 +53,11 @@ export function LockerPage() {
 
   const { section } = useParams();
   const navigate = useNavigate();
-  const [manualLockedFeature, setManualLockedFeature] = useState<UnlockFeatureKey | null>(null);
+  const [manualLockedFeature, setManualLockedFeature] =
+    useState<UnlockFeatureKey | null>(null);
   const [tutorialActive, setTutorialActive] = useState(initialTutorialActive);
+  const [showRankUpOverlay, setShowRankUpOverlay] = useState(false);
+  const [overlayRankLevel, setOverlayRankLevel] = useState(prestigeLevel);
   const [tutorialSection, setTutorialSection] = useState<LockerSection | null>(
     initialTutorialActive ? "inventory" : null
   );
@@ -64,7 +72,8 @@ export function LockerPage() {
   }, [hasSeenCollectionTutorial]);
 
   const currentSection: LockerSection = useMemo(() => {
-    if (!section || !SECTIONS.includes(section as LockerSection)) return "inventory";
+    if (!section || !SECTIONS.includes(section as LockerSection))
+      return "inventory";
     return section as LockerSection;
   }, [section]);
 
@@ -77,17 +86,39 @@ export function LockerPage() {
 
   const routeLockedFeature: UnlockFeatureKey | null = useMemo(() => {
     if (!isFeatureUnlocked("locker", xp)) return "locker";
-    if (displaySection === "market" && !isFeatureUnlocked("market", xp)) return "market";
-    if (displaySection === "arena" && !isFeatureUnlocked("arena", xp)) return "arena";
+    if (displaySection === "market" && !isFeatureUnlocked("market", xp))
+      return "market";
+    if (displaySection === "arena" && !isFeatureUnlocked("arena", xp))
+      return "arena";
     return null;
   }, [displaySection, xp]);
 
   const activeLockedFeature = manualLockedFeature ?? routeLockedFeature;
 
-  const tabs: { key: LockerSection; label: string; mobileLabel: string; tutorialId: string }[] = [
-    { key: "inventory", label: "Inventory", mobileLabel: "Inventory", tutorialId: "locker-tab-inventory" },
-    { key: "market", label: "Market", mobileLabel: "Market", tutorialId: "locker-tab-market" },
-    { key: "arena", label: "Arena", mobileLabel: "Arena", tutorialId: "locker-tab-arena" }
+  const tabs: {
+    key: LockerSection;
+    label: string;
+    mobileLabel: string;
+    tutorialId: string;
+  }[] = [
+    {
+      key: "inventory",
+      label: "Inventory",
+      mobileLabel: "Inventory",
+      tutorialId: "locker-tab-inventory",
+    },
+    {
+      key: "market",
+      label: "Market",
+      mobileLabel: "Market",
+      tutorialId: "locker-tab-market",
+    },
+    {
+      key: "arena",
+      label: "Arena",
+      mobileLabel: "Arena",
+      tutorialId: "locker-tab-arena",
+    },
   ];
 
   const handleSectionChange = (key: LockerSection) => {
@@ -130,17 +161,17 @@ export function LockerPage() {
         balance={balance}
         inventoryCount={inventory.length}
         xp={xp}
-        level={levelInfo.level}
         prestigeLevel={prestigeLevel}
         freeSpins={freeSpins}
         cashoutFlashTimestamp={cashoutFlashTimestamp}
         cashoutStreak={cashoutStreak}
         bossEnergy={bossEnergy}
         maxBossEnergy={maxBossEnergy}
+        hideDock={showRankUpOverlay}
         tutorialActive={tutorialActive}
       />
       <main className="min-h-screen bg-bg px-3 sm:px-4 md:px-6 pt-36 md:pt-28 pb-28 sm:pb-28 md:pb-24">
-        <div className="max-w-6xl mx-auto">
+        <div className="mx-auto max-w-5xl">
           <div className="mb-6 sm:mb-8 text-center">
             <h1 className="text-xl sm:text-3xl md:text-5xl font-black uppercase tracking-tight text-white mb-1 sm:mb-2">
               <span className="text-neon-cyan">Locker</span>
@@ -158,7 +189,9 @@ export function LockerPage() {
             layoutId="locker-tabs-indicator"
             className="justify-center"
           />
+        </div>
 
+        <div className="mx-auto mt-6 max-w-[88rem] px-1 sm:px-2 lg:px-4">
           {!routeLockedFeature && displaySection === "inventory" && (
             <div data-tutorial="locker-inventory">
               <InventoryGrid />
@@ -171,11 +204,35 @@ export function LockerPage() {
           )}
           {!routeLockedFeature && displaySection === "arena" && (
             <div data-tutorial="locker-arena">
-              <LockerArenaHome xp={xp} onSelect={handleArenaSelect} />
+              <LockerArenaHome
+                xp={xp}
+                levelInfo={levelInfo}
+                bossEnergy={bossEnergy}
+                maxBossEnergy={maxBossEnergy}
+                shards={shards}
+                freeSpins={freeSpins}
+                prestigeLevel={prestigeLevel}
+                canRankUp={canPrestige}
+                onRankUp={() => {
+                  const nextRankLevel = Math.min(prestigeLevel + 1, 3);
+                  setOverlayRankLevel(nextRankLevel);
+                  prestige();
+                  setShowRankUpOverlay(true);
+                }}
+                onConvertShardsToFreeSpin={convertShardsToFreeSpin}
+                onSelect={handleArenaSelect}
+              />
             </div>
           )}
         </div>
       </main>
+
+      {showRankUpOverlay && (
+        <PrestigeOverlay
+          prestigeLevel={overlayRankLevel}
+          onClose={() => setShowRankUpOverlay(false)}
+        />
+      )}
 
       <LockedOverlay
         isOpen={activeLockedFeature != null}

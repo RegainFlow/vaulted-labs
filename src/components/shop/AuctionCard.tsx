@@ -5,6 +5,7 @@ import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
 import { CYBER_TRANSITIONS } from "../../lib/motion-presets";
 import type { AuctionCardProps } from "../../types/marketplace";
 import { CollectibleDisplayCard } from "../shared/CollectibleDisplayCard";
+import { InlineStatusNotice } from "../shared/InlineStatusNotice";
 
 function formatTimeLeft(ms: number): string {
   if (ms <= 0) return "Ended";
@@ -153,7 +154,7 @@ export function AuctionCard({
                 <button
                   type="button"
                   onClick={handleBid}
-                  className="command-segment min-h-[44px] shrink-0 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-accent cursor-pointer"
+                  className="command-segment min-h-[44px] shrink-0 rounded-[14px] border border-accent/30 bg-accent/10 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-accent cursor-pointer"
                 >
                   Bid
                 </button>
@@ -169,7 +170,7 @@ export function AuctionCard({
                 className="system-input w-full px-3 py-2.5 text-sm font-mono text-white placeholder:text-text-dim"
               />
               {bidError && (
-                <p className="text-[10px] font-bold text-error">{bidError}</p>
+                <InlineStatusNotice title={bidError} tone="danger" />
               )}
             </div>
           )
@@ -182,6 +183,7 @@ export function AuctionCard({
           ) : undefined
         }
         tutorialId={isFirst ? "shop-auction" : undefined}
+        variant="feature"
         dimmed={isEnded}
       />
     </motion.div>
