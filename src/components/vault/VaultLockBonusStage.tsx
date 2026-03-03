@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { generateVaultLockStrip, pickVaultLockLanding } from "../../data/vaults";
 import { playSfx } from "../../lib/audio";
@@ -47,6 +47,7 @@ interface VaultLockSpinnerProps {
   lockedResult: SpinnerResult | null;
   escalation: number;
   spinnerIndex: number;
+  rootRef?: (node: HTMLDivElement | null) => void;
 }
 
 function BonusSlotCard({
@@ -197,6 +198,7 @@ function VaultLockSpinnerInner({
   lockedResult,
   escalation,
   spinnerIndex,
+  rootRef,
 }: VaultLockSpinnerProps) {
   const prefersReducedMotion = useReducedMotion();
   const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
@@ -216,6 +218,7 @@ function VaultLockSpinnerInner({
 
   return (
     <motion.div
+      ref={rootRef}
       initial={{ opacity: 0, y: 20, scale: 0.96 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ delay: spinnerIndex * 0.09, type: "spring", damping: 20, stiffness: 160 }}
@@ -301,9 +304,18 @@ function VaultLockSpinnerInner({
 
 const VaultLockSpinner = memo(VaultLockSpinnerInner);
 
-function ChannelBridge({ color, fromIndex }: { color: string; fromIndex: number }) {
+function ChannelBridge({
+  color,
+  left,
+  width,
+  top,
+}: {
+  color: string;
+  left: number;
+  width: number;
+  top: number;
+}) {
   const prefersReducedMotion = useReducedMotion();
-  const isMobile = typeof window !== "undefined" && window.innerWidth < 640;
 
   return (
     <motion.div
@@ -316,9 +328,10 @@ function ChannelBridge({ color, fromIndex }: { color: string; fromIndex: number 
       }
       className="pointer-events-none absolute top-1/2 z-20 -translate-y-1/2"
       style={{
-        left: `${(fromIndex + 1) * 33.333 - (isMobile ? 4.1 : 4.35)}%`,
-        width: isMobile ? "8.2%" : "7.8%",
-        height: isMobile ? "24px" : "28px",
+        left,
+        top,
+        width,
+        height: 28,
       }}
     >
       <div
@@ -370,6 +383,12 @@ export function VaultLockBonusStage({
   const [lockedResults, setLockedResults] = useState<(SpinnerResult | null)[]>([null, null, null]);
   const [escalation, setEscalation] = useState(0);
   const timersRef = useRef<Array<ReturnType<typeof setTimeout>>>([]);
+  const channelRowRef = useRef<HTMLDivElement | null>(null);
+  const channelRefs = useRef<Array<HTMLDivElement | null>>([null, null, null]);
+  const lockTransitioningRef = useRef(false);
+  const [channelRects, setChannelRects] = useState<
+    { left: number; right: number; centerY: number }[]
+  >([]);
   const prestigeTheme =
     PRESTIGE_THEMES[prestigeLevel as keyof typeof PRESTIGE_THEMES] || PRESTIGE_THEMES[0];
 
@@ -437,6 +456,58 @@ export function VaultLockBonusStage({
     return 1;
   }, [lockedResults]);
 
+  const firstTwoMatch =
+    lockedResults[0] != null &&
+    lockedResults[1] != null &&
+    lockedResults[0].tier === lockedResults[1].tier;
+
+  useEffect(() => {
+    lockTransitioningRef.current = false;
+  }, [phase]);
+
+  useLayoutEffect(() => {
+    const measure = () => {
+      const rowRect = channelRowRef.current?.getBoundingClientRect();
+      if (!rowRect) return;
+
+      const nextRects = channelRefs.current
+        .map((node) => {
+          if (!node) return null;
+          const rect = node.getBoundingClientRect();
+          return {
+            left: rect.left - rowRect.left,
+            right: rect.right - rowRect.left,
+            centerY: rect.top - rowRect.top + rect.height / 2,
+          };
+        })
+        .filter((entry): entry is { left: number; right: number; centerY: number } => entry != null);
+
+      if (nextRects.length === 3) {
+        setChannelRects(nextRects);
+      }
+    };
+
+    measure();
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => measure())
+        : null;
+
+    if (resizeObserver) {
+      if (channelRowRef.current) resizeObserver.observe(channelRowRef.current);
+      channelRefs.current.forEach((node) => {
+        if (node) resizeObserver.observe(node);
+      });
+    } else {
+      window.addEventListener("resize", measure);
+    }
+
+    return () => {
+      resizeObserver?.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [lockedResults, phase, strips]);
+
   useEffect(() => {
     if (phase === "announce") {
       schedule(() => setPhase("materialize"), 1700);
@@ -448,7 +519,6 @@ export function VaultLockBonusStage({
         setPhase("spin-2");
       }, 1250);
     } else if (phase === "lock-2") {
-      const firstTwoMatch = landings[0].tier === landings[1].tier;
       if (!firstTwoMatch) {
         schedule(() => setPhase("evaluate"), 1250);
       } else {
@@ -477,25 +547,30 @@ export function VaultLockBonusStage({
     }
 
     return () => clearTimers();
-  }, [clearTimers, getMatchCount, landings, lockedResults, onComplete, phase, schedule]);
+  }, [clearTimers, firstTwoMatch, getMatchCount, landings, lockedResults, onComplete, phase, schedule]);
 
   useEffect(() => () => clearTimers(), [clearTimers]);
 
   const handleLock = useCallback(() => {
+    if (lockTransitioningRef.current) return;
     playSfx("bonus_round_tick");
+    lockTransitioningRef.current = true;
     if (phase === "spin-1") {
       setLockedResults((prev) => [landings[0], prev[1], prev[2]]);
       setPhase("lock-1");
     } else if (phase === "spin-2") {
       setLockedResults((prev) => [prev[0], landings[1], prev[2]]);
       setPhase("lock-2");
-    } else if (phase === "spin-3") {
+    } else if (phase === "spin-3" && firstTwoMatch) {
       setLockedResults((prev) => [prev[0], prev[1], landings[2]]);
       setPhase("lock-3");
+    } else {
+      lockTransitioningRef.current = false;
     }
-  }, [landings, phase]);
+  }, [firstTwoMatch, landings, phase]);
 
-  const isSpinPhase = phase === "spin-1" || phase === "spin-2" || phase === "spin-3";
+  const isSpinPhase =
+    phase === "spin-1" || phase === "spin-2" || (phase === "spin-3" && firstTwoMatch);
   const showSpinners = phase !== "announce";
   const matchCount = getMatchCount();
 
@@ -511,18 +586,38 @@ export function VaultLockBonusStage({
       lockedResult: lockedResults[1],
     },
     {
-      isActive: phase === "spin-3",
+      isActive: phase === "spin-3" && firstTwoMatch,
       isLocked: lockedResults[2] !== null,
       lockedResult: lockedResults[2],
     },
   ];
 
-  const arcs: { from: number; color: string }[] = [];
-  if (lockedResults[0] && lockedResults[1] && lockedResults[0].tier === lockedResults[1].tier) {
-    arcs.push({ from: 0, color: lockedResults[0].color });
+  const arcs: { left: number; width: number; top: number; color: string }[] = [];
+  if (
+    channelRects.length === 3 &&
+    lockedResults[0] &&
+    lockedResults[1] &&
+    lockedResults[0].tier === lockedResults[1].tier
+  ) {
+    arcs.push({
+      left: channelRects[0].right,
+      width: Math.max(0, channelRects[1].left - channelRects[0].right),
+      top: (channelRects[0].centerY + channelRects[1].centerY) / 2,
+      color: lockedResults[0].color,
+    });
   }
-  if (lockedResults[1] && lockedResults[2] && lockedResults[1].tier === lockedResults[2].tier) {
-    arcs.push({ from: 1, color: lockedResults[1].color });
+  if (
+    channelRects.length === 3 &&
+    lockedResults[1] &&
+    lockedResults[2] &&
+    lockedResults[1].tier === lockedResults[2].tier
+  ) {
+    arcs.push({
+      left: channelRects[1].right,
+      width: Math.max(0, channelRects[2].left - channelRects[1].right),
+      top: (channelRects[1].centerY + channelRects[2].centerY) / 2,
+      color: lockedResults[1].color,
+    });
   }
 
   const activeMessage =
@@ -604,6 +699,7 @@ export function VaultLockBonusStage({
           </motion.div>
 
           <div
+            ref={channelRowRef}
             data-tutorial="bonus-round"
             className="relative flex w-full items-center justify-center gap-2 sm:gap-4 md:gap-6"
           >
@@ -616,11 +712,20 @@ export function VaultLockBonusStage({
                 lockedResult={spinnerStates[index].lockedResult}
                 escalation={escalation}
                 spinnerIndex={index}
+                rootRef={(node) => {
+                  channelRefs.current[index] = node;
+                }}
               />
             ))}
 
             {arcs.map((arc) => (
-              <ChannelBridge key={`bridge-${arc.from}`} color={arc.color} fromIndex={arc.from} />
+              <ChannelBridge
+                key={`bridge-${arc.left}-${arc.color}`}
+                color={arc.color}
+                left={arc.left}
+                width={arc.width}
+                top={arc.top}
+              />
             ))}
           </div>
 

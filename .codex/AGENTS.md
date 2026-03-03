@@ -57,28 +57,29 @@ Repository guidance for coding agents working on VaultedLabs.
 ## Current Implementation Notes (2026-02-23)
 - Landing navbar is Join-only; do not reintroduce Play/Shop buttons on `/`.
 - HUD navigation is unified:
-- Global fixed bottom dock on all breakpoints for `Wallet`, `Vaults`, `Locker`.
+- Global fixed bottom dock on all breakpoints for `Wallet`, `Vaults`, `Labs`.
 - Dock is hidden during blocking overlays/modals (vault open overlay, arena battle/setup overlays, rank-up overlay).
 - Open tutorial flow includes: dashboard, category, odds, contents, open, spin, and result-action guidance.
-- Locker tutorial is inventory-first (seeded demo item) and then walks market + auctions.
-- Locker section switching uses the shared segmented tab pattern.
+- Labs tutorial is inventory-first (seeded demo item) and then walks market + auctions.
+- Labs section switching uses the shared segmented tab pattern.
 - Arena tutorial is wired and replayable from help button, covering resources, section tabs, battles, forge, quests, and rank-up.
-- Arena resource/status decks now include Rank Up alongside Energy, Shards, Level, and Free Spins; use that shared deck instead of separate one-off rank-up widgets.
+- Arena resource/status decks now include Prestige alongside Energy, Shards, Level, and Free Spins; use that shared deck instead of separate one-off prestige widgets.
 - Bonus spin percentage UI is premium-only: Platinum, Obsidian, Diamond.
 
 ## Current Implementation Notes (2026-02-24)
 - Primary app routes now center on `/vaults`, `/wallet`, `/locker/*`, and `/arena/*`.
-- Bottom dock has exactly three items: `Wallet`, `Vaults`, `Locker`.
-- Locker is the only tabbed surface (`Inventory`, `Market`, `Arena`).
+- Visible product label is `Labs`; `/locker/*` remains the compatibility route.
+- Bottom dock has exactly three items: `Wallet`, `Vaults`, `Labs`.
+- Labs is the only tabbed surface (`Inventory`, `Market`, `Arena`).
 - Arena tabs were removed; Arena Home cards route to `/arena/battles`, `/arena/forge`, `/arena/quests`.
-- XP gating is enforced via `LockedOverlay` for Locker/Market/Arena/Battles/Forge/Quests.
+- XP gating is enforced via `LockedOverlay` for Labs/Market/Arena/Battles/Forge/Quests.
 - HUD is informational only: Credits, Energy, XP/Lv (no navigation actions).
 - Inventory defaults to active items only (status `held`); non-held history is surfaced via wallet/market flows.
 - Open reveal layout is constrained for mobile to prevent legendary overflow and floating rarity tags.
 - Tutorial spotlight utilities now auto-scroll and clamp tooltips to safe viewport areas across desktop/mobile.
 ## Product Notes
 
-- Use `Rank Up` for user-facing progression copy, not `Prestige`.
+- Use `Prestige` for user-facing progression copy, even though internal compatibility names remain `prestige*`.
 - Use `Spin` for the main vault action and `Lock` for the bonus round.
 - Provably fair UX belongs in vault overlays, result surfaces, wallet receipts, and the `/provably-fair` legal page, not as random extra chrome on browse cards.
 - Covered provably fair RNG currently includes vault opens, bonus lock, forge rolls, and battle simulation.

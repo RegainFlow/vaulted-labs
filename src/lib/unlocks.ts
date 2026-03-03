@@ -16,7 +16,7 @@ export const FEATURE_UNLOCK_XP: Record<UnlockFeatureKey, number> = {
 };
 
 export const FEATURE_UNLOCK_LABEL: Record<UnlockFeatureKey, string> = {
-  locker: "Locker",
+  locker: "Labs",
   market: "Market",
   arena: "Arena",
   battles: "Battles",

@@ -180,10 +180,10 @@ Defined in `src/index.css`:
 
 ### Arena Status Decks
 - Arena status decks are shared across Arena Home and Arena sub-pages
-- include core resources plus Rank Up in the same visual family
-- Rank Up should appear as a dedicated status card, not a detached button below the page
-- Rank Up cards should explain the concrete vault-odds shift, not vague prestige wording
-- visible product language should be `Rank Up` / `Rank` even if internal compatibility names remain `prestige*`
+- include core resources plus Prestige in the same visual family
+- Prestige should appear as a dedicated status card, not a detached button below the page
+- Prestige cards should explain the concrete vault-odds shift
+- visible product language should be `Prestige` even if internal compatibility names remain `prestige*`
 
 ### Battle Presentation
 - Arena battles should read as a combat scene, not a stats dashboard

@@ -174,7 +174,7 @@ export function LockerPage() {
         <div className="mx-auto max-w-5xl">
           <div className="mb-6 sm:mb-8 text-center">
             <h1 className="text-xl sm:text-3xl md:text-5xl font-black uppercase tracking-tight text-white mb-1 sm:mb-2">
-              <span className="text-neon-cyan">Locker</span>
+              <span className="text-neon-cyan">Labs</span>
             </h1>
             <p className="text-text-muted text-xs sm:text-sm max-w-xl mx-auto">
               Manage inventory, browse market, and launch arena systems.

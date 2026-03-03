@@ -159,13 +159,13 @@ export function ArenaStatusDeck({
   const currentShift = getPrestigeShiftBreakdown(activeRank);
   const previewShift = getPrestigeShiftBreakdown(previewRank);
   const rankShift = activeRank > 0 ? currentShift : previewShift;
-  const rankButtonLabel = isMaxRank ? "Max Rank" : canRankUp ? "Rank Up" : "Reach Lv 10";
+  const rankButtonLabel = isMaxRank ? "Max Prestige" : canRankUp ? "Prestige" : "Reach Lv 10";
   const rankSummary = isMaxRank
     ? "Max bonus active"
     : canRankUp
       ? "Lv 10 reached"
       : "Reach Lv 10";
-  const rankOddsLabel = activeRank > 0 ? "Vault Odds Bonus" : "Next Rank Bonus";
+  const rankOddsLabel = activeRank > 0 ? "Vault Odds Bonus" : "Next Prestige Bonus";
 
   if (variant === "compact") {
     return (
@@ -234,7 +234,7 @@ export function ArenaStatusDeck({
         >
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-[9px] font-black uppercase tracking-[0.22em] text-accent">Rank</div>
+              <div className="text-[9px] font-black uppercase tracking-[0.22em] text-accent">Prestige</div>
               <div className="mt-1 text-base font-mono font-black text-accent">{activeRank}</div>
               <div className="mt-1 text-[10px] font-mono uppercase tracking-[0.18em] text-text-dim">
                 {rankSummary}
@@ -395,7 +395,7 @@ export function ArenaStatusDeck({
       </div>
 
       <StatusCard
-        label="Rank Up"
+        label="Prestige"
         toneClass="text-accent"
         accentGlow="drop-shadow(0 0 10px rgba(255,45,149,0.3))"
         icon={<RankUpIcon />}
@@ -406,7 +406,7 @@ export function ArenaStatusDeck({
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-mono font-black text-accent">
-                  Rank {activeRank}
+                  Prestige {activeRank}
                 </span>
                 {activeRank > 0 ? (
                   <span className="flex gap-0.5">
@@ -438,7 +438,7 @@ export function ArenaStatusDeck({
                 {rankOddsLabel}
               </span>
               <span className="text-[10px] font-mono uppercase tracking-[0.16em] text-text-dim">
-                Rank {activeRank > 0 ? activeRank : previewRank}
+                Prestige {activeRank > 0 ? activeRank : previewRank}
               </span>
             </div>
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
@@ -479,7 +479,7 @@ export function ArenaStatusDeck({
 
           <div className="flex flex-col gap-3 border-t border-white/6 pt-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-[10px] font-mono uppercase tracking-[0.18em] text-text-dim">
-              Rank Up applies across every vault tier and stacks up to Rank 3.
+              Prestige applies across every vault tier and stacks up to Prestige 3.
             </p>
             <ArcadeButton
               onClick={canRankUp && !isMaxRank ? onRankUp : undefined}

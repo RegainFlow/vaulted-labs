@@ -25,7 +25,7 @@ const HUD_TOOLTIPS: Record<
   },
   level: {
     title: "Level",
-    text: "Earn XP by opening vaults, winning battles, and completing quests. Reach Lv 10 to Rank Up and improve vault odds.",
+    text: "Earn XP by opening vaults, winning battles, and completing quests. Reach Lv 10 to Prestige and improve vault odds.",
     color: "text-accent",
     borderColor: "border-l-accent",
   },
@@ -307,7 +307,7 @@ export function Navbar({
           />
         </svg>
         <span className="text-[9px] font-black uppercase tracking-wider">
-          Locker
+          Labs
         </span>
       </button>
     </>

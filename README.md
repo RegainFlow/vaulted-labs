@@ -6,8 +6,8 @@ VaultedLabs is a gamified commerce demo where players open vaults, reveal collec
 
 - 6 fixed vault tiers with transparent rarity odds.
 - Reveal outcomes with 3 actions: Cashout, Equip, Ship.
-- Locker hub with Inventory, Market (with Auctions inside), and Arena Home.
-- Arena loop with Battles, Forge, Quests, energy/shard economy, XP progression, and Rank Up odds bonuses.
+- Labs hub with Inventory, Market (with Auctions inside), and Arena Home.
+- Arena loop with Battles, Forge, Quests, energy/shard economy, XP progression, and Prestige odds bonuses.
 - Battles now use a cinematic `YOU vs BOSS` presentation layer that replays the already-resolved combat result with authored boss profiles, battle feed, and ability-bar visuals.
 - Wallet with typed credit history (earned, incentive, spent).
 - Waitlist and prelaunch incentive flow on landing page.
@@ -17,10 +17,10 @@ VaultedLabs is a gamified commerce demo where players open vaults, reveal collec
 - `/` - Landing (join-first funnel)
 - `/vaults` - Vault opening loop and first-run micro tutorial
 - `/wallet` - Balance and transaction history
-- `/locker` - Redirects to `/locker/inventory`
-- `/locker/inventory` - Inventory items (active items only)
-- `/locker/market` - Market + Auctions
-- `/locker/arena` - Arena Home menu
+- `/locker` - Redirects to `/locker/inventory` (visible product label: `Labs`)
+- `/locker/inventory` - Labs Inventory items (active items only)
+- `/locker/market` - Labs Market + Auctions
+- `/locker/arena` - Labs Arena Home menu
 - `/arena/battles`, `/arena/forge`, `/arena/quests` - Arena sub-screens
 - `/provably-fair` - Public fairness/legal transparency page
 - `/privacy`, `/terms`
@@ -37,15 +37,15 @@ Legacy redirects:
 - Landing navbar: `Join` CTA only.
 - App pages (`/vaults`, `/wallet`, `/locker/*`, `/arena/*`):
 - Top bar: centered wordmark on mobile + HUD resources.
-- Global primary nav: fixed bottom dock (`Wallet`, `Vaults`, `Locker`) on all breakpoints.
+- Global primary nav: fixed bottom dock (`Wallet`, `Vaults`, `Labs`) on all breakpoints.
 - Dock auto-hides during full-screen overlays/modals (e.g. vault open flow, arena battle flow).
-- HUD is informational only (Credits, Energy, XP/Lv), not navigation. Arena resource decks surface Rank Up as the progression action.
+- HUD is informational only (Credits, Energy, XP/Lv), not navigation. Arena resource decks surface Prestige as the progression action.
 
 ## Tutorials
 
 - Tutorials now run through one shared vault-tech overlay system with a common controller, spotlight, and instruction rail.
 - `/vaults`: auto-runs once for new users, guiding the full open -> spin -> bonus -> reveal loop, replayable via floating `?` button.
-- `/locker`: guided walkthrough across Inventory, Market, and Arena sections on first eligible unlock, then replayable.
+- `/locker`: guided walkthrough across Labs Inventory, Market, and Arena sections on first eligible unlock, then replayable.
 - `/wallet`: replayable via floating `?` button.
 - Tutorials use shared target resolution, viewport-safe placement, and mobile-safe safe-area handling.
 
@@ -94,7 +94,7 @@ Only premium tiers show bonus percentages and can trigger Vault Lock:
 - `src/lib/provably-fair-core.ts` - canonical payload hashing, digest derivation, and local verification
 - `src/lib/provably-fair-api.ts` - client calls into Supabase fairness functions
 - `src/components/shared/Navbar.tsx` - HUD + unified bottom dock navigation
-- `src/components/shared/SegmentedTabs.tsx` - shared segmented control used by Locker tabs and other section rails
+- `src/components/shared/SegmentedTabs.tsx` - shared segmented control used by Labs tabs and other section rails
 - `src/pages/ProvablyFairPage.tsx` - public fairness and verification guide
 - `supabase/functions/_shared/provably-fair*.ts` - Deno-safe shared fairness runtime used by edge functions
 - `supabase/migrations/20260302120000_add_provably_fair.sql` - fairness tables

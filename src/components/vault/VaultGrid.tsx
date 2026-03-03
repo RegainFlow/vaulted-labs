@@ -51,6 +51,11 @@ import { InlineStatusNotice } from "../shared/InlineStatusNotice";
 import { ArcadeButton } from "../shared/ArcadeButton";
 import { ProvablyFairReceiptModal } from "../shared/ProvablyFairReceiptModal";
 import { useOverlayScrollLock } from "../../hooks/useOverlayScrollLock";
+import {
+  clearPendingVaultReveal,
+  savePendingVaultReveal,
+  type PendingVaultReveal,
+} from "../../lib/pending-vault-reveal";
 
 /* â”€â”€â”€ Constants & Types â”€â”€â”€ */
 
@@ -70,6 +75,16 @@ interface VaultOverlayProps {
   ) => { acquisitionMeta: ItemAcquisitionMeta; transactionId: string } | null;
   onClaim: (amount: number, receiptId?: string) => void;
   onEquip: (
+    product: string,
+    vaultTier: VaultTierName,
+    rarity: Rarity,
+    value: number,
+    funkoId?: string,
+    funkoName?: string,
+    acquisitionMeta?: ItemAcquisitionMeta,
+    receiptId?: string
+  ) => void;
+  onStore: (
     product: string,
     vaultTier: VaultTierName,
     rarity: Rarity,
@@ -303,6 +318,7 @@ function VaultOverlay({
   onPurchase,
   onClaim,
   onEquip,
+  onStore,
   onShip,
   prestigeLevel: overlayPrestigeLevel = 0,
   onUseFreeSpinForVault,
@@ -409,6 +425,8 @@ function VaultOverlay({
   const [resolvedBonusChannels, setResolvedBonusChannels] = useState<
     { tier: VaultTierName; color: string; imagePath: string }[] | null
   >(null);
+  const revealResolvedRef = useRef(false);
+  const revealFallbackSavedRef = useRef(false);
   const preBalance = purchasedBalance ?? balance;
   const postBalance = usedFreeSpin
     ? preBalance + resultValue
@@ -429,10 +447,101 @@ function VaultOverlay({
     };
   }, []);
 
+  const buildPendingReveal = useCallback((): PendingVaultReveal | null => {
+    if (stage !== "result" || cashoutComplete || isTutorialDemo) return null;
+
+    return {
+      product,
+      vaultTier: tier.name as VaultTierName,
+      rarity: wonRarity as Rarity,
+      value: resultValue,
+      funkoId: wonFunko.id,
+      funkoName: wonFunko.name,
+      acquisitionMeta: resultAcquisitionMeta,
+      receiptId: vaultReceiptId ?? undefined,
+      createdAt: Date.now(),
+    };
+  }, [
+    cashoutComplete,
+    isTutorialDemo,
+    product,
+    resultAcquisitionMeta,
+    resultValue,
+    stage,
+    tier.name,
+    vaultReceiptId,
+    wonFunko.id,
+    wonFunko.name,
+    wonRarity,
+  ]);
+
+  const markRevealResolved = useCallback(() => {
+    revealResolvedRef.current = true;
+    revealFallbackSavedRef.current = true;
+    clearPendingVaultReveal();
+  }, []);
+
+  const persistRevealFallback = useCallback(
+    (mode: "store" | "stash") => {
+      if (revealResolvedRef.current || revealFallbackSavedRef.current) return;
+
+      const payload = buildPendingReveal();
+      if (!payload) return;
+
+      revealFallbackSavedRef.current = true;
+
+      if (mode === "store") {
+        onStore(
+          payload.product,
+          payload.vaultTier,
+          payload.rarity,
+          payload.value,
+          payload.funkoId,
+          payload.funkoName,
+          payload.acquisitionMeta,
+          payload.receiptId
+        );
+        revealResolvedRef.current = true;
+        clearPendingVaultReveal();
+        trackEvent(AnalyticsEvents.ITEM_ACTION, {
+          action: "auto_hold",
+          vault_tier: tier.name,
+          rarity: wonRarity,
+          value: resultValue,
+          vault_price: tier.price,
+          free_spin: usedFreeSpin,
+        });
+        return;
+      }
+
+      savePendingVaultReveal(payload);
+    },
+    [
+      buildPendingReveal,
+      onStore,
+      resultValue,
+      tier.name,
+      tier.price,
+      usedFreeSpin,
+      wonRarity,
+    ]
+  );
+
   useEffect(() => {
     if (stage !== "idle") return;
     void ensureProvablyFairSession();
   }, [ensureProvablyFairSession, stage]);
+
+  useEffect(() => {
+    const handlePersist = () => persistRevealFallback("stash");
+    window.addEventListener("pagehide", handlePersist);
+    window.addEventListener("beforeunload", handlePersist);
+    return () => {
+      handlePersist();
+      window.removeEventListener("pagehide", handlePersist);
+      window.removeEventListener("beforeunload", handlePersist);
+    };
+  }, [persistRevealFallback]);
 
   const handleSpinLand = useCallback(() => {
     setSpinLanded(true);
@@ -483,6 +592,7 @@ function VaultOverlay({
   ]);
 
   const resetForNextSpin = useCallback(() => {
+    markRevealResolved();
     setStage("idle");
     setSpinLanded(false);
     setIsClaiming(false);
@@ -499,10 +609,13 @@ function VaultOverlay({
     setVaultReceiptId(null);
     setBonusReceiptId(null);
     setResolvedBonusChannels(null);
-  }, []);
+  }, [markRevealResolved]);
 
   const handleSpin = useCallback(async () => {
     if (spinRequestState !== "idle") return;
+    revealResolvedRef.current = false;
+    revealFallbackSavedRef.current = false;
+    clearPendingVaultReveal();
     const usesFreeSpin = !isTutorialDemo && freeSpins > 0;
     setPurchaseError(null);
     setFairnessError(null);
@@ -737,6 +850,7 @@ function VaultOverlay({
 
   const handleClaimLocal = () => {
     if (isResolvingAction || cashoutComplete) return;
+    markRevealResolved();
     onTutorialResultAction?.();
     setIsResolvingAction(true);
     const viewportHeight =
@@ -782,6 +896,7 @@ function VaultOverlay({
 
   const handleEquip = () => {
     if (isResolvingAction) return;
+    markRevealResolved();
     onTutorialResultAction?.();
     setIsResolvingAction(true);
     trackEvent(AnalyticsEvents.ITEM_ACTION, {
@@ -816,6 +931,7 @@ function VaultOverlay({
       if (shippingLocked) playSfx("ui_locked");
       return;
     }
+    markRevealResolved();
     onTutorialResultAction?.();
     setIsResolvingAction(true);
     trackEvent(AnalyticsEvents.ITEM_ACTION, {
@@ -844,6 +960,8 @@ function VaultOverlay({
       vaultReceiptId ?? undefined
     );
     if (!shipped) {
+      revealResolvedRef.current = false;
+      revealFallbackSavedRef.current = false;
       setIsResolvingAction(false);
     }
   };
@@ -871,6 +989,11 @@ function VaultOverlay({
     playSfx("ui_select");
     scheduleTimeout(() => handleSpin(), 50);
   };
+
+  const handleCloseRequest = useCallback(() => {
+    persistRevealFallback("store");
+    onClose();
+  }, [onClose, persistRevealFallback]);
 
   return (
     <motion.div
@@ -962,7 +1085,7 @@ function VaultOverlay({
               className="relative my-auto w-full max-w-[88rem] px-2 pt-14 sm:px-4 sm:pt-6 lg:px-5"
             >
               <button
-                onClick={onClose}
+                onClick={handleCloseRequest}
                 type="button"
                 aria-label="Close"
                 className="system-close"
@@ -1389,7 +1512,7 @@ function VaultOverlay({
                       </p>
                       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
                         <button
-                          onClick={onClose}
+                          onClick={handleCloseRequest}
                           className="system-rail px-4 py-2.5 text-white text-[10px] font-black uppercase tracking-widest transition-colors cursor-pointer"
                         >
                           Return to Vaults
@@ -1440,6 +1563,7 @@ export function VaultGrid({
     xp,
     purchaseVault,
     claimCreditsFromReveal,
+    addItem,
     addAndEquipItem,
     addAndShipItem,
     awardXP,
@@ -1504,6 +1628,28 @@ export function VaultGrid({
     claimCreditsFromReveal(amount, receiptId);
     awardXP(ACTION_XP_REWARD, "vault_cashout");
   };
+  const handleStore = (
+    product: string,
+    vaultTier: VaultTierName,
+    rarity: Rarity,
+    value: number,
+    funkoId?: string,
+    funkoName?: string,
+    acquisitionMeta?: ItemAcquisitionMeta,
+    receiptId?: string
+  ) => {
+    addItem(
+      product,
+      vaultTier,
+      rarity,
+      value,
+      funkoId,
+      funkoName,
+      acquisitionMeta,
+      receiptId
+    );
+    setSelectedVault(null);
+  };
   const handleEquip = (
     product: string,
     vaultTier: VaultTierName,
@@ -1544,7 +1690,7 @@ export function VaultGrid({
     if (!isFeatureUnlocked("arena", xpAfterReward)) {
       const remainingXP = getRemainingXP("arena", xpAfterReward);
       setEquipLockedNotice(
-        `Saved to Locker. Earn ${remainingXP} XP to unlock Arena.`
+        `Saved to Labs. Earn ${remainingXP} XP to unlock Arena.`
       );
     }
   };
@@ -1607,7 +1753,7 @@ export function VaultGrid({
     if (features.includes("market")) {
       return { path: "/locker/market", label: "Go to Market" };
     }
-    return { path: "/locker/inventory", label: "Go to Locker" };
+    return { path: "/locker/inventory", label: "Go to Labs" };
   }, [unlockNoticeFeatures]);
 
   return (
@@ -1649,7 +1795,7 @@ export function VaultGrid({
               className={`relative transition-all duration-300 ${isBroke ? "blur-xl grayscale pointer-events-none scale-[0.97] opacity-20" : ""}`}
             >
               <div data-tutorial="vault-grid" className="mx-auto max-w-6xl">
-                <div className="scrollbar-none -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto px-1 pb-3 md:hidden">
+                <div className="scrollbar-none -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-hidden px-1 pb-3 md:hidden touch-pan-x [overscroll-behavior-x:contain] [overscroll-behavior-y:none]">
                   {VAULTS.map((vault, index) => (
                     <div
                       key={vault.name}
@@ -1745,6 +1891,7 @@ export function VaultGrid({
             onPurchase={purchaseVault}
             onClaim={handleClaim}
             onEquip={handleEquip}
+            onStore={handleStore}
             onShip={handleShip}
             prestigeLevel={prestigeLevel}
             onUseFreeSpinForVault={useFreeSpinForVault}
@@ -1801,7 +1948,7 @@ export function VaultGrid({
                 </svg>
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-white uppercase tracking-tight mb-3">
-                Saved to Locker
+                Saved to Labs
               </h2>
               <p className="text-text-muted text-sm leading-relaxed mb-8">
                 {equipLockedNotice}

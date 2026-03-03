@@ -137,15 +137,14 @@ export const VAULT_TUTORIAL_STEPS: TutorialStepDefinition[] = [
     compact: true,
     placement: "top",
     target: {
-      selectors: [
+      selector: '[data-tutorial="reveal-actions"]',
+      fallbackSelectors: [
         '[data-tutorial="reveal-cashout"]',
         '[data-tutorial="reveal-equip"]',
         '[data-tutorial="reveal-ship"]',
       ],
-      fallbackSelectors: ['[data-tutorial="reveal-actions"]'],
       padding: 10,
       radius: 18,
-      requireAll: false,
       showRing: true,
     },
     advanceOn: [
@@ -170,15 +169,15 @@ export const LOCKER_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "locker-intro",
     kind: "intro",
-    kicker: "Locker Tutorial",
-    title: "Your Locker",
-    body: "Locker is your control hub for saved collectibles, market activity, and arena systems.",
+    kicker: "Labs Tutorial",
+    title: "Your Labs",
+    body: "Labs is your control hub for saved collectibles, market activity, and arena systems.",
     actionLabel: "Begin",
   },
   {
     id: "locker-tabs",
     kind: "spotlight",
-    kicker: "Locker Tutorial",
+    kicker: "Labs Tutorial",
     title: "Section Rail",
     body: "Use this command rail to move between Inventory, Market, and Arena.",
     placement: "bottom",
@@ -191,7 +190,7 @@ export const LOCKER_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "locker-inventory",
     kind: "rail",
-    kicker: "Locker Tutorial",
+    kicker: "Labs Tutorial",
     title: "Inventory",
     body: "Saved collectibles live here. From Inventory you can ship, cash out, or list held items.",
     hint: "Inventory is where saved collectibles live",
@@ -206,7 +205,7 @@ export const LOCKER_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "locker-market",
     kind: "rail",
-    kicker: "Locker Tutorial",
+    kicker: "Labs Tutorial",
     title: "Market",
     body: "Market combines buy-now listings and auctions so you can browse demand from one place.",
     hint: "Browse market listings and auctions here",
@@ -221,7 +220,7 @@ export const LOCKER_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "locker-arena",
     kind: "rail",
-    kicker: "Locker Tutorial",
+    kicker: "Labs Tutorial",
     title: "Arena",
     body: "Arena is where your collectibles drive battles, forge upgrades, and progression systems.",
     hint: "Launch battles, forge, and quests from here",
@@ -236,8 +235,8 @@ export const LOCKER_TUTORIAL_STEPS: TutorialStepDefinition[] = [
   {
     id: "locker-complete",
     kind: "complete",
-    kicker: "Locker Tutorial",
-    title: "Locker Ready",
+    kicker: "Labs Tutorial",
+    title: "Labs Ready",
     body: "You now know where to manage items, watch the market, and launch arena systems.",
     actionLabel: "Done",
   },
@@ -550,8 +549,8 @@ export const ARENA_TUTORIAL_STEPS: TutorialStepDefinition[] = [
     id: "arena-rankup",
     kind: "spotlight",
     kicker: "Arena Tutorial",
-    title: "Rank Up",
-    body: "Reach Lv 10 to Rank Up and permanently improve vault odds across every tier.",
+    title: "Prestige",
+    body: "Reach Lv 10 to Prestige and permanently improve vault odds across every tier.",
     placement: "top",
     target: {
       selector: '[data-tutorial="arena-rankup"]',

@@ -43,6 +43,10 @@ import {
   invokeProvablyFairRotate,
   invokeProvablyFairSession,
 } from "../lib/provably-fair-api";
+import {
+  clearPendingVaultReveal,
+  loadPendingVaultReveal,
+} from "../lib/pending-vault-reveal";
 import type {
   ProvablyFairCommitState,
   ProvablyFairReceipt,
@@ -354,7 +358,8 @@ interface GameContextValue {
     value: number,
     funkoId?: string,
     funkoName?: string,
-    acquisitionMeta?: ItemAcquisitionMeta
+    acquisitionMeta?: ItemAcquisitionMeta,
+    receiptId?: string
   ) => Collectible;
   addAndShipItem: (
     product: string,
@@ -658,6 +663,45 @@ export function GameProvider({ children }: { children: ReactNode }) {
     bossEnergy, lastEnergyRegenAt, shards, equippedItemIds, trackedUnlocks,
     walletId, fairnessClientSeed, provablyFairCommit, provablyFairReceipts
   ]);
+
+  useEffect(() => {
+    const pendingReveal = loadPendingVaultReveal();
+    if (!pendingReveal) return;
+
+    setInventory((prev) => {
+      const alreadyStored = prev.some(
+        (item) =>
+          item.provablyFairReceiptId &&
+          pendingReveal.receiptId &&
+          item.provablyFairReceiptId === pendingReveal.receiptId
+      );
+      if (alreadyStored) {
+        clearPendingVaultReveal();
+        return prev;
+      }
+
+      return [
+        ...prev,
+        {
+          id: uid("item"),
+          product: pendingReveal.product,
+          vaultTier: pendingReveal.vaultTier,
+          rarity: pendingReveal.rarity,
+          value: pendingReveal.value,
+          status: "held",
+          acquiredAt: pendingReveal.createdAt,
+          funkoId: pendingReveal.funkoId,
+          funkoName: pendingReveal.funkoName,
+          stats: generateItemStats(pendingReveal.rarity, pendingReveal.vaultTier),
+          isEquipped: false,
+          provablyFairReceiptId: pendingReveal.receiptId,
+          ...pendingReveal.acquisitionMeta,
+        },
+      ];
+    });
+
+    clearPendingVaultReveal();
+  }, []);
 
   const balance = useMemo(
     () => creditTransactions.reduce((sum, tx) => sum + tx.amount, 0),
@@ -971,7 +1015,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       value: number,
       funkoId?: string,
       funkoName?: string,
-      acquisitionMeta: ItemAcquisitionMeta = DEFAULT_ITEM_META
+      acquisitionMeta: ItemAcquisitionMeta = DEFAULT_ITEM_META,
+      receiptId?: string
     ): Collectible => {
       const item: Collectible = {
         id: uid("item"),
@@ -983,6 +1028,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         acquiredAt: Date.now(),
         stats: generateItemStats(rarity, vaultTier),
         isEquipped: false,
+        provablyFairReceiptId: receiptId,
         ...acquisitionMeta,
         ...(funkoId ? { funkoId } : {}),
         ...(funkoName ? { funkoName } : {})

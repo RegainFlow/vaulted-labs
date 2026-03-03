@@ -110,19 +110,19 @@ export function PrestigeOverlay({
         />
 
         <div className="relative z-10 text-center">
-          <p className="system-kicker mb-4 text-white/55">Rank Up Complete</p>
+          <p className="system-kicker mb-4 text-white/55">Prestige Complete</p>
 
           <div className="mx-auto flex w-fit items-center gap-4 rounded-[24px] border border-white/8 bg-black/18 px-5 py-4">
             <PrestigeShieldIcon level={(prestigeLevel as 1 | 2 | 3) || 1} size={52} />
             <div className="text-left">
               <p className="text-[10px] font-black uppercase tracking-[0.24em] text-text-dim">
-                New Rank
+                New Prestige
               </p>
               <h2
                 className="mt-1 text-3xl font-black uppercase tracking-[0.08em] sm:text-4xl"
                 style={{ color: theme.primary }}
               >
-                Rank {prestigeLevel}
+                Prestige {prestigeLevel}
               </h2>
               <p className="mt-1 text-[11px] font-mono uppercase tracking-[0.18em] text-white/70">
                 {theme.title} boost online
