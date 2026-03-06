@@ -184,3 +184,11 @@ If the fairness algorithm, covered RNG systems, request payloads, receipt shape,
 - `docs/STYLES.md`
 - `.codex/AGENTS.md`
 - the relevant Supabase migrations, edge functions, and `supabase/config.toml`
+
+### Docs sync contract
+
+If implementation changes incentives, waitlist tier behavior, route naming, or route coverage, update the related docs in the same pass.
+
+- Incentives / waitlist ladder: update `README.md`, `docs/marketing/ICP.md`, and any customer-facing messaging docs that mention specific tier amounts or signup thresholds.
+- Routes / naming: update `README.md`, `docs/POSTHOG_EVENTS.md`, and any marketing docs that mention canonical entry paths.
+- Fairness / receipt coverage: follow the existing change-management rule above and the full contract in `docs/legal/PROVABLY_FAIR.md`.

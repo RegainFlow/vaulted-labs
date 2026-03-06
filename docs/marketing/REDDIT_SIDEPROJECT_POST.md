@@ -10,7 +10,7 @@ Mystery box sites have always had a "please hand us money and ask fewer question
 
 So I built one that does the opposite.
 
-I'm working on **VaultedLabs**, a mystery-box / collectible-vault platform where every vault shows the exact odds up front before you open it. No hunting through a footer, no vague "rare items available," no trust-me-bro probability system.
+I'm working on **VaultedLabs**, a chance-based collectible-commerce / collectible-vault platform where every vault shows the exact odds up front before you open it. No hunting through a footer, no vague "rare items available," no trust-me-bro probability system.
 
 The basic loop is:
 
@@ -25,7 +25,9 @@ If you hold the collectibles, they become part of the game loop instead of just 
 
 There’s also a playable demo live now because asking people to trust a mystery box site without letting them try both the vault flow and the game layer first felt a little too on-brand for the industry.
 
-Still early, so this is not me pretending the whole product is finished. The demo and core gameplay loop are live; full production money / fulfillment systems are still being finalized.
+To be clear on scope: the demo and core vault/game loop are live now. Real-money checkout and production fulfillment are still being finalized.
+
+Still early, so this is not me pretending the whole product is finished.
 
 Main thing I’m curious about: if a product like this shows the odds clearly, lets you test the loop before spending anything, and adds progression on top, does that actually make the category feel more trustworthy and interesting, or does "mystery box" still trigger the same skepticism no matter what?
 

@@ -120,7 +120,7 @@ Configured in `src/lib/posthog.ts`:
 1. Landing to Open
 - `$pageview` where `page_path = "/"`
 - `cta_click` where `cta_name = "open_now"`
-- `$pageview` where `page_path = "/open"`
+- `$pageview` where `page_path = "/vaults"`
 - `vault_opened`
 
 2. Core Vault Completion

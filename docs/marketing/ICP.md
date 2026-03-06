@@ -22,7 +22,7 @@
 
 **Buying triggers**:
 1. Scarcity — "Only 47 Founder spots left" / "Tier closing soon"
-2. Free credits — $25–$200 free credits for early signup is a no-brainer trial
+2. Free credits — $25–$100 in early-access credits makes trying the platform a low-friction decision
 3. Transparent odds — Seeing exact percentages on the vault card resolves the #1 objection
 4. Social proof — Watching someone else open a vault and win
 5. Playable demo — "Try before you deposit real money" eliminates risk
@@ -32,11 +32,11 @@
 | Objection | Rebuttal |
 |-----------|----------|
 | "Is this a scam?" | Odds are printed on every vault card. Play the demo for free right now — no account, no deposit. |
-| "Is this gambling?" | It's chance-based commerce with real physical items. You always receive a collectible — there's no "lose" outcome. Every vault contains a real item. |
+| "Is this gambling?" | It's chance-based collectible commerce with real physical items. You always receive a collectible — there's no "lose" outcome. Every vault contains a real item. |
 | "Are the items real?" | Every item is a licensed collectible (Funko Pop!, etc.) that you can ship to your door, hold in your digital inventory, or cashout for credits. |
 | "What if I get junk?" | Common items are still real collectibles worth 40–85% of the vault price. Plus you can cashout for credits instantly. |
 | "How is this different from HypeDrop?" | HypeDrop got hacked for $60M and has hidden odds. We show exact probabilities, stock real collectibles (not crypto), and give you three options for every item: hold, ship, or cashout. |
-| "Why should I sign up now?" | Founder tier (first 50 spots) gets $200 in free credits. Once those spots fill, you drop to $100, then $50, then $25. The waitlist is live — spots are going. |
+| "Why should I sign up now?" | Founder tier (first 25 spots) gets $100 in free credits. After that the ladder steps down to $75, then $50, then $25 through the first 100 signups. |
 
 **Voice of customer themes**:
 - **Pain**: "Every mystery box site feels rigged" / "I deposited $100 and got garbage" / "They never show the real odds"
@@ -70,7 +70,7 @@
 
 ---
 
-## Adjacent ICP 2: Thrill-Seeking Gamblers / Case Openers
+## Adjacent ICP 2: Case Openers / High-Intensity Unboxing Audience
 
 **Demographics**: 18–28, heavily male (85/15), US/EU, spend $100–1,000/mo on gambling-adjacent entertainment.
 
@@ -89,11 +89,11 @@
 - **Discord**: CSGORoll Discord, CS2 trading servers, gambling community servers
 - **Twitter/X**: Follows gambling streamers, skin trading accounts
 
-**Why VaultedLabs appeals**: Real physical items instead of digital skins. No complicated withdrawal — just ship the item or cashout for credits. The vault opening animation delivers the same dopamine as a case opening but the reward is tangible.
+**Why VaultedLabs appeals**: Real physical items instead of digital skins. No complicated withdrawal — just ship the item or cashout for credits. The vault opening flow delivers the same high-intensity reveal feeling as a case opening, but the reward is tangible.
 
 **Messaging angle**: "The case opening thrill, but you get real collectibles instead of pixels."
 
-**Caution**: Messaging must not glorify gambling. Focus on "collectible commerce with chance elements" — not "gambling but better." Avoid targeting anyone under 18 or anyone in gambling recovery communities.
+**Caution**: Messaging must not glorify gambling. Focus on "chance-based collectible commerce with transparent odds" — not "gambling but better." Avoid targeting anyone under 18 or anyone in gambling recovery communities.
 
 ---
 
