@@ -95,7 +95,6 @@ export const VALUE_RANGE_REDUCTION = 0;
 export const PRODUCT_TYPES = [
   "Funko Pop!",
   "Community Pick",
-  "Community Pick",
 ] as const;
 
 /**
