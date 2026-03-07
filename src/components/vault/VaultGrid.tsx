@@ -2,6 +2,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import {
+  PRODUCT_TYPES,
   VAULTS,
   RARITY_CONFIG,
   PREMIUM_BONUS_CHANCE,
@@ -12,6 +13,7 @@ import {
 } from "../../data/vaults";
 import { getVaultItemsByRarity, pickFunko } from "../../data/funkos";
 import { FunkoImage } from "../shared/FunkoImage";
+import { SegmentedTabs } from "../shared/SegmentedTabs";
 import { VaultCard } from "./VaultCard";
 import { useGame } from "../../context/GameContext";
 import { trackEvent, AnalyticsEvents } from "../../lib/analytics";
@@ -1555,6 +1557,7 @@ export function VaultGrid({
   tutorialMode = null,
 }: VaultGridProps & { onOverlayChange?: (isOpen: boolean) => void }) {
   const isTutorialDemo = tutorialMode === "demo";
+  const primaryCategoryKey = `${PRODUCT_TYPES[0]}-0`;
   const {
     balance,
     xp,
@@ -1572,6 +1575,7 @@ export function VaultGrid({
   const navigate = useNavigate();
   const [selectedVault, setSelectedVault] = useState<Vault | null>(null);
   const [overlayKey, setOverlayKey] = useState(0);
+  const [activeCategoryKey, setActiveCategoryKey] = useState(primaryCategoryKey);
   const [legendaryHype, setLegendaryHype] = useState<{
     funkoName: string;
     value: number;
@@ -1587,7 +1591,8 @@ export function VaultGrid({
   useEffect(() => {
     onOverlayChange?.(selectedVault != null);
   }, [selectedVault, onOverlayChange]);
-  const selectedCategory = "Funko";
+  const isPrimaryCategory = activeCategoryKey === primaryCategoryKey;
+  const selectedCategory = isPrimaryCategory ? PRODUCT_TYPES[0] : null;
 
   const handleSelect = (vault: Vault) => {
     if (microTutorialActive && tutorialStepId !== "vault-open") {
@@ -1721,7 +1726,23 @@ export function VaultGrid({
   };
 
   const minPrice = Math.min(...VAULTS.map((v) => v.price));
-  const isBroke = !isTutorialDemo && balance < minPrice && freeSpins <= 0 && !selectedVault;
+  const isBroke =
+    isPrimaryCategory &&
+    !isTutorialDemo &&
+    balance < minPrice &&
+    freeSpins <= 0 &&
+    !selectedVault;
+  const categoryTabs = PRODUCT_TYPES.map((category, idx) => {
+    const tabKey = `${category}-${idx}`;
+    const isPrimary = idx === 0;
+
+    return {
+      key: tabKey,
+      label: category,
+      mobileLabel: isPrimary ? "Funko" : "Community",
+      badgeText: isPrimary ? undefined : "Vote",
+    };
+  });
 
   const unlockDestination = useMemo(() => {
     const features = unlockNoticeFeatures ?? [];
@@ -1753,23 +1774,49 @@ export function VaultGrid({
             Pick your tier, press spin, and extract your collectible.
           </p>
         </div>
+        <SegmentedTabs
+          tabs={categoryTabs}
+          activeKey={activeCategoryKey}
+          onChange={setActiveCategoryKey}
+          containerTutorialId="categories"
+          layoutId="open-categories-indicator"
+          mode="fill"
+          className="w-full"
+        />
         <motion.div
+          key={activeCategoryKey}
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
           className="mb-8"
         >
-          <div
-            className={`relative transition-all duration-300 ${isBroke ? "blur-xl grayscale pointer-events-none scale-[0.97] opacity-20" : ""}`}
-          >
-            <div data-tutorial="vault-grid" className="mx-auto max-w-6xl">
-              <div className="scrollbar-none -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-hidden px-1 pb-3 md:hidden [overscroll-behavior-x:contain]">
-                {VAULTS.map((vault, index) => (
-                  <div
-                    key={vault.name}
-                    className="w-[min(84vw,340px)] max-w-[340px] min-w-[280px] flex-none snap-center"
-                  >
+          {isPrimaryCategory ? (
+            <div
+              className={`relative transition-all duration-300 ${isBroke ? "blur-xl grayscale pointer-events-none scale-[0.97] opacity-20" : ""}`}
+            >
+              <div data-tutorial="vault-grid" className="mx-auto max-w-6xl">
+                <div className="scrollbar-none -mx-1 flex snap-x snap-mandatory gap-4 overflow-x-auto overflow-y-hidden px-1 pb-3 md:hidden [overscroll-behavior-x:contain]">
+                  {VAULTS.map((vault, index) => (
+                    <div
+                      key={vault.name}
+                      className="w-[min(84vw,340px)] max-w-[340px] min-w-[280px] flex-none snap-center"
+                    >
+                      <VaultCard
+                        vault={vault}
+                        index={index}
+                        balance={balance}
+                        onSelect={handleSelect}
+                        prestigeLevel={prestigeLevel}
+                        tutorialStepId={tutorialStepId}
+                        tutorialMode={tutorialMode}
+                      />
+                    </div>
+                  ))}
+                </div>
+                <div className="hidden gap-4 gap-y-6 md:grid md:grid-cols-2 md:gap-6 md:gap-y-8 lg:grid-cols-3">
+                  {VAULTS.map((vault, index) => (
                     <VaultCard
+                      key={vault.name}
                       vault={vault}
                       index={index}
                       balance={balance}
@@ -1778,25 +1825,34 @@ export function VaultGrid({
                       tutorialStepId={tutorialStepId}
                       tutorialMode={tutorialMode}
                     />
-                  </div>
-                ))}
-              </div>
-              <div className="hidden gap-4 gap-y-6 md:grid md:grid-cols-2 md:gap-6 md:gap-y-8 lg:grid-cols-3">
-                {VAULTS.map((vault, index) => (
-                  <VaultCard
-                    key={vault.name}
-                    vault={vault}
-                    index={index}
-                    balance={balance}
-                    onSelect={handleSelect}
-                    prestigeLevel={prestigeLevel}
-                    tutorialStepId={tutorialStepId}
-                    tutorialMode={tutorialMode}
-                  />
-                ))}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex justify-center">
+              <div className="w-full max-w-xl rounded-2xl border border-neon-cyan/30 bg-surface-elevated/70 px-5 py-6 text-center shadow-[0_0_40px_rgba(0,240,255,0.12)] backdrop-blur-xl sm:px-7 sm:py-7">
+                <h3 className="text-lg font-black uppercase tracking-widest text-neon-cyan sm:text-xl">
+                  Coming Soon
+                </h3>
+                <p className="mt-2 text-xs text-text-muted sm:text-sm">
+                  Community vault categories are next. Join the waitlist and help vote which collection drops first.
+                </p>
+                <button
+                  onClick={() => {
+                    trackEvent(AnalyticsEvents.CTA_CLICK, {
+                      cta_name: "community_vote_waitlist",
+                      location: "play_categories",
+                    });
+                    navigate("/", { state: { scrollToWaitlist: true } });
+                  }}
+                  className="mt-4 inline-flex items-center justify-center rounded-xl border border-neon-cyan/50 bg-neon-cyan/10 px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.18em] text-neon-cyan transition-all hover:bg-neon-cyan/18 cursor-pointer sm:text-xs"
+                >
+                  Join Waitlist to Vote
+                </button>
+              </div>
+            </div>
+          )}
         </motion.div>
         <p className="text-center text-[10px] text-text-dim mt-8 font-mono uppercase tracking-wider max-w-lg mx-auto">
           Demo only - item prices, drop odds, game mechanics, and inventory are

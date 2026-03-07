@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AnimatePresence } from "motion/react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Navbar } from "../components/shared/Navbar";
 import { SegmentedTabs } from "../components/shared/SegmentedTabs";
@@ -58,6 +59,7 @@ export function LockerPage() {
   const [tutorialActive, setTutorialActive] = useState(initialTutorialActive);
   const [showRankUpOverlay, setShowRankUpOverlay] = useState(false);
   const [overlayRankLevel, setOverlayRankLevel] = useState(prestigeLevel);
+  const [suppressLockedOverlay, setSuppressLockedOverlay] = useState(false);
   const [tutorialSection, setTutorialSection] = useState<LockerSection | null>(
     initialTutorialActive ? "inventory" : null
   );
@@ -76,6 +78,13 @@ export function LockerPage() {
       return "inventory";
     return section as LockerSection;
   }, [section]);
+
+  useEffect(() => {
+    if (!suppressLockedOverlay) return;
+    if (currentSection !== "arena" || isFeatureUnlocked("arena", xp)) {
+      setSuppressLockedOverlay(false);
+    }
+  }, [currentSection, suppressLockedOverlay, xp]);
 
   const canRunLockerTutorial = useMemo(
     () => isFeatureUnlocked("market", xp) && isFeatureUnlocked("arena", xp),
@@ -154,6 +163,30 @@ export function LockerPage() {
     setTutorialSection(command.section);
   };
 
+  const handleRankUp = useCallback(() => {
+    const nextRankLevel = Math.min(prestigeLevel + 1, 3);
+    setOverlayRankLevel(nextRankLevel);
+    setSuppressLockedOverlay(true);
+    setManualLockedFeature(null);
+    prestige();
+    setShowRankUpOverlay(true);
+  }, [prestige, prestigeLevel]);
+
+  const handleCloseRankUpOverlay = useCallback(() => {
+    const shouldReturnToInventory =
+      currentSection === "arena" && !isFeatureUnlocked("arena", xp);
+
+    setShowRankUpOverlay(false);
+    setManualLockedFeature(null);
+
+    if (shouldReturnToInventory) {
+      navigate("/locker/inventory", { replace: true });
+      return;
+    }
+
+    setSuppressLockedOverlay(false);
+  }, [currentSection, navigate, xp]);
+
   return (
     <>
       <Navbar
@@ -213,12 +246,7 @@ export function LockerPage() {
                 freeSpins={freeSpins}
                 prestigeLevel={prestigeLevel}
                 canRankUp={canPrestige}
-                onRankUp={() => {
-                  const nextRankLevel = Math.min(prestigeLevel + 1, 3);
-                  setOverlayRankLevel(nextRankLevel);
-                  prestige();
-                  setShowRankUpOverlay(true);
-                }}
+                onRankUp={handleRankUp}
                 onConvertShardsToFreeSpin={convertShardsToFreeSpin}
                 onSelect={handleArenaSelect}
               />
@@ -227,15 +255,21 @@ export function LockerPage() {
         </div>
       </main>
 
-      {showRankUpOverlay && (
-        <PrestigeOverlay
-          prestigeLevel={overlayRankLevel}
-          onClose={() => setShowRankUpOverlay(false)}
-        />
-      )}
+      <AnimatePresence>
+        {showRankUpOverlay && (
+          <PrestigeOverlay
+            prestigeLevel={overlayRankLevel}
+            onClose={handleCloseRankUpOverlay}
+          />
+        )}
+      </AnimatePresence>
 
       <LockedOverlay
-        isOpen={activeLockedFeature != null}
+        isOpen={
+          !showRankUpOverlay &&
+          !suppressLockedOverlay &&
+          activeLockedFeature != null
+        }
         featureKey={activeLockedFeature ?? "locker"}
         xp={xp}
         {...(manualLockedFeature
